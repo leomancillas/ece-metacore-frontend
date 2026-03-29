@@ -1066,7 +1066,7 @@ function generateRxCD(nombre, nacimiento, edad, fecha, meds, diag, instr, showDi
   </body></html>`;
 }
 
-function printPrescription() {
+async function printPrescription() {
   const nombre = document.getElementById('rx_nombre').value.trim();
   const nacimiento = (() => {
     const v = document.getElementById('rx_nacimiento').value;
