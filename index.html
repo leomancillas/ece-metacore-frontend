@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ECE META CORE - Expediente Clinico Electronico</title>
 <style>
-    :root { --primary: #1a6b3c; --primary-light: #2d9e5a; --bg: #f5f7fa; --card: #fff; --text: #1a202c; --border: #e2e8f0; --danger: #e53e3e; }
+    :root { --primary: #1a6b3c; --primary-light: #2d9e5a; --bg: #f5f7fa; --card: #fff; --text: #1a202c; --border: #e2e8f0; --danger: #e53e3e; --amber: #d69e2e; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
     #app { display: none; }
@@ -16,7 +16,7 @@
     .login-logo p { color: #666; font-size: 0.85rem; margin-top: 4px; }
     .form-group { margin-bottom: 16px; }
     label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: #4a5568; }
-    input, select, textarea { width: 100%; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-size: 0.95rem; transition: border-color 0.2s; outline: none; }
+    input, select, textarea { width: 100%; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-size: 0.95rem; transition: border-color 0.2s; outline: none; font-family: inherit; }
     input:focus, select:focus, textarea:focus { border-color: var(--primary); }
     .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
     .btn-primary { background: var(--primary); color: white; width: 100%; padding: 12px; }
@@ -48,12 +48,16 @@
     .badge { padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
     .badge-green { background: #c6f6d5; color: #276749; }
     .badge-blue { background: #bee3f8; color: #2a69ac; }
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
+    .badge-red { background: #fed7d7; color: #9b2c2c; }
+    .badge-purple { background: #e9d8fd; color: #553c9a; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; }
     .modal-overlay.open { display: flex; }
-    .modal { background: white; border-radius: 16px; padding: 28px; width: 580px; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 60px rgba(0,0,0,0.3); }
+    .modal { background: white; border-radius: 16px; padding: 28px; width: 700px; max-width: 100%; box-shadow: 0 25px 60px rgba(0,0,0,0.3); margin: auto; }
     .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
     .modal-title { font-size: 1.15rem; font-weight: 700; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
     .ai-box { background: linear-gradient(135deg, #f0fff4, #e6fffa); border: 1px solid #9ae6b4; border-radius: 12px; padding: 20px; }
     .ai-box h3 { color: var(--primary); margin-bottom: 12px; }
     .ai-response { background: white; border-radius: 8px; padding: 16px; margin-top: 12px; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6; border: 1px solid var(--border); max-height: 400px; overflow-y: auto; }
@@ -61,6 +65,32 @@
     .loading { color: var(--primary); font-style: italic; }
     .section-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 20px; color: var(--text); }
     .empty-state { text-align: center; padding: 48px; color: #a0aec0; }
+    /* Voice button */
+    .voice-row { display: flex; gap: 8px; align-items: flex-start; }
+    .voice-row textarea { flex: 1; }
+    .btn-voice { background: #edf2f7; border: 2px solid var(--border); border-radius: 8px; padding: 8px 10px; cursor: pointer; font-size: 1.1rem; transition: all 0.2s; flex-shrink: 0; height: 42px; }
+    .btn-voice:hover { background: #e2e8f0; }
+    .btn-voice.recording { background: #fed7d7; border-color: var(--danger); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    /* Nota display */
+    .nota-card { border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 14px; }
+    .nota-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+    .nota-section { margin-bottom: 12px; }
+    .nota-section-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--primary); margin-bottom: 6px; border-bottom: 1px solid #c6f6d5; padding-bottom: 3px; }
+    .nota-field { margin-bottom: 6px; font-size: 0.88rem; line-height: 1.5; }
+    .nota-field b { color: #4a5568; }
+    /* SOAP colors */
+    .soap-s { border-left: 3px solid #90cdf4; padding-left: 10px; }
+    .soap-o { border-left: 3px solid #9ae6b4; padding-left: 10px; }
+    .soap-a { border-left: 3px solid #fbb6ce; padding-left: 10px; }
+    .soap-p { border-left: 3px solid #fbd38d; padding-left: 10px; }
+    .note-type-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .note-type-btn { padding: 10px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 0.82rem; font-weight: 600; text-align: center; transition: all 0.2s; }
+    .note-type-btn:hover { border-color: var(--primary-light); background: #f0fff4; }
+    .note-type-btn.selected { border-color: var(--primary); background: #f0fff4; color: var(--primary); }
+    .nom-label { font-size: 0.7rem; color: #718096; font-style: italic; margin-top: 2px; }
+    hr.section-divider { border: none; border-top: 2px solid var(--border); margin: 16px 0; }
+    .section-tag { font-size: 0.8rem; font-weight: 700; color: var(--primary); background: #f0fff4; padding: 3px 10px; border-radius: 6px; display: inline-block; margin-bottom: 10px; }
 </style>
 </head>
 <body>
@@ -77,12 +107,12 @@
       <input type="email" id="loginEmail" placeholder="medico@metacore.mx" autocomplete="email">
     </div>
     <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="loginPassword" placeholder="&#8242;&#8242;&#8242;&#8242;&#8242;&#8242;">
+      <label>Contrasena</label>
+      <input type="password" id="loginPassword" placeholder="••••••">
     </div>
     <p id="loginError" class="error-msg"></p>
     <button class="btn btn-primary" onclick="doLogin()">Iniciar sesion</button>
-    <p style="text-align:center;margin-top:16px;font-size:0.8rem;color:#a0aec0;">META CORE 2025</p>
+    <p style="text-align:center;margin-top:16px;font-size:0.8rem;color:#a0aec0;">ECE META CORE 2026 · NOM-004-SSA3-2012</p>
   </div>
 </div>
 
@@ -95,9 +125,9 @@
   </nav>
   <div class="main-layout">
     <div class="sidebar">
-      <a href="#" class="active" onclick="showSection('dashboard')">Dashboard</a>
-      <a href="#" onclick="showSection('patients')">Pacientes</a>
-      <a href="#" onclick="showSection('research')">Asistente IA</a>
+      <a href="#" class="active" onclick="showSection('dashboard')">📊 Dashboard</a>
+      <a href="#" onclick="showSection('patients')">👥 Pacientes</a>
+      <a href="#" onclick="showSection('research')">🤖 Asistente IA</a>
     </div>
     <div class="content" id="mainContent"></div>
   </div>
@@ -108,7 +138,7 @@
   <div class="modal">
     <div class="modal-header">
       <h2 class="modal-title" id="modalTitle">Nuevo Paciente</h2>
-      <button class="btn btn-secondary btn-sm" onclick="closeModal('patientModal')">X</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('patientModal')">✕</button>
     </div>
     <div class="grid-2">
       <div class="form-group"><label>Expediente *</label><input id="f_expediente" placeholder="EXP-001"></div>
@@ -130,11 +160,42 @@
     </div>
     <div class="form-group"><label>Email</label><input id="f_email" type="email"></div>
     <div class="form-group"><label>Alergias</label><textarea id="f_alergias" rows="2"></textarea></div>
-    <div class="form-group"><label>Antecedentes</label><textarea id="f_antecedentes" rows="3"></textarea></div>
+    <div class="form-group"><label>Antecedentes personales patologicos</label><textarea id="f_antecedentes" rows="3"></textarea></div>
     <p id="modalError" class="error-msg"></p>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
       <button class="btn btn-secondary" onclick="closeModal('patientModal')">Cancelar</button>
       <button class="btn btn-primary" style="width:auto" onclick="savePatient()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOTA CLINICA (NOM-004-SSA3-2012) -->
+<div class="modal-overlay" id="noteModal">
+  <div class="modal" style="width:780px">
+    <div class="modal-header">
+      <h2 class="modal-title">Nueva Nota Clinica · NOM-004-SSA3-2012</h2>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('noteModal')">✕</button>
+    </div>
+
+    <!-- Selector de tipo -->
+    <div class="form-group">
+      <label>Tipo de nota</label>
+      <div class="note-type-selector" id="notTypeSelector">
+        <button class="note-type-btn selected" onclick="selectNoteType('evolucion',this)">📋 Nota de evolución<br><span class="nom-label">Art. 10 NOM-004</span></button>
+        <button class="note-type-btn" onclick="selectNoteType('historia_clinica',this)">📖 Historia clínica<br><span class="nom-label">Art. 7 NOM-004</span></button>
+        <button class="note-type-btn" onclick="selectNoteType('urgencias',this)">🚨 Nota de urgencias<br><span class="nom-label">Art. 11 NOM-004</span></button>
+        <button class="note-type-btn" onclick="selectNoteType('interconsulta',this)">🔄 Interconsulta<br><span class="nom-label">Art. 13 NOM-004</span></button>
+        <button class="note-type-btn" onclick="selectNoteType('egreso',this)">🏠 Nota de egreso<br><span class="nom-label">Art. 14 NOM-004</span></button>
+        <button class="note-type-btn" onclick="selectNoteType('referencia',this)">📨 Referencia/Traslado<br><span class="nom-label">Art. 15 NOM-004</span></button>
+      </div>
+    </div>
+
+    <div id="noteFormContainer"></div>
+
+    <p id="noteError" class="error-msg"></p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closeModal('noteModal')">Cancelar</button>
+      <button class="btn btn-primary" style="width:auto" onclick="saveNote()">💾 Guardar Nota</button>
     </div>
   </div>
 </div>
@@ -147,7 +208,12 @@ const API = (window.location.hostname === 'localhost' || window.location.hostnam
 let token = localStorage.getItem('ece_token');
 let currentUser = JSON.parse(localStorage.getItem('ece_user') || 'null');
 let editingPatientId = null;
+let currentNotePatientId = null;
+let currentNoteType = 'evolucion';
+let voiceRecognition = null;
+let activeVoiceField = null;
 
+// ── API ────────────────────────────────────────────────────────────
 async function api(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) };
   const res = await fetch(API + path, { headers, ...opts });
@@ -156,20 +222,18 @@ async function api(path, opts = {}) {
   return data;
 }
 
+// ── AUTH ───────────────────────────────────────────────────────────
 async function doLogin() {
   const email = document.getElementById('loginEmail').value;
   const pw = document.getElementById('loginPassword').value;
   document.getElementById('loginError').textContent = '';
   try {
     const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password: pw }) });
-    token = data.token;
-    currentUser = data.user;
+    token = data.token; currentUser = data.user;
     localStorage.setItem('ece_token', token);
     localStorage.setItem('ece_user', JSON.stringify(currentUser));
     showApp();
-  } catch (e) {
-    document.getElementById('loginError').textContent = e.message;
-  }
+  } catch (e) { document.getElementById('loginError').textContent = e.message; }
 }
 
 function logout() {
@@ -182,10 +246,11 @@ function logout() {
 function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  document.getElementById('navUser').textContent = currentUser?.name + ' (' + currentUser?.role + ')';
+  document.getElementById('navUser').textContent = currentUser?.name + ' · ' + currentUser?.role;
   showSection('dashboard');
 }
 
+// ── NAVEGACION ─────────────────────────────────────────────────────
 function showSection(s) {
   document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
   const idx = ['dashboard','patients','research'].indexOf(s);
@@ -195,6 +260,7 @@ function showSection(s) {
   else if (s === 'research') renderResearch();
 }
 
+// ── DASHBOARD ──────────────────────────────────────────────────────
 async function renderDashboard() {
   const c = document.getElementById('mainContent');
   c.innerHTML = '<p class="loading">Cargando...</p>';
@@ -203,18 +269,19 @@ async function renderDashboard() {
     c.innerHTML = `<div class="section-title">Dashboard</div>
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-num">${data.count || 0}</div><div class="stat-label">Pacientes registrados</div></div>
-        <div class="stat-card"><div class="stat-num">ECE</div><div class="stat-label">META CORE v1.0</div></div>
-        <div class="stat-card"><div class="stat-num">IA</div><div class="stat-label">Asistente activo</div></div>
+        <div class="stat-card"><div class="stat-num">NOM</div><div class="stat-label">004-SSA3-2012</div></div>
+        <div class="stat-card"><div class="stat-num">🎤</div><div class="stat-label">Dictado por voz activo</div></div>
       </div>
       <div class="card">
         <div class="card-header"><span class="card-title">Ultimos pacientes</span><button class="btn btn-primary btn-sm" style="width:auto" onclick="showSection('patients')">Ver todos</button></div>
         <table><thead><tr><th>Expediente</th><th>Paciente</th><th>Nacimiento</th><th>Sexo</th></tr></thead>
-        <tbody>${(data.patients || []).map(p => `<tr><td>${p.expediente}</td><td>${p.nombre} ${p.apellido_paterno}</td><td>${p.fecha_nacimiento?.split('T')[0] || ''}</td><td>${p.sexo || '-'}</td></tr>`).join('') || '<tr><td colspan=4 style="text-align:center;color:#a0aec0">Sin pacientes aun</td></tr>'}
+        <tbody>${(data.patients || []).map(p => `<tr onclick="viewPatient('${p.id}')" style="cursor:pointer"><td><span class="badge badge-blue">${p.expediente}</span></td><td>${p.nombre} ${p.apellido_paterno}</td><td>${p.fecha_nacimiento?.split('T')[0] || ''}</td><td>${p.sexo || '-'}</td></tr>`).join('') || '<tr><td colspan=4 style="text-align:center;color:#a0aec0">Sin pacientes aun</td></tr>'}
         </tbody></table>
       </div>`;
   } catch (e) { c.innerHTML = '<p class="error-msg">' + e.message + '</p>'; }
 }
 
+// ── PACIENTES ──────────────────────────────────────────────────────
 let allPatients = [];
 async function renderPatients(search = '') {
   const c = document.getElementById('mainContent');
@@ -241,8 +308,8 @@ async function renderPatients(search = '') {
             <td>${p.sexo || '-'}</td>
             <td>${p.telefono || '-'}</td>
             <td>
-              <button class="btn btn-secondary btn-sm" onclick='viewPatient(\"${p.id}\")'>Ver</button>
-              <button class="btn btn-secondary btn-sm" onclick='editPatient(\"${p.id}\")'>Editar</button>
+              <button class="btn btn-secondary btn-sm" onclick='viewPatient("${p.id}")'>Ver expediente</button>
+              <button class="btn btn-secondary btn-sm" onclick='editPatient("${p.id}")'>Editar</button>
             </td>
           </tr>`).join('') || '<tr><td colspan=6 class="empty-state">No se encontraron pacientes</td></tr>'}
         </tbody></table>
@@ -250,6 +317,7 @@ async function renderPatients(search = '') {
   } catch (e) { c.innerHTML = '<p class="error-msg">' + e.message + '</p>'; }
 }
 
+// ── EXPEDIENTE PACIENTE ────────────────────────────────────────────
 async function viewPatient(id) {
   const c = document.getElementById('mainContent');
   c.innerHTML = '<p class="loading">Cargando expediente...</p>';
@@ -264,49 +332,379 @@ async function viewPatient(id) {
     const lastV = vitals[0] || {};
     c.innerHTML = `
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-        <button class="btn btn-secondary btn-sm" onclick="renderPatients()">&larr; Volver</button>
+        <button class="btn btn-secondary btn-sm" onclick="renderPatients()">← Volver</button>
         <div class="section-title" style="margin:0">${pat.nombre} ${pat.apellido_paterno} ${pat.apellido_materno || ''}</div>
         <span class="badge badge-blue">${pat.expediente}</span>
       </div>
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-num">${age}</div><div class="stat-label">Aners</div></div>
+        <div class="stat-card"><div class="stat-num">${age}</div><div class="stat-label">Años de edad</div></div>
         <div class="stat-card"><div class="stat-num">${lastV.peso_kg || '-'}</div><div class="stat-label">Peso (kg)</div></div>
         <div class="stat-card"><div class="stat-num">${lastV.imc || '-'}</div><div class="stat-label">IMC</div></div>
-        <div class="stat-card"><div class="stat-num">${lastV.presion_sistolica ? lastV.presion_sistolica+'/'+lastV.presion_diastolica : '-'}</div><div class="stat-label">Tension arterial</div></div>
+        <div class="stat-card"><div class="stat-num">${lastV.presion_sistolica ? lastV.presion_sistolica+'/'+lastV.presion_diastolica : '-'}</div><div class="stat-label">T/A mmHg</div></div>
       </div>
       <div class="grid-2">
         <div class="card">
-          <div class="card-header"><span class="card-title">Datos del paciente</span><button class="btn btn-secondary btn-sm" onclick='editPatient(\"${pat.id}\")'>Editar</button></div>
-          <p><b>CURP:</b> ${pat.curp || '-'}</p>
-          <p><b>Sexo:</b> ${pat.sexo || '-'}</p>
-          <p><b>Tel:</b> ${pat.telefono || '-'}</p>
-          <p><b>Email:</b> ${pat.email || '-'}</p>
-          <p><b>Alergias:</b> ${pat.alergias || 'Ninguna'}</p>
-          <p style="margin-top:8px"><b>Antecedentes:</b><br>${pat.antecedentes || '-'}</p>
+          <div class="card-header"><span class="card-title">Datos del paciente</span><button class="btn btn-secondary btn-sm" onclick='editPatient("${pat.id}")'>Editar</button></div>
+          <p class="nota-field"><b>CURP:</b> ${pat.curp || '-'}</p>
+          <p class="nota-field"><b>Sexo:</b> ${pat.sexo || '-'}</p>
+          <p class="nota-field"><b>Tel:</b> ${pat.telefono || '-'}</p>
+          <p class="nota-field"><b>Email:</b> ${pat.email || '-'}</p>
+          <p class="nota-field"><b>Alergias:</b> <span style="color:var(--danger);font-weight:600">${pat.alergias || 'Ninguna referida'}</span></p>
+          <p class="nota-field" style="margin-top:8px"><b>APP:</b> ${pat.antecedentes || '-'}</p>
         </div>
         <div class="card">
-          <div class="card-header"><span class="card-title">Ultimos labs</span></div>
-          ${labs.slice(0,5).map(l => `<div style="border-bottom:1px solid var(--border);padding:8px 0;"><b>${l.nombre_estudio}:</b> ${l.resultado} ${l.unidades || ''}</div>`).join('') || '<p class="empty-state">Sin resultados</p>'}
+          <div class="card-header"><span class="card-title">Ultimos laboratorios</span></div>
+          ${labs.slice(0,6).map(l => `<div style="border-bottom:1px solid var(--border);padding:8px 0;font-size:0.88rem"><b>${l.nombre_estudio}:</b> ${l.resultado} ${l.unidades || ''} <small style="color:#718096">${l.created_at?.split('T')[0] || ''}</small></div>`).join('') || '<p class="empty-state" style="padding:24px">Sin resultados de laboratorio</p>'}
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><span class="card-title">Notas clinicas</span><button class="btn btn-primary btn-sm" style="width:auto" onclick='addNote(\"${pat.id}\")'>+ Nueva nota</button></div>
-        ${notes.map(n => `<div style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span class="badge badge-green">${n.tipo}</span><small style="color:#718096">${n.created_at?.split('T')[0]} - ${n.author_name || ''}</small></div>
-          ${n.motivo_consulta ? '<p><b>Motivo:</b> '+n.motivo_consulta+'</p>' : ''}
-          ${n.diagnostico ? '<p><b>Diagnostico:</b> '+n.diagnostico+'</p>' : ''}
-          ${n.plan_tratamiento ? '<p><b>Plan:</b> '+n.plan_tratamiento+'</p>' : ''}
-        </div>`).join('') || '<p class="empty-state">Sin notas clinicas</p>'}
+        <div class="card-header">
+          <span class="card-title">Notas clinicas · NOM-004-SSA3-2012</span>
+          <button class="btn btn-primary btn-sm" style="width:auto" onclick='openNoteModal("${pat.id}")'>🖊 Nueva nota</button>
+        </div>
+        ${renderNotesList(notes, pat.id)}
       </div>`;
   } catch (e) { c.innerHTML = '<p class="error-msg">' + e.message + '</p>'; }
 }
 
+// ── RENDERIZAR NOTAS ───────────────────────────────────────────────
+function notaBadge(tipo) {
+  const map = {
+    evolucion: ['badge-green','📋 Evolución'],
+    historia_clinica: ['badge-blue','📖 Historia Clínica'],
+    urgencias: ['badge-red','🚨 Urgencias'],
+    interconsulta: ['badge-amber','🔄 Interconsulta'],
+    egreso: ['badge-purple','🏠 Egreso'],
+    referencia: ['badge-blue','📨 Referencia'],
+    consulta: ['badge-green','📋 Consulta'],
+  };
+  const [cls, label] = map[tipo] || ['badge-green', tipo];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function renderNotesList(notes, patId) {
+  if (!notes || notes.length === 0) return '<p class="empty-state">Sin notas clinicas. Crea la primera nota de evolucion.</p>';
+  return notes.map(n => {
+    const meta = (() => { try { return typeof n.plan_tratamiento === 'string' && n.plan_tratamiento.startsWith('{') ? JSON.parse(n.plan_tratamiento) : null; } catch(e){ return null; } })();
+    const fecha = n.created_at?.split('T')[0] || '';
+    const hora = n.created_at?.split('T')[1]?.slice(0,5) || '';
+    if (meta && meta._tipo) return renderStructuredNote(n, meta, fecha, hora);
+    return renderLegacyNote(n, fecha, hora);
+  }).join('');
+}
+
+function renderLegacyNote(n, fecha, hora) {
+  return `<div class="nota-card">
+    <div class="nota-header">${notaBadge(n.tipo)}<small style="color:#718096">${fecha} ${hora} · ${n.author_name || ''}</small></div>
+    ${n.motivo_consulta ? `<div class="nota-field"><b>Motivo:</b> ${n.motivo_consulta}</div>` : ''}
+    ${n.diagnostico ? `<div class="nota-field"><b>Diagnóstico:</b> ${n.diagnostico}</div>` : ''}
+    ${n.plan_tratamiento ? `<div class="nota-field"><b>Plan:</b> ${n.plan_tratamiento}</div>` : ''}
+  </div>`;
+}
+
+function renderStructuredNote(n, meta, fecha, hora) {
+  const tipo = meta._tipo;
+  let body = '';
+  if (tipo === 'evolucion') {
+    body = `
+      <div class="nota-section soap-s"><div class="nota-section-title">S — Subjetivo</div>
+        ${f('Motivo de consulta', meta.motivo)}<br>${f('Síntomas actuales', meta.sintomas)}<br>${f('Síntomas asociados', meta.sint_asociados)}
+      </div>
+      <div class="nota-section soap-o" style="margin-top:10px"><div class="nota-section-title">O — Objetivo</div>
+        ${f('Exploración física', meta.exfisica)}<br>${f('Signos vitales', meta.signos_vitales)}<br>${f('Estudios/resultados', meta.estudios)}
+      </div>
+      <div class="nota-section soap-a" style="margin-top:10px"><div class="nota-section-title">A — Análisis / Diagnóstico</div>
+        ${f('Diagnósticos (CIE-10)', meta.diagnostico)}<br>${f('Impresión diagnóstica', meta.impresion)}
+      </div>
+      <div class="nota-section soap-p" style="margin-top:10px"><div class="nota-section-title">P — Plan</div>
+        ${f('Tratamiento farmacológico', meta.tx_farmaco)}<br>${f('Indicaciones no farmacológicas', meta.tx_nofarmaco)}<br>${f('Seguimiento', meta.seguimiento)}
+      </div>`;
+  } else if (tipo === 'historia_clinica') {
+    body = `
+      <div class="nota-section"><div class="nota-section-title">Antecedentes heredo-familiares</div>${f('', meta.ahf)}</div>
+      <div class="nota-section"><div class="nota-section-title">Antecedentes personales no patológicos</div>${f('', meta.apnp)}</div>
+      <div class="nota-section"><div class="nota-section-title">Antecedentes personales patológicos</div>${f('', meta.app)}</div>
+      <div class="nota-section"><div class="nota-section-title">Padecimiento actual</div>${f('', meta.padecimiento)}</div>
+      <div class="nota-section"><div class="nota-section-title">Interrogatorio por aparatos y sistemas</div>${f('', meta.interrogatorio)}</div>
+      <div class="nota-section"><div class="nota-section-title">Exploración física</div>${f('', meta.exfisica)}</div>
+      <div class="nota-section"><div class="nota-section-title">Diagnóstico</div>${f('', meta.diagnostico)}</div>
+      <div class="nota-section"><div class="nota-section-title">Plan diagnóstico-terapéutico</div>${f('', meta.plan)}</div>
+      <div class="nota-section"><div class="nota-section-title">Pronóstico</div>${f('', meta.pronostico)}</div>`;
+  } else if (tipo === 'urgencias') {
+    body = `
+      ${f('Hora de llegada', meta.hora_llegada)}
+      ${f('Motivo de atención', meta.motivo)}
+      ${f('Estado al ingreso', meta.estado_ingreso)}
+      ${f('Exploración física', meta.exfisica)}
+      ${f('Diagnóstico', meta.diagnostico)}
+      ${f('Tratamiento inicial', meta.tratamiento)}
+      ${f('Estado al egreso', meta.estado_egreso)}
+      ${f('Hora de egreso', meta.hora_egreso)}`;
+  } else if (tipo === 'interconsulta') {
+    body = `
+      ${f('Especialidad consultada', meta.especialidad)}
+      ${f('Motivo de interconsulta', meta.motivo)}
+      ${f('Resumen clínico', meta.resumen)}
+      ${f('Diagnóstico', meta.diagnostico)}
+      ${f('Solicitud específica', meta.solicitud)}`;
+  } else if (tipo === 'egreso') {
+    body = `
+      ${f('Diagnóstico de egreso', meta.diagnostico)}
+      ${f('Condición al egreso', meta.condicion)}
+      ${f('Pronóstico', meta.pronostico)}
+      ${f('Instrucciones al paciente', meta.instrucciones)}
+      ${f('Citas y seguimiento', meta.seguimiento)}`;
+  } else if (tipo === 'referencia') {
+    body = `
+      ${f('Unidad médica de envío', meta.unidad_envio)}
+      ${f('Unidad médica receptora', meta.unidad_receptora)}
+      ${f('Motivo de referencia', meta.motivo)}
+      ${f('Estado clínico actual', meta.estado_clinico)}
+      ${f('Diagnóstico', meta.diagnostico)}
+      ${f('Tratamiento recibido', meta.tratamiento)}`;
+  }
+  return `<div class="nota-card">
+    <div class="nota-header">${notaBadge(tipo)}<small style="color:#718096">${fecha} ${hora} · ${n.author_name || ''}</small></div>
+    ${body}
+  </div>`;
+}
+
+function f(label, val) {
+  if (!val || val.trim() === '') return '';
+  return `<div class="nota-field">${label ? '<b>' + label + ':</b> ' : ''}${val}</div>`;
+}
+
+// ── MODAL NOTA ─────────────────────────────────────────────────────
+function openNoteModal(patientId) {
+  currentNotePatientId = patientId;
+  currentNoteType = 'evolucion';
+  document.getElementById('noteError').textContent = '';
+  // Reset selector
+  document.querySelectorAll('.note-type-btn').forEach((b,i) => b.classList.toggle('selected', i===0));
+  renderNoteForm('evolucion');
+  document.getElementById('noteModal').classList.add('open');
+}
+
+function selectNoteType(tipo, btn) {
+  currentNoteType = tipo;
+  document.querySelectorAll('.note-type-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  renderNoteForm(tipo);
+}
+
+function vBtn(fieldId) {
+  return `<button class="btn-voice" title="Dictar por voz" onclick="toggleVoice('${fieldId}',this)">🎤</button>`;
+}
+
+function vArea(id, rows, ph) {
+  return `<div class="voice-row"><textarea id="${id}" rows="${rows}" placeholder="${ph}"></textarea>${vBtn(id)}</div>`;
+}
+
+function renderNoteForm(tipo) {
+  const c = document.getElementById('noteFormContainer');
+  if (tipo === 'evolucion') {
+    c.innerHTML = `
+      <div class="section-tag">S — Subjetivo</div>
+      <div class="form-group"><label>Motivo de consulta *</label>${vArea('n_motivo',2,'Paciente acude por...')}</div>
+      <div class="form-group"><label>Síntomas actuales</label>${vArea('n_sintomas',3,'Descripción cronológica del padecimiento actual...')}</div>
+      <div class="form-group"><label>Síntomas asociados</label>${vArea('n_sint_asociados',2,'Síntomas acompañantes...')}</div>
+      <hr class="section-divider"><div class="section-tag">O — Objetivo</div>
+      <div class="form-group"><label>Exploración física</label>${vArea('n_exfisica',3,'TA: PA: FR: FC: T: SatO2: Tórax: Abdomen: Extremidades:...')}</div>
+      <div class="form-group"><label>Signos vitales</label>
+        <div class="grid-3">
+          <div><input id="n_ta" placeholder="T/A (mmHg)"></div>
+          <div><input id="n_fc" placeholder="FC (lpm)"></div>
+          <div><input id="n_fr" placeholder="FR (rpm)"></div>
+          <div><input id="n_temp" placeholder="Temp (°C)"></div>
+          <div><input id="n_sat" placeholder="SatO2 (%)"></div>
+          <div><input id="n_peso" placeholder="Peso (kg)"></div>
+        </div>
+      </div>
+      <div class="form-group"><label>Estudios y resultados</label>${vArea('n_estudios',2,'Resultados de laboratorio, imagen, etc...')}</div>
+      <hr class="section-divider"><div class="section-tag">A — Análisis / Diagnóstico</div>
+      <div class="form-group"><label>Diagnósticos (CIE-10) *</label>${vArea('n_diagnostico',2,'1. E11 - Diabetes mellitus tipo 2\n2. ...')}</div>
+      <div class="form-group"><label>Impresión diagnóstica</label>${vArea('n_impresion',2,'Comentario clínico...')}</div>
+      <hr class="section-divider"><div class="section-tag">P — Plan</div>
+      <div class="form-group"><label>Tratamiento farmacológico</label>${vArea('n_tx_farmaco',3,'1. Metformina 850mg VO c/12h con alimentos\n2. ...')}</div>
+      <div class="form-group"><label>Indicaciones no farmacológicas</label>${vArea('n_tx_nofarmaco',2,'Dieta, ejercicio, medidas generales...')}</div>
+      <div class="form-group"><label>Seguimiento y próxima cita</label>${vArea('n_seguimiento',2,'Cita en 4 semanas, HbA1c en 3 meses...')}</div>`;
+  } else if (tipo === 'historia_clinica') {
+    c.innerHTML = `
+      <div class="section-tag">Historia Clínica · NOM-004-SSA3-2012 Art. 7</div>
+      <div class="form-group"><label>Antecedentes heredo-familiares (AHF)</label>${vArea('n_ahf',3,'DM, HTA, cardiopatía, cáncer, enf. autoinmune en familiares de 1er y 2do grado...')}</div>
+      <div class="form-group"><label>Antecedentes personales no patológicos (APNP)</label>${vArea('n_apnp',3,'Alimentación, actividad física, tabaquismo, alcoholismo, toxicomanías, escolaridad, ocupación...')}</div>
+      <div class="form-group"><label>Antecedentes personales patológicos (APP)</label>${vArea('n_app',3,'Enfermedades previas, hospitalizaciones, cirugías, transfusiones, alergias...')}</div>
+      <hr class="section-divider">
+      <div class="form-group"><label>Padecimiento actual *</label>${vArea('n_padecimiento',4,'Inicio, cronología, localización, características, intensidad, factores que modifican...')}</div>
+      <div class="form-group"><label>Interrogatorio por aparatos y sistemas</label>${vArea('n_interrogatorio',4,'CV: Resp: GI: GU: Óseo-muscular: Neurológico: Endócrino:...')}</div>
+      <hr class="section-divider">
+      <div class="form-group"><label>Exploración física *</label>${vArea('n_exfisica',4,'Habitus exterior, SV, Cabeza, Cuello, Tórax, Abdomen, Extremidades, Neurológico...')}</div>
+      <div class="form-group"><label>Diagnóstico(s) *</label>${vArea('n_diagnostico',2,'')}</div>
+      <div class="form-group"><label>Plan diagnóstico-terapéutico</label>${vArea('n_plan',3,'')}</div>
+      <div class="form-group"><label>Pronóstico</label>${vArea('n_pronostico',2,'')}</div>`;
+  } else if (tipo === 'urgencias') {
+    c.innerHTML = `
+      <div class="section-tag">Nota de Urgencias · NOM-004-SSA3-2012 Art. 11</div>
+      <div class="grid-2">
+        <div class="form-group"><label>Fecha y hora de llegada</label><input id="n_hora_llegada" type="datetime-local" value="${new Date().toISOString().slice(0,16)}"></div>
+        <div class="form-group"><label>Fecha y hora de egreso</label><input id="n_hora_egreso" type="datetime-local"></div>
+      </div>
+      <div class="form-group"><label>Motivo de atención *</label>${vArea('n_motivo',2,'')}</div>
+      <div class="form-group"><label>Estado general al ingreso</label>${vArea('n_estado_ingreso',2,'Consciente, orientado, TA:, FC:, FR:, T:, SatO2:...')}</div>
+      <div class="form-group"><label>Exploración física</label>${vArea('n_exfisica',3,'')}</div>
+      <div class="form-group"><label>Diagnóstico *</label>${vArea('n_diagnostico',2,'')}</div>
+      <div class="form-group"><label>Tratamiento inicial</label>${vArea('n_tratamiento',3,'')}</div>
+      <div class="form-group"><label>Estado al egreso</label>
+        <select id="n_estado_egreso"><option value="">-- Seleccionar --</option><option>Alta voluntaria</option><option>Mejoría</option><option>Ingreso hospitalario</option><option>Traslado</option><option>Defunción</option></select>
+      </div>`;
+  } else if (tipo === 'interconsulta') {
+    c.innerHTML = `
+      <div class="section-tag">Nota de Interconsulta · NOM-004-SSA3-2012 Art. 13</div>
+      <div class="form-group"><label>Especialidad consultada *</label><input id="n_especialidad" placeholder="Ej: Cardiología, Endocrinología..."></div>
+      <div class="form-group"><label>Motivo de interconsulta *</label>${vArea('n_motivo',2,'')}</div>
+      <div class="form-group"><label>Resumen clínico</label>${vArea('n_resumen',4,'Antecedentes relevantes, evolución, tratamiento actual...')}</div>
+      <div class="form-group"><label>Diagnóstico actual</label>${vArea('n_diagnostico',2,'')}</div>
+      <div class="form-group"><label>Solicitud específica</label>${vArea('n_solicitud',2,'Se solicita valoración y manejo de...')}</div>`;
+  } else if (tipo === 'egreso') {
+    c.innerHTML = `
+      <div class="section-tag">Nota de Egreso · NOM-004-SSA3-2012 Art. 14</div>
+      <div class="form-group"><label>Diagnóstico de egreso *</label>${vArea('n_diagnostico',2,'')}</div>
+      <div class="form-group"><label>Condición del paciente al egreso</label>
+        <select id="n_condicion"><option value="">-- Seleccionar --</option><option>Mejoría</option><option>Curación</option><option>Sin cambios</option><option>Agravamiento</option><option>Alta voluntaria</option></select>
+      </div>
+      <div class="form-group"><label>Pronóstico</label>${vArea('n_pronostico',2,'')}</div>
+      <div class="form-group"><label>Instrucciones al paciente / cuidador</label>${vArea('n_instrucciones',3,'Medicamentos, dieta, actividad, signos de alarma...')}</div>
+      <div class="form-group"><label>Citas y seguimiento</label>${vArea('n_seguimiento',2,'')}</div>`;
+  } else if (tipo === 'referencia') {
+    c.innerHTML = `
+      <div class="section-tag">Nota de Referencia/Traslado · NOM-004-SSA3-2012 Art. 15</div>
+      <div class="grid-2">
+        <div class="form-group"><label>Unidad médica de envío</label><input id="n_unidad_envio" placeholder="Nombre, nivel de atención"></div>
+        <div class="form-group"><label>Unidad médica receptora</label><input id="n_unidad_receptora" placeholder="Nombre, especialidad"></div>
+      </div>
+      <div class="form-group"><label>Motivo de referencia *</label>${vArea('n_motivo',2,'')}</div>
+      <div class="form-group"><label>Estado clínico actual</label>${vArea('n_estado_clinico',3,'Resumen del estado actual del paciente...')}</div>
+      <div class="form-group"><label>Diagnóstico</label>${vArea('n_diagnostico',2,'')}</div>
+      <div class="form-group"><label>Tratamiento recibido</label>${vArea('n_tratamiento',2,'')}</div>`;
+  }
+}
+
+// ── GUARDAR NOTA ───────────────────────────────────────────────────
+function g(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+async function saveNote() {
+  const tipo = currentNoteType;
+  let meta = { _tipo: tipo };
+  let motivo_consulta = '';
+  let diagnostico = '';
+  let plan_tratamiento = '';
+
+  if (tipo === 'evolucion') {
+    motivo_consulta = g('n_motivo');
+    if (!motivo_consulta) { document.getElementById('noteError').textContent = 'El motivo de consulta es obligatorio.'; return; }
+    diagnostico = g('n_diagnostico');
+    if (!diagnostico) { document.getElementById('noteError').textContent = 'El diagnóstico es obligatorio.'; return; }
+    const sv = [g('n_ta'),g('n_fc'),g('n_fr'),g('n_temp'),g('n_sat'),g('n_peso')].filter(Boolean);
+    meta = { _tipo: tipo, motivo: motivo_consulta, sintomas: g('n_sintomas'), sint_asociados: g('n_sint_asociados'),
+      exfisica: g('n_exfisica'), signos_vitales: sv.length ? ['TA:'+g('n_ta'),'FC:'+g('n_fc'),'FR:'+g('n_fr'),'T:'+g('n_temp'),'Sat:'+g('n_sat'),'Peso:'+g('n_peso')].filter(s=>!s.endsWith(':')).join(' ') : '',
+      estudios: g('n_estudios'), diagnostico, impresion: g('n_impresion'),
+      tx_farmaco: g('n_tx_farmaco'), tx_nofarmaco: g('n_tx_nofarmaco'), seguimiento: g('n_seguimiento') };
+    plan_tratamiento = JSON.stringify(meta);
+  } else if (tipo === 'historia_clinica') {
+    motivo_consulta = g('n_padecimiento').slice(0,200);
+    diagnostico = g('n_diagnostico');
+    if (!motivo_consulta) { document.getElementById('noteError').textContent = 'El padecimiento actual es obligatorio.'; return; }
+    meta = { _tipo: tipo, ahf: g('n_ahf'), apnp: g('n_apnp'), app: g('n_app'), padecimiento: g('n_padecimiento'),
+      interrogatorio: g('n_interrogatorio'), exfisica: g('n_exfisica'), diagnostico, plan: g('n_plan'), pronostico: g('n_pronostico') };
+    plan_tratamiento = JSON.stringify(meta);
+  } else if (tipo === 'urgencias') {
+    motivo_consulta = g('n_motivo');
+    if (!motivo_consulta) { document.getElementById('noteError').textContent = 'El motivo de atención es obligatorio.'; return; }
+    diagnostico = g('n_diagnostico');
+    meta = { _tipo: tipo, hora_llegada: g('n_hora_llegada'), hora_egreso: g('n_hora_egreso'), motivo: motivo_consulta,
+      estado_ingreso: g('n_estado_ingreso'), exfisica: g('n_exfisica'), diagnostico, tratamiento: g('n_tratamiento'), estado_egreso: g('n_estado_egreso') };
+    plan_tratamiento = JSON.stringify(meta);
+  } else if (tipo === 'interconsulta') {
+    motivo_consulta = g('n_especialidad') + ': ' + g('n_motivo');
+    if (!g('n_motivo')) { document.getElementById('noteError').textContent = 'El motivo es obligatorio.'; return; }
+    diagnostico = g('n_diagnostico');
+    meta = { _tipo: tipo, especialidad: g('n_especialidad'), motivo: g('n_motivo'), resumen: g('n_resumen'), diagnostico, solicitud: g('n_solicitud') };
+    plan_tratamiento = JSON.stringify(meta);
+  } else if (tipo === 'egreso') {
+    diagnostico = g('n_diagnostico');
+    if (!diagnostico) { document.getElementById('noteError').textContent = 'El diagnóstico de egreso es obligatorio.'; return; }
+    motivo_consulta = 'Egreso: ' + g('n_condicion');
+    meta = { _tipo: tipo, diagnostico, condicion: g('n_condicion'), pronostico: g('n_pronostico'), instrucciones: g('n_instrucciones'), seguimiento: g('n_seguimiento') };
+    plan_tratamiento = JSON.stringify(meta);
+  } else if (tipo === 'referencia') {
+    motivo_consulta = g('n_motivo');
+    if (!motivo_consulta) { document.getElementById('noteError').textContent = 'El motivo de referencia es obligatorio.'; return; }
+    diagnostico = g('n_diagnostico');
+    meta = { _tipo: tipo, unidad_envio: g('n_unidad_envio'), unidad_receptora: g('n_unidad_receptora'), motivo: motivo_consulta, estado_clinico: g('n_estado_clinico'), diagnostico, tratamiento: g('n_tratamiento') };
+    plan_tratamiento = JSON.stringify(meta);
+  }
+
+  document.getElementById('noteError').textContent = '';
+  try {
+    stopVoice();
+    await api('/api/patients/' + currentNotePatientId + '/notes', {
+      method: 'POST',
+      body: JSON.stringify({ tipo, motivo_consulta, diagnostico, plan_tratamiento })
+    });
+    closeModal('noteModal');
+    viewPatient(currentNotePatientId);
+  } catch (e) { document.getElementById('noteError').textContent = 'Error: ' + e.message; }
+}
+
+// ── VOZ ────────────────────────────────────────────────────────────
+function initVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const r = new SR();
+  r.lang = 'es-MX'; r.continuous = true; r.interimResults = true;
+  r.onresult = e => {
+    if (!activeVoiceField) return;
+    const ta = document.getElementById(activeVoiceField);
+    if (!ta) return;
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    if (final) ta.value += final;
+    ta.dataset.interim = interim;
+  };
+  r.onerror = e => { if (e.error !== 'no-speech') stopVoice(); };
+  r.onend = () => { if (activeVoiceField) stopVoice(); };
+  return r;
+}
+
+function toggleVoice(fieldId, btn) {
+  if (activeVoiceField === fieldId) { stopVoice(); return; }
+  stopVoice();
+  if (!voiceRecognition) voiceRecognition = initVoice();
+  if (!voiceRecognition) { alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome.'); return; }
+  activeVoiceField = fieldId;
+  document.querySelectorAll('.btn-voice').forEach(b => b.classList.remove('recording'));
+  btn.classList.add('recording');
+  btn.textContent = '⏹';
+  try { voiceRecognition.start(); } catch(e) { stopVoice(); }
+}
+
+function stopVoice() {
+  if (voiceRecognition && activeVoiceField) {
+    try { voiceRecognition.stop(); } catch(e){}
+  }
+  document.querySelectorAll('.btn-voice').forEach(b => { b.classList.remove('recording'); b.textContent = '🎤'; });
+  activeVoiceField = null;
+}
+
+// ── PACIENTE CRUD ──────────────────────────────────────────────────
 function openNewPatient() {
   editingPatientId = null;
   document.getElementById('modalTitle').textContent = 'Nuevo Paciente';
   ['expediente','curp','nombre','apellido_p','apellido_m','nacimiento','sexo','telefono','email','alergias','antecedentes'].forEach(id => {
-    const el = document.getElementById('f_' + id);
-    if (el) el.value = '';
+    const el = document.getElementById('f_' + id); if (el) el.value = '';
   });
   document.getElementById('modalError').textContent = '';
   document.getElementById('patientModal').classList.add('open');
@@ -358,34 +756,25 @@ async function savePatient() {
   } catch (e) { document.getElementById('modalError').textContent = e.message; }
 }
 
-async function addNote(patientId) {
-  const tipo = prompt('Tipo de nota:', 'consulta');
-  if (!tipo) return;
-  const motivo = prompt('Motivo de consulta:');
-  const diagnostico = prompt('Diagnostico:');
-  const plan = prompt('Plan de tratamiento:');
-  try {
-    await api('/api/patients/' + patientId + '/notes', { method: 'POST', body: JSON.stringify({ tipo, motivo_consulta: motivo, diagnostico, plan_tratamiento: plan }) });
-    viewPatient(patientId);
-  } catch (e) { alert('Error: ' + e.message); }
-}
-
+// ── ASISTENTE IA ───────────────────────────────────────────────────
 function renderResearch() {
   const c = document.getElementById('mainContent');
   c.innerHTML = `<div class="section-title">Asistente de IA Medica</div>
     <div class="ai-box">
       <h3>Consulta Clinica con Claude</h3>
-      <p style="font-size:0.85rem;color:#4a5568;margin-bottom:12px">Resuelve dudas clinicas, consulta guias de practica yobtiene recomendaciones basadas en evidencia.</p>
+      <p style="font-size:0.85rem;color:#4a5568;margin-bottom:12px">Resuelve dudas clinicas, consulta guias de practica y obtiene recomendaciones basadas en evidencia.</p>
       <div class="form-group">
-        <textarea id="aiQuestion" rows="4" placeholder="Paciente con DM2, HbA1c 9.2%, metformina 2g/dia. Recomienda siguiente paso Terapeutico ara ADA 2025..."></textarea>
+        <div class="voice-row">
+          <textarea id="aiQuestion" rows="4" placeholder="Paciente con DM2, HbA1c 9.2%, metformina 2g/dia. ¿Cual es el siguiente paso terapeutico segun ADA 2025?"></textarea>
+          <button class="btn-voice" title="Dictar pregunta" onclick="toggleVoice('aiQuestion',this)">🎤</button>
+        </div>
       </div>
       <div style="display:flex;justify-content:flex-end">
-        <button class="btn btn-primary" style="width:auto" onclick="askAI()">Consultar IA</button>
+        <button class="btn btn-primary" style="width:auto" onclick="askAI()">Consultar IA →</button>
       </div>
       <div id="aiResponse" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;margin-bottom:8px">
-          <b>Respuesta:</b>
-          <small id="aiTokens" style="color:#a0aec0"></small>
+          <b>Respuesta:</b><small id="aiTokens" style="color:#a0aec0"></small>
         </div>
         <div class="ai-response" id="aiResponseText"></div>
       </div>
@@ -395,6 +784,7 @@ function renderResearch() {
 async function askAI() {
   const q = document.getElementById('aiQuestion').value.trim();
   if (!q) return;
+  stopVoice();
   const btn = document.querySelector('.ai-box .btn-primary');
   btn.textContent = 'Consultando...'; btn.disabled = true;
   document.getElementById('aiResponse').style.display = 'none';
@@ -404,12 +794,17 @@ async function askAI() {
     document.getElementById('aiTokens').textContent = 'Tokens: ' + data.tokens_used;
     document.getElementById('aiResponse').style.display = 'block';
   } catch (e) { alert('Error IA: ' + e.message); }
-  finally { btn.textContent = 'Consultar IA'; btn.disabled = false; }
+  finally { btn.textContent = 'Consultar IA →'; btn.disabled = false; }
 }
 
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+// ── UTILS ──────────────────────────────────────────────────────────
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  stopVoice();
+}
 
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { stopVoice(); document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open')); }
   if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') doLogin();
 });
 
