@@ -288,7 +288,7 @@
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px;align-items:center">
       <span style="font-size:0.78rem;color:#718096;flex:1">Se abrirá una ventana de impresión</span>
       <button class="btn btn-secondary" onclick="closeModal('prescriptionModal')">Cancelar</button>
-      <button class="btn btn-primary" style="width:auto;background:linear-gradient(135deg,#6b21a8,#1a5c8a)" onclick="printPrescription()">🖨 Imprimir Receta</button>
+      <button class="btn btn-primary" style="width:auto;background:linear-gradient(135deg,#6b21a8,#1a5c8a)" onclick="printPrescription()">🖨 Guardar e Imprimir</button>
     </div>
   </div>
 </div>
@@ -477,6 +477,7 @@ function notaBadge(tipo) {
     interconsulta: ['badge-amber','🔄 Interconsulta'],
     egreso: ['badge-purple','🏠 Egreso'],
     referencia: ['badge-blue','📨 Referencia'],
+    receta: ['badge-purple','💊 Receta'],
     consulta: ['badge-green','📋 Consulta'],
   };
   const [cls, label] = map[tipo] || ['badge-green', tipo];
@@ -563,6 +564,16 @@ function renderStructuredNote(n, meta, fecha, hora) {
       ${f('Estado clínico actual', meta.estado_clinico)}
       ${f('Diagnóstico', meta.diagnostico)}
       ${f('Tratamiento recibido', meta.tratamiento)}`;
+  } else if (tipo === 'receta') {
+    const cons = meta.consultorio === 2 ? '🏛 Centro Regional Diabetes · Monterrey' : '🏥 Hospital Zambrano Hellion · San Pedro Garza García';
+    body = `
+      <div class="nota-section"><div class="nota-section-title">${cons}</div></div>
+      <div class="nota-section">
+        <div class="nota-section-title">Medicamentos (Rp.)</div>
+        <div style="white-space:pre-wrap;font-size:0.88rem;line-height:1.6;padding:8px 0">${meta.medicamentos || ''}</div>
+      </div>
+      ${meta.diagnostico ? `<div class="nota-section"><div class="nota-section-title">Diagnóstico</div>${f('', meta.diagnostico)}</div>` : ''}
+      ${meta.instrucciones ? `<div class="nota-section"><div class="nota-section-title">Indicaciones</div>${f('', meta.instrucciones)}</div>` : ''}`;
   }
   return `<div class="nota-card">
     <div class="nota-header">${notaBadge(tipo)}<small style="color:#718096">${fecha} ${hora} · ${n.author_name || ''}</small></div>
@@ -1071,6 +1082,33 @@ function printPrescription() {
   const showDiag = document.getElementById('rx_show_diag').checked;
   if (!meds) { alert('Agrega al menos un medicamento en el campo Rp.'); return; }
   stopVoice();
+
+  // 1. Guardar en el expediente
+  const rxMeta = {
+    _tipo: 'receta',
+    consultorio: rxConsultorio,
+    medicamentos: meds,
+    diagnostico: showDiag ? diag : '',
+    instrucciones: instr,
+    fecha_receta: fecha,
+    nacimiento: nacimiento,
+  };
+  const primerMed = meds.split('\n').find(l => l.trim()) || '';
+  try {
+    await api('/api/patients/' + currentPatient.id + '/notes', {
+      method: 'POST',
+      body: JSON.stringify({
+        tipo: 'receta',
+        motivo_consulta: 'Receta: ' + primerMed.replace(/^\d+[\.\-\)]\s*/, '').slice(0, 120),
+        diagnostico: diag,
+        plan_tratamiento: JSON.stringify(rxMeta),
+      })
+    });
+  } catch (e) {
+    console.error('No se pudo guardar la receta en el expediente:', e.message);
+  }
+
+  // 2. Imprimir
   const html = rxConsultorio === 1
     ? generateRxZH(nombre, nacimiento, edad, fecha, meds, diag, instr, showDiag)
     : generateRxCD(nombre, nacimiento, edad, fecha, meds, diag, instr, showDiag);
@@ -1079,6 +1117,10 @@ function printPrescription() {
   win.document.close();
   win.focus();
   setTimeout(() => win.print(), 700);
+
+  // 3. Cerrar modal y refrescar expediente
+  closeModal('prescriptionModal');
+  viewPatient(currentPatient.id);
 }
 
 // ── DICTADO INTELIGENTE ────────────────────────────────────────────
