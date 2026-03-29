@@ -91,6 +91,22 @@
     .nom-label { font-size: 0.7rem; color: #718096; font-style: italic; margin-top: 2px; }
     hr.section-divider { border: none; border-top: 2px solid var(--border); margin: 16px 0; }
     .section-tag { font-size: 0.8rem; font-weight: 700; color: var(--primary); background: #f0fff4; padding: 3px 10px; border-radius: 6px; display: inline-block; margin-bottom: 10px; }
+    /* Dictado Inteligente */
+    .transcript-section { background: linear-gradient(135deg, #f0f9ff, #ede9fe); border: 1.5px solid #a5b4fc; border-radius: 12px; padding: 16px 18px; margin-bottom: 18px; }
+    .transcript-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; cursor: pointer; user-select: none; }
+    .transcript-header h4 { color: #4338ca; font-size: 0.92rem; font-weight: 700; flex: 1; margin: 0; }
+    .transcript-header .toggle-icon { color: #6366f1; font-size: 0.8rem; }
+    .transcript-body { }
+    .transcript-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+    .btn-analyze { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+    .btn-analyze:hover { opacity: 0.9; }
+    .btn-analyze:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-scribe { background: #059669; color: white; border: none; border-radius: 8px; padding: 9px 18px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+    .btn-scribe:hover { opacity: 0.88; }
+    .analyze-status { font-size: 0.82rem; margin-top: 8px; padding: 7px 12px; border-radius: 7px; }
+    .analyze-status.ok { background: #d1fae5; color: #065f46; }
+    .analyze-status.loading { background: #ede9fe; color: #4338ca; font-style: italic; }
+    .analyze-status.error { background: #fee2e2; color: #991b1b; }
 </style>
 </head>
 <body>
@@ -187,6 +203,28 @@
         <button class="note-type-btn" onclick="selectNoteType('interconsulta',this)">🔄 Interconsulta<br><span class="nom-label">Art. 13 NOM-004</span></button>
         <button class="note-type-btn" onclick="selectNoteType('egreso',this)">🏠 Nota de egreso<br><span class="nom-label">Art. 14 NOM-004</span></button>
         <button class="note-type-btn" onclick="selectNoteType('referencia',this)">📨 Referencia/Traslado<br><span class="nom-label">Art. 15 NOM-004</span></button>
+      </div>
+    </div>
+
+    <!-- DICTADO INTELIGENTE -->
+    <div class="transcript-section">
+      <div class="transcript-header" onclick="toggleTranscriptSection()">
+        <span>🤖</span>
+        <h4>Dictado Inteligente — Transcripción de la consulta</h4>
+        <span class="toggle-icon" id="transcriptToggleIcon">▲</span>
+      </div>
+      <div class="transcript-body" id="transcriptBody">
+        <p style="font-size:0.8rem;color:#6366f1;margin-bottom:8px">Dicta o pega la transcripción completa. La IA llenará todos los campos automáticamente.</p>
+        <div class="voice-row">
+          <textarea id="n_transcript" rows="5" placeholder="Ej: 'Paciente masculino 45 años acude por dolor en epigastrio de 3 días, ardor después de comer, niega vómito ni fiebre. Al examen abdomen blando, dolor leve en epigastrio sin rebote. Sospecho gastritis aguda. Indico omeprazol 20mg cada día por 30 días y dieta blanda, cita en 2 semanas.'"></textarea>
+          <button class="btn-voice" title="Dictar transcripción" onclick="toggleVoice('n_transcript',this)">🎤</button>
+        </div>
+        <div class="transcript-actions">
+          <button class="btn-analyze" id="btnAnalyze" onclick="analyzeTranscript()">✨ Analizar y llenar campos</button>
+          <button class="btn-scribe" onclick="openSimpleScribe()" title="Abre Simple Medical Scribe con la transcripción en el portapapeles">🔗 Simple Medical Scribe</button>
+          <button class="btn btn-secondary btn-sm" onclick="clearTranscript()">🗑 Limpiar</button>
+        </div>
+        <div id="analyzeStatus" style="display:none" class="analyze-status"></div>
       </div>
     </div>
 
@@ -479,6 +517,10 @@ function openNoteModal(patientId) {
   currentNotePatientId = patientId;
   currentNoteType = 'evolucion';
   document.getElementById('noteError').textContent = '';
+  const st = document.getElementById('analyzeStatus');
+  if (st) st.style.display = 'none';
+  const transcriptEl = document.getElementById('n_transcript');
+  if (transcriptEl) transcriptEl.value = '';
   // Reset selector
   document.querySelectorAll('.note-type-btn').forEach((b,i) => b.classList.toggle('selected', i===0));
   renderNoteForm('evolucion');
@@ -490,6 +532,8 @@ function selectNoteType(tipo, btn) {
   document.querySelectorAll('.note-type-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
   renderNoteForm(tipo);
+  const st = document.getElementById('analyzeStatus');
+  if (st) st.style.display = 'none';
 }
 
 function vBtn(fieldId) {
@@ -795,6 +839,122 @@ async function askAI() {
     document.getElementById('aiResponse').style.display = 'block';
   } catch (e) { alert('Error IA: ' + e.message); }
   finally { btn.textContent = 'Consultar IA →'; btn.disabled = false; }
+}
+
+// ── DICTADO INTELIGENTE ────────────────────────────────────────────
+function toggleTranscriptSection() {
+  const body = document.getElementById('transcriptBody');
+  const icon = document.getElementById('transcriptToggleIcon');
+  if (!body) return;
+  const hidden = body.style.display === 'none';
+  body.style.display = hidden ? '' : 'none';
+  if (icon) icon.textContent = hidden ? '▲' : '▼';
+}
+
+async function analyzeTranscript() {
+  const transcript = document.getElementById('n_transcript')?.value?.trim();
+  if (!transcript) { showAnalyzeStatus('Ingresa o dicta la transcripción de la consulta primero.', 'error'); return; }
+  const btn = document.getElementById('btnAnalyze');
+  btn.disabled = true; btn.textContent = '⏳ Analizando...';
+  showAnalyzeStatus('Analizando con IA... por favor espera un momento.', 'loading');
+  try {
+    stopVoice();
+    const data = await api('/api/research/analyze-note', {
+      method: 'POST',
+      body: JSON.stringify({ transcript, tipo: currentNoteType })
+    });
+    fillFormFromAnalysis(data.fields);
+    showAnalyzeStatus('✅ Campos llenados automáticamente. Revisa y edita antes de guardar.', 'ok');
+  } catch (e) {
+    showAnalyzeStatus('❌ Error al analizar: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '✨ Analizar y llenar campos';
+  }
+}
+
+function showAnalyzeStatus(msg, type) {
+  const el = document.getElementById('analyzeStatus');
+  el.textContent = msg;
+  el.className = 'analyze-status ' + type;
+  el.style.display = 'block';
+}
+
+function fillFormFromAnalysis(fields) {
+  if (!fields) return;
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+  const tipo = currentNoteType;
+
+  if (tipo === 'evolucion') {
+    set('n_motivo', fields.motivo); set('n_sintomas', fields.sintomas);
+    set('n_sint_asociados', fields.sint_asociados); set('n_exfisica', fields.exfisica);
+    set('n_estudios', fields.estudios); set('n_diagnostico', fields.diagnostico);
+    set('n_impresion', fields.impresion); set('n_tx_farmaco', fields.tx_farmaco);
+    set('n_tx_nofarmaco', fields.tx_nofarmaco); set('n_seguimiento', fields.seguimiento);
+    if (fields.signos_vitales) {
+      const sv = fields.signos_vitales;
+      const rv = p => { const m = sv.match(p); return m ? m[1].trim() : ''; };
+      set('n_ta', rv(/TA[:\s]+([0-9\/]+)/i));
+      set('n_fc', rv(/FC[:\s]+([0-9]+)/i));
+      set('n_fr', rv(/FR[:\s]+([0-9]+)/i));
+      set('n_temp', rv(/T(?:emp)?[°:\s]+([0-9.]+)/i));
+      set('n_sat', rv(/Sat(?:O2)?[:\s]+([0-9]+)/i));
+      set('n_peso', rv(/Peso[:\s]+([0-9.]+)/i));
+    }
+  } else if (tipo === 'historia_clinica') {
+    set('n_ahf', fields.ahf); set('n_apnp', fields.apnp); set('n_app', fields.app);
+    set('n_padecimiento', fields.padecimiento); set('n_interrogatorio', fields.interrogatorio);
+    set('n_exfisica', fields.exfisica); set('n_diagnostico', fields.diagnostico);
+    set('n_plan', fields.plan); set('n_pronostico', fields.pronostico);
+  } else if (tipo === 'urgencias') {
+    set('n_motivo', fields.motivo); set('n_estado_ingreso', fields.estado_ingreso);
+    set('n_exfisica', fields.exfisica); set('n_diagnostico', fields.diagnostico);
+    set('n_tratamiento', fields.tratamiento);
+    if (fields.hora_llegada) set('n_hora_llegada', fields.hora_llegada);
+    if (fields.hora_egreso) set('n_hora_egreso', fields.hora_egreso);
+    selectClosestOption('n_estado_egreso', fields.estado_egreso);
+  } else if (tipo === 'interconsulta') {
+    set('n_especialidad', fields.especialidad); set('n_motivo', fields.motivo);
+    set('n_resumen', fields.resumen); set('n_diagnostico', fields.diagnostico);
+    set('n_solicitud', fields.solicitud);
+  } else if (tipo === 'egreso') {
+    set('n_diagnostico', fields.diagnostico); set('n_pronostico', fields.pronostico);
+    set('n_instrucciones', fields.instrucciones); set('n_seguimiento', fields.seguimiento);
+    selectClosestOption('n_condicion', fields.condicion);
+  } else if (tipo === 'referencia') {
+    set('n_unidad_envio', fields.unidad_envio); set('n_unidad_receptora', fields.unidad_receptora);
+    set('n_motivo', fields.motivo); set('n_estado_clinico', fields.estado_clinico);
+    set('n_diagnostico', fields.diagnostico); set('n_tratamiento', fields.tratamiento);
+  }
+}
+
+function selectClosestOption(selectId, value) {
+  if (!value) return;
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const v = value.toLowerCase();
+  for (let opt of sel.options) {
+    if (opt.value && opt.text.toLowerCase().includes(v.split(' ')[0])) { sel.value = opt.value; return; }
+  }
+}
+
+function openSimpleScribe() {
+  const transcript = document.getElementById('n_transcript')?.value?.trim();
+  const url = 'https://chatgpt.com/g/g-BUxKCI53i-simple-medical-scribe';
+  if (transcript) {
+    navigator.clipboard.writeText(transcript).then(() => {
+      window.open(url, '_blank');
+      showAnalyzeStatus('📋 Transcripción copiada al portapapeles. Pégala en Simple Medical Scribe.', 'ok');
+    }).catch(() => window.open(url, '_blank'));
+  } else {
+    window.open(url, '_blank');
+  }
+}
+
+function clearTranscript() {
+  const el = document.getElementById('n_transcript');
+  if (el) el.value = '';
+  const st = document.getElementById('analyzeStatus');
+  if (st) st.style.display = 'none';
 }
 
 // ── UTILS ──────────────────────────────────────────────────────────
