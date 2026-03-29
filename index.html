@@ -113,6 +113,25 @@
     .rx-cons-btn.selected { border-color: var(--primary); background: #f0fff4; color: var(--primary); }
     .rx-cons-btn small { display: block; font-weight: 400; color: #718096; font-size: 0.75rem; }
     .rx-cons-btn.selected small { color: var(--primary); }
+    /* Lab report upload modal */
+    .upload-zone { border: 2px dashed #a5b4fc; border-radius: 12px; padding: 28px; text-align: center; background: #f8f7ff; cursor: pointer; transition: all 0.2s; }
+    .upload-zone:hover, .upload-zone.drag-over { border-color: #6366f1; background: #ede9fe; }
+    .upload-zone .upload-icon { font-size: 2.5rem; margin-bottom: 8px; }
+    .upload-zone p { color: #6366f1; font-weight: 600; margin-bottom: 4px; }
+    .upload-zone small { color: #718096; }
+    .upload-preview { max-width: 100%; max-height: 260px; border-radius: 8px; border: 1px solid var(--border); margin-top: 12px; display: block; }
+    .lab-extract-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 12px; }
+    .lab-extract-table th { background: #f7fafc; padding: 7px 8px; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: #4a5568; border-bottom: 2px solid var(--border); }
+    .lab-extract-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .lab-extract-table td input { width: 100%; border: 1px solid transparent; border-radius: 4px; padding: 3px 6px; font-size: 0.82rem; background: transparent; }
+    .lab-extract-table td input:focus { border-color: var(--primary); background: white; outline: none; }
+    .lab-extract-table tr:hover td { background: #f7fafc; }
+    .interp-badge { padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 700; }
+    .interp-normal { background: #c6f6d5; color: #276749; }
+    .interp-alto { background: #fed7d7; color: #9b2c2c; }
+    .interp-bajo { background: #bee3f8; color: #2a69ac; }
+    .interp-anormal { background: #fef3c7; color: #92400e; }
+    .btn-del-row { background: none; border: none; cursor: pointer; color: #e53e3e; font-size: 1rem; padding: 2px 6px; }
 </style>
 </head>
 <body>
@@ -241,6 +260,81 @@
       <button class="btn btn-secondary" onclick="closeModal('noteModal')">Cancelar</button>
       <button class="btn btn-primary" style="width:auto" onclick="saveNote()">💾 Guardar Nota</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL ANALIZAR REPORTE DE LABORATORIO -->
+<div class="modal-overlay" id="labReportModal">
+  <div class="modal" style="width:860px">
+    <div class="modal-header">
+      <h2 class="modal-title">🔬 Analizar Reporte de Laboratorio / Gabinete</h2>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('labReportModal')">✕</button>
+    </div>
+
+    <!-- Upload zone -->
+    <div id="labUploadZone" class="upload-zone"
+         onclick="document.getElementById('labFileInput').click()"
+         ondragover="event.preventDefault();this.classList.add('drag-over')"
+         ondragleave="this.classList.remove('drag-over')"
+         ondrop="handleLabDrop(event)">
+      <div class="upload-icon">📄</div>
+      <p>Arrastra el archivo aquí o haz clic para seleccionar</p>
+      <small>Soporta imágenes (JPG, PNG, HEIC) y PDF · Máx. 15 MB</small>
+    </div>
+    <input type="file" id="labFileInput" accept="image/*,application/pdf" style="display:none" onchange="handleLabFile(this.files[0])">
+
+    <!-- Botones de captura -->
+    <div style="display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('labCameraInput').click()">📷 Tomar foto</button>
+      <input type="file" id="labCameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleLabFile(this.files[0])">
+      <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;margin-left:auto">
+        <input type="checkbox" id="labSaveOriginal" style="width:auto;height:auto;padding:0;margin:0">
+        Guardar archivo original en el expediente
+      </label>
+    </div>
+
+    <!-- Preview -->
+    <div id="labPreviewArea" style="display:none;margin-top:10px">
+      <img id="labImgPreview" class="upload-preview" style="display:none">
+      <div id="labPdfPreview" style="display:none;background:#fee2e2;padding:12px;border-radius:8px;font-size:0.85rem">
+        📄 <span id="labPdfName"></span> — PDF listo para analizar
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px;align-items:center">
+        <button class="btn-analyze" id="btnAnalyzeLab" onclick="analyzeLabReport()">✨ Extraer valores con IA</button>
+        <button class="btn btn-secondary btn-sm" onclick="clearLabUpload()">🗑 Quitar archivo</button>
+        <span id="labAnalyzeStatus" style="font-size:0.82rem;color:#6366f1;font-style:italic"></span>
+      </div>
+    </div>
+
+    <!-- Results table -->
+    <div id="labResultsArea" style="display:none;margin-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <b style="font-size:0.95rem">Valores extraídos — revisa y edita antes de guardar</b>
+        <button class="btn btn-secondary btn-sm" onclick="addLabRow()">+ Agregar fila</button>
+      </div>
+      <div style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
+        <table class="lab-extract-table">
+          <thead><tr>
+            <th style="width:28%">Estudio</th>
+            <th style="width:12%">Resultado</th>
+            <th style="width:10%">Unidades</th>
+            <th style="width:14%">Referencia</th>
+            <th style="width:10%">Interp.</th>
+            <th style="width:12%">Fecha</th>
+            <th style="width:10%">Laboratorio</th>
+            <th style="width:4%"></th>
+          </tr></thead>
+          <tbody id="labResultsBody"></tbody>
+        </table>
+      </div>
+      <p id="labSaveError" class="error-msg" style="margin-top:6px"></p>
+      <div style="display:flex;justify-content:flex-end;margin-top:12px;gap:10px">
+        <button class="btn btn-secondary" onclick="closeModal('labReportModal')">Cancelar</button>
+        <button class="btn btn-primary" style="width:auto" onclick="saveExtractedLabs()">💾 Guardar en expediente</button>
+      </div>
+    </div>
+
+    <p id="labModalError" class="error-msg" style="margin-top:8px"></p>
   </div>
 </div>
 
@@ -451,8 +545,20 @@ async function viewPatient(id) {
           <p class="nota-field" style="margin-top:8px"><b>APP:</b> ${pat.antecedentes || '-'}</p>
         </div>
         <div class="card">
-          <div class="card-header"><span class="card-title">Ultimos laboratorios</span></div>
-          ${labs.slice(0,6).map(l => `<div style="border-bottom:1px solid var(--border);padding:8px 0;font-size:0.88rem"><b>${l.nombre_estudio}:</b> ${l.resultado} ${l.unidades || ''} <small style="color:#718096">${l.created_at?.split('T')[0] || ''}</small></div>`).join('') || '<p class="empty-state" style="padding:24px">Sin resultados de laboratorio</p>'}
+          <div class="card-header">
+            <span class="card-title">Laboratorios y Gabinete</span>
+            <button class="btn btn-secondary btn-sm" style="background:#6366f1;color:white;border:none" onclick="openLabReportModal()">🔬 Analizar reporte</button>
+          </div>
+          ${labs.slice(0,10).map(l => {
+            const ic = l.interpretacion ? (l.interpretacion.toLowerCase()==='normal'?'#276749':l.interpretacion.toLowerCase()==='alto'?'#9b2c2c':l.interpretacion.toLowerCase()==='bajo'?'#2a69ac':'#92400e') : '#718096';
+            return `<div style="border-bottom:1px solid var(--border);padding:7px 0;font-size:0.88rem;display:flex;justify-content:space-between;align-items:center">
+              <span><b>${l.nombre_estudio}:</b> ${l.resultado}${l.unidades?' '+l.unidades:''}</span>
+              <span style="display:flex;gap:8px;align-items:center">
+                ${l.interpretacion?`<span style="font-size:0.72rem;font-weight:700;color:${ic}">${l.interpretacion}</span>`:''}
+                <small style="color:#a0aec0">${l.fecha_toma?.split('T')[0]||l.created_at?.split('T')[0]||''}</small>
+              </span>
+            </div>`;
+          }).join('') || '<p class="empty-state" style="padding:24px">Sin resultados de laboratorio</p>'}
         </div>
       </div>
       <div class="card">
@@ -913,6 +1019,203 @@ async function askAI() {
     document.getElementById('aiResponse').style.display = 'block';
   } catch (e) { alert('Error IA: ' + e.message); }
   finally { btn.textContent = 'Consultar IA →'; btn.disabled = false; }
+}
+
+// ── LABORATORIOS: ANALIZAR REPORTE ────────────────────────────────
+let labFileData = null;   // base64 string (without data:... prefix)
+let labFileMime = null;
+let labFileName = null;
+
+function openLabReportModal() {
+  labFileData = null; labFileMime = null; labFileName = null;
+  document.getElementById('labFileInput').value = '';
+  document.getElementById('labCameraInput').value = '';
+  document.getElementById('labUploadZone').style.display = '';
+  document.getElementById('labPreviewArea').style.display = 'none';
+  document.getElementById('labResultsArea').style.display = 'none';
+  document.getElementById('labImgPreview').style.display = 'none';
+  document.getElementById('labPdfPreview').style.display = 'none';
+  document.getElementById('labSaveOriginal').checked = false;
+  document.getElementById('labAnalyzeStatus').textContent = '';
+  document.getElementById('labModalError').textContent = '';
+  document.getElementById('labSaveError').textContent = '';
+  document.getElementById('labReportModal').classList.add('open');
+}
+
+function handleLabDrop(e) {
+  e.preventDefault();
+  document.getElementById('labUploadZone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) handleLabFile(file);
+}
+
+async function handleLabFile(file) {
+  if (!file) return;
+  const maxBytes = 15 * 1024 * 1024;
+  if (file.size > maxBytes) { document.getElementById('labModalError').textContent = 'El archivo supera 15 MB. Intenta con una imagen de menor resolución.'; return; }
+  document.getElementById('labModalError').textContent = '';
+  labFileName = file.name;
+  labFileMime = file.type || 'image/jpeg';
+
+  if (file.type === 'application/pdf') {
+    // PDF: read as base64 directly
+    const reader = new FileReader();
+    reader.onload = e => {
+      const dataUrl = e.target.result;
+      labFileData = dataUrl.split(',')[1]; // strip data:...;base64,
+      document.getElementById('labPdfName').textContent = file.name;
+      document.getElementById('labPdfPreview').style.display = '';
+      document.getElementById('labImgPreview').style.display = 'none';
+      document.getElementById('labPreviewArea').style.display = '';
+      document.getElementById('labUploadZone').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    // Image: compress then show preview
+    const compressed = await compressLabImage(file);
+    labFileData = compressed.split(',')[1];
+    labFileMime = 'image/jpeg';
+    const img = document.getElementById('labImgPreview');
+    img.src = compressed;
+    img.style.display = 'block';
+    document.getElementById('labPdfPreview').style.display = 'none';
+    document.getElementById('labPreviewArea').style.display = '';
+    document.getElementById('labUploadZone').style.display = 'none';
+  }
+}
+
+function compressLabImage(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1800;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.88));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function clearLabUpload() {
+  labFileData = null; labFileMime = null; labFileName = null;
+  document.getElementById('labFileInput').value = '';
+  document.getElementById('labCameraInput').value = '';
+  document.getElementById('labUploadZone').style.display = '';
+  document.getElementById('labPreviewArea').style.display = 'none';
+  document.getElementById('labResultsArea').style.display = 'none';
+  document.getElementById('labAnalyzeStatus').textContent = '';
+}
+
+async function analyzeLabReport() {
+  if (!labFileData) { document.getElementById('labModalError').textContent = 'Selecciona un archivo primero.'; return; }
+  const btn = document.getElementById('btnAnalyzeLab');
+  btn.disabled = true; btn.textContent = '⏳ Analizando...';
+  document.getElementById('labAnalyzeStatus').textContent = 'Claude está leyendo el reporte...';
+  document.getElementById('labResultsArea').style.display = 'none';
+  try {
+    const data = await api('/api/patients/' + currentPatient.id + '/labs/analyze-report', {
+      method: 'POST',
+      body: JSON.stringify({
+        file_data: labFileData,
+        mime_type: labFileMime,
+        filename: labFileName,
+        save_original: document.getElementById('labSaveOriginal').checked,
+      })
+    });
+    renderLabResults(data.estudios, data.report_id);
+    document.getElementById('labAnalyzeStatus').textContent = `✅ ${data.total} valores extraídos`;
+    document.getElementById('labResultsArea').style.display = '';
+  } catch (e) {
+    document.getElementById('labAnalyzeStatus').textContent = '';
+    document.getElementById('labModalError').textContent = 'Error al analizar: ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = '✨ Extraer valores con IA';
+  }
+}
+
+function interpClass(v) {
+  if (!v) return '';
+  const l = v.toLowerCase();
+  if (l === 'normal') return 'interp-normal';
+  if (l === 'alto' || l === 'high' || l === 'elevado') return 'interp-alto';
+  if (l === 'bajo' || l === 'low') return 'interp-bajo';
+  return 'interp-anormal';
+}
+
+function renderLabResults(estudios, reportId) {
+  const tbody = document.getElementById('labResultsBody');
+  tbody.innerHTML = '';
+  (estudios || []).forEach((e, i) => {
+    const ic = interpClass(e.interpretacion);
+    const row = document.createElement('tr');
+    row.dataset.reportId = reportId || '';
+    row.innerHTML = `
+      <td><input value="${(e.nombre_estudio||'').replace(/"/g,'&quot;')}" placeholder="Nombre"></td>
+      <td><input value="${(e.resultado||'').replace(/"/g,'&quot;')}" placeholder="Resultado"></td>
+      <td><input value="${(e.unidades||'').replace(/"/g,'&quot;')}" placeholder="Unidades"></td>
+      <td><input value="${(e.valor_referencia||'').replace(/"/g,'&quot;')}" placeholder="Referencia"></td>
+      <td><input value="${(e.interpretacion||'').replace(/"/g,'&quot;')}" placeholder="Interp."></td>
+      <td><input value="${(e.fecha_toma||'').replace(/"/g,'&quot;')}" placeholder="YYYY-MM-DD"></td>
+      <td><input value="${(e.laboratorio||'').replace(/"/g,'&quot;')}" placeholder="Lab"></td>
+      <td><button class="btn-del-row" onclick="this.closest('tr').remove()" title="Eliminar">🗑</button></td>`;
+    tbody.appendChild(row);
+  });
+}
+
+function addLabRow() {
+  const tbody = document.getElementById('labResultsBody');
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td><input placeholder="Nombre del estudio"></td>
+    <td><input placeholder="Resultado"></td>
+    <td><input placeholder="Unidades"></td>
+    <td><input placeholder="Referencia"></td>
+    <td><input placeholder="Interp."></td>
+    <td><input placeholder="YYYY-MM-DD"></td>
+    <td><input placeholder="Lab"></td>
+    <td><button class="btn-del-row" onclick="this.closest('tr').remove()">🗑</button></td>`;
+  tbody.appendChild(row);
+}
+
+async function saveExtractedLabs() {
+  const rows = document.querySelectorAll('#labResultsBody tr');
+  const estudios = [];
+  rows.forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const nombre = inputs[0].value.trim();
+    const resultado = inputs[1].value.trim();
+    if (!nombre || !resultado) return;
+    estudios.push({
+      nombre_estudio: nombre,
+      resultado: resultado,
+      unidades: inputs[2].value.trim(),
+      valor_referencia: inputs[3].value.trim(),
+      interpretacion: inputs[4].value.trim(),
+      fecha_toma: inputs[5].value.trim() || null,
+      laboratorio: inputs[6].value.trim(),
+      report_id: row.dataset.reportId || null,
+    });
+  });
+  if (estudios.length === 0) { document.getElementById('labSaveError').textContent = 'No hay valores para guardar.'; return; }
+  document.getElementById('labSaveError').textContent = '';
+  try {
+    const r = await api('/api/patients/' + currentPatient.id + '/labs/batch', {
+      method: 'POST',
+      body: JSON.stringify({ estudios })
+    });
+    closeModal('labReportModal');
+    viewPatient(currentPatient.id);
+  } catch (e) {
+    document.getElementById('labSaveError').textContent = 'Error al guardar: ' + e.message;
+  }
 }
 
 // ── RECETA MEDICA ─────────────────────────────────────────────────
