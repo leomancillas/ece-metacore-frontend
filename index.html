@@ -156,7 +156,7 @@ async function api(path, opts = {}) {
   return data;
 }
 
-apsnc function doLogin() {
+async function doLogin() {
   const email = document.getElementById('loginEmail').value;
   const pw = document.getElementById('loginPassword').value;
   document.getElementById('loginError').textContent = '';
