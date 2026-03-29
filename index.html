@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECE META CORE - Expediente Clinico Electronico</title>
+<style>
+    :root { --primary: #1a6b3c; --primary-light: #2d9e5a; --bg: #f5f7fa; --card: #fff; --text: #1a202c; --border: #e2e8f0; --danger: #e53e3e; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+    #app { display: none; }
+    .login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a6b3c 0%, #0d4427 100%); }
+    .login-card { background: white; border-radius: 16px; padding: 40px; width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .login-logo { text-align: center; margin-bottom: 30px; }
+    .login-logo h1 { color: var(--primary); font-size: 1.8rem; font-weight: 700; }
+    .login-logo p { color: #666; font-size: 0.85rem; margin-top: 4px; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: #4a5568; }
+    input, select, textarea { width: 100%; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-size: 0.95rem; transition: border-color 0.2s; outline: none; }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+    .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: var(--primary); color: white; width: 100%; padding: 12px; }
+    .btn-primary:hover { background: var(--primary-light); }
+    .btn-secondary { background: #edf2f7; color: #4a5568; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-sm { padding: 6px 14px; font-size: 0.82rem; }
+    nav { background: var(--primary); color: white; padding: 0 24px; display: flex; align-items: center; height: 60px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    nav h1 { font-size: 1.2rem; font-weight: 700; flex: 1; }
+    nav .user-info { font-size: 0.85rem; opacity: 0.85; }
+    nav button { background: rgba(255,255,255,0.15); border: none; color: white; padding: 6px 14px; border-radius: 6px; cursor: pointer; margin-left: 12px; font-size: 0.85rem; }
+    .sidebar { width: 220px; background: #1a202c; min-height: calc(100vh - 60px); padding: 20px 12px; }
+    .sidebar a { display: flex; align-items: center; gap: 10px; color: #a0aec0; text-decoration: none; padding: 10px 12px; border-radius: 8px; margin-bottom: 4px; font-size: 0.9rem; transition: all 0.2s; }
+    .sidebar a:hover, .sidebar a.active { background: rgba(255,255,255,0.1); color: white; }
+    .main-layout { display: flex; }
+    .content { flex: 1; padding: 28px; max-width: 1100px; }
+    .card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .card-title { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid var(--border); }
+    .stat-num { font-size: 2rem; font-weight: 700; color: var(--primary); }
+    .stat-label { color: #718096; font-size: 0.85rem; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 10px 12px; background: #f7fafc; font-size: 0.8rem; font-weight: 700; color: #4a5568; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border); }
+    td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    tr:hover td { background: #f7fafc; }
+    .badge { padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+    .badge-green { background: #c6f6d5; color: #276749; }
+    .badge-blue { background: #bee3f8; color: #2a69ac; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 16px; padding: 28px; width: 580px; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 60px rgba(0,0,0,0.3); }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .modal-title { font-size: 1.15rem; font-weight: 700; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .ai-box { background: linear-gradient(135deg, #f0fff4, #e6fffa); border: 1px solid #9ae6b4; border-radius: 12px; padding: 20px; }
+    .ai-box h3 { color: var(--primary); margin-bottom: 12px; }
+    .ai-response { background: white; border-radius: 8px; padding: 16px; margin-top: 12px; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6; border: 1px solid var(--border); max-height: 400px; overflow-y: auto; }
+    .error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 6px; }
+    .loading { color: var(--primary); font-style: italic; }
+    .section-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 20px; color: var(--text); }
+    .empty-state { text-align: center; padding: 48px; color: #a0aec0; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <h1>ECE META CORE</h1>
+      <p>Expediente Clinico Electronico con IA</p>
+    </div>
+    <div class="form-group">
+      <label>Correo electronico</label>
+      <input type="email" id="loginEmail" placeholder="medico@metacore.mx" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="&#8242;&#8242;&#8242;&#8242;&#8242;&#8242;">
+    </div>
+    <p id="loginError" class="error-msg"></p>
+    <button class="btn btn-primary" onclick="doLogin()">Iniciar sesion</button>
+    <p style="text-align:center;margin-top:16px;font-size:0.8rem;color:#a0aec0;">META CORE 2025</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <nav>
+    <h1>ECE META CORE</h1>
+    <span class="user-info" id="navUser"></span>
+    <button onclick="logout()">Salir</button>
+  </nav>
+  <div class="main-layout">
+    <div class="sidebar">
+      <a href="#" class="active" onclick="showSection('dashboard')">Dashboard</a>
+      <a href="#" onclick="showSection('patients')">Pacientes</a>
+      <a href="#" onclick="showSection('research')">Asistente IA</a>
+    </div>
+    <div class="content" id="mainContent"></div>
+  </div>
+</div>
+
+<!-- MODAL PACIENTE -->
+<div class="modal-overlay" id="patientModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalTitle">Nuevo Paciente</h2>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('patientModal')">X</button>
+    </div>
+    <div class="grid-2">
+      <div class="form-group"><label>Expediente *</label><input id="f_expediente" placeholder="EXP-001"></div>
+      <div class="form-group"><label>CURP</label><input id="f_curp"></div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group"><label>Nombre *</label><input id="f_nombre"></div>
+      <div class="form-group"><label>Apellido Paterno *</label><input id="f_apellido_p"></div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group"><label>Apellido Materno</label><input id="f_apellido_m"></div>
+      <div class="form-group"><label>Fecha Nacimiento *</label><input id="f_nacimiento" type="date"></div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group"><label>Sexo</label>
+        <select id="f_sexo"><option value="">-</option><option value="M">Masculino</option><option value="F">Femenino</option></select>
+      </div>
+      <div class="form-group"><label>Telefono</label><input id="f_telefono"></div>
+    </div>
+    <div class="form-group"><label>Email</label><input id="f_email" type="email"></div>
+    <div class="form-group"><label>Alergias</label><textarea id="f_alergias" rows="2"></textarea></div>
+    <div class="form-group"><label>Antecedentes</label><textarea id="f_antecedentes" rows="3"></textarea></div>
+    <p id="modalError" class="error-msg"></p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+      <button class="btn btn-secondary" onclick="closeModal('patientModal')">Cancelar</button>
+      <button class="btn btn-primary" style="width:auto" onclick="savePatient()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:3000'
+  : 'https://ece-metacore-api-production.up.railway.app';
+
+let token = localStorage.getItem('ece_token');
+let currentUser = JSON.parse(localStorage.getItem('ece_user') || 'null');
+let editingPatientId = null;
+
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) };
+  const res = await fetch(API + path, { headers, ...opts });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error de servidor');
+  return data;
+}
+
+apsnc function doLogin() {
+  const email = document.getElementById('loginEmail').value;
+  const pw = document.getElementById('loginPassword').value;
+  document.getElementById('loginError').textContent = '';
+  try {
+    const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password: pw }) });
+    token = data.token;
+    currentUser = data.user;
+    localStorage.setItem('ece_token', token);
+    localStorage.setItem('ece_user', JSON.stringify(currentUser));
+    showApp();
+  } catch (e) {
+    document.getElementById('loginError').textContent = e.message;
+  }
+}
+
+function logout() {
+  token = null; currentUser = null;
+  localStorage.removeItem('ece_token'); localStorage.removeItem('ece_user');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('navUser').textContent = currentUser?.name + ' (' + currentUser?.role + ')';
+  showSection('dashboard');
+}
+
+function showSection(s) {
+  document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+  const idx = ['dashboard','patients','research'].indexOf(s);
+  if (idx >= 0) document.querySelectorAll('.sidebar a')[idx].classList.add('active');
+  if (s === 'dashboard') renderDashboard();
+  else if (s === 'patients') renderPatients();
+  else if (s === 'research') renderResearch();
+}
+
+async function renderDashboard() {
+  const c = document.getElementById('mainContent');
+  c.innerHTML = '<p class="loading">Cargando...</p>';
+  try {
+    const data = await api('/api/patients?limit=5');
+    c.innerHTML = `<div class="section-title">Dashboard</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-num">${data.count || 0}</div><div class="stat-label">Pacientes registrados</div></div>
+        <div class="stat-card"><div class="stat-num">ECE</div><div class="stat-label">META CORE v1.0</div></div>
+        <div class="stat-card"><div class="stat-num">IA</div><div class="stat-label">Asistente activo</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Ultimos pacientes</span><button class="btn btn-primary btn-sm" style="width:auto" onclick="showSection('patients')">Ver todos</button></div>
+        <table><thead><tr><th>Expediente</th><th>Paciente</th><th>Nacimiento</th><th>Sexo</th></tr></thead>
+        <tbody>${(data.patients || []).map(p => `<tr><td>${p.expediente}</td><td>${p.nombre} ${p.apellido_paterno}</td><td>${p.fecha_nacimiento?.split('T')[0] || ''}</td><td>${p.sexo || '-'}</td></tr>`).join('') || '<tr><td colspan=4 style="text-align:center;color:#a0aec0">Sin pacientes aun</td></tr>'}
+        </tbody></table>
+      </div>`;
+  } catch (e) { c.innerHTML = '<p class="error-msg">' + e.message + '</p>'; }
+}
+
+let allPatients = [];
+async function renderPatients(search = '') {
+  const c = document.getElementById('mainContent');
+  c.innerHTML = '<p class="loading">Cargando...</p>';
+  try {
+    const data = await api('/api/patients?limit=100' + (search ? '&search=' + encodeURIComponent(search) : ''));
+    allPatients = data.patients || [];
+    c.innerHTML = `
+      <div class="section-title">Pacientes</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="display:flex;gap:10px;flex:1;margin-right:16px">
+          <input id="searchInput" placeholder="Buscar por nombre o expediente..." value="${search}" onkeydown="if(event.key==='Enter')renderPatients(this.value)">
+          <button class="btn btn-secondary" onclick="renderPatients(document.getElementById('searchInput').value)">Buscar</button>
+        </div>
+        <button class="btn btn-primary btn-sm" style="width:auto" onclick="openNewPatient()">+ Nuevo Paciente</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table><thead><tr><th>Expediente</th><th>Paciente</th><th>Nacimiento</th><th>Sexo</th><th>Telefono</th><th>Acciones</th></tr></thead>
+        <tbody>${allPatients.map(p => `
+          <tr>
+            <td><span class="badge badge-blue">${p.expediente}</span></td>
+            <td><b>${p.apellido_paterno} ${p.apellido_materno || ''}</b>, ${p.nombre}</td>
+            <td>${p.fecha_nacimiento?.split('T')[0] || ''}</td>
+            <td>${p.sexo || '-'}</td>
+            <td>${p.telefono || '-'}</td>
+            <td>
+              <button class="btn btn-secondary btn-sm" onclick='viewPatient(\"${p.id}\")'>Ver</button>
+              <button class="btn btn-secondary btn-sm" onclick='editPatient(\"${p.id}\")'>Editar</button>
+            </td>
+          </tr>`).join('') || '<tr><td colspan=6 class="empty-state">No se encontraron pacientes</td></tr>'}
+        </tbody></table>
+      </div>`;
+  } catch (e) { c.innerHTML = '<p class="error-msg">' + e.message + '</p>'; }
+}
+
+async function viewPatient(id) {
+  const c = document.getElementById('mainContent');
+  c.innerHTML = '<p class="loading">Cargando expediente...</p>';
+  try {
+    const [pat, vitals, labs, notes] = await Promise.all([
+      api('/api/patients/' + id),
+      api('/api/patients/' + id + '/vitals'),
+      api('/api/patients/' + id + '/labs'),
+      api('/api/patients/' + id + '/notes'),
+    ]);
+    const age = pat.fecha_nacimiento ? Math.floor((Date.now() - new Date(pat.fecha_nacimiento)) / (365.25*24*3600*1000)) : '?';
+    const lastV = vitals[0] || {};
+    c.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <button class="btn btn-secondary btn-sm" onclick="renderPatients()">&larr; Volver</button>
+        <div class="section-title" style="margin:0">${pat.nombre} ${pat.apellido_paterno} ${pat.apellido_materno || ''}</div>
+        <span class="badge badge-blue">${pat.expediente}</span>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-num">${age}</div><div class="stat-label">Aners</div></div>
+        <div class="stat-card"><div class="stat-num">${lastV.peso_kg || '-'}</div><div class="stat-label">Peso (kg)</div></div>
+        <div class="stat-card"><div class="stat-num">${lastV.imc || '-'}</div><div class="stat-label">IMC</div></div>
+        <div class="stat-card"><div class="stat-num">${lastV.presion_sistolica ? lastV.presion_sistolica+'/'+lastV.presion_diastolica : '-'}</div><div class="stat-label">Tension arterial</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Datos del paciente</span><button class="btn btn-secondary btn-sm" onclick='editPatient(\"${pat.id}\")'>Editar</button></div>
+          <p><b>CURP:</b> ${pat.curp || '-'}</p>
+          <p><b>Sexo:</b> ${pat.sexo || '-'}</p>
+          <p><b>Tel:</b> ${pat.telefono || '-'}</p>
+          <p><b>Email:</b> ${pat.email || '-'}</p>
+          <p><b>Alergias:</b> ${pat.alergias || 'Ninguna'}</p>
+          <p style="margin-top:8px"><b>Antecedentes:</b><br>${pat.antecedentes || '-'}</p>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Ultimos labs</span></div>
+          ${labs.slice(0,5).map(l => `<div style="border-bottom:1px solid var(--border);padding:8px 0;"><b>${l.nombre_estudio}:</b> ${l.resultado} ${l.unidades || ''}</div>`).join('') || '<p class="empty-state">Sin resultados</p>'}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Notas clinicas</span><button class="btn btn-primary btn-sm" style="width:auto" onclick='addNote(\"${pat.id}\")'>+ Nueva nota</button></div>
+        ${notes.map(n => `<div style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span class="badge badge-green">${n.tipo}</span><small style="color:#718096">${n.created_at?.split('T')[0]} - ${n.author_name || ''}</small></div>
+          ${n.motivo_consulta ? '<p><b>Motivo:</b> '+n.motivo_consulta+'</p>' : ''}
+          ${n.diagnostico ? '<p><b>Diagnostico:</b> '+n.diagnostico+'</p>' : ''}
+          ${n.plan_tratamiento ? '<p><b>Plan:</b> '+n.plan_tratamiento+'</p>' : ''}
+        </div>`).join('') || '<p class="empty-state">Sin notas clinicas</p>'}
+      </div>`;
+  } catch (e) { c.innerHTML = '<p class="error-msg">' + e.message + '</p>'; }
+}
+
+function openNewPatient() {
+  editingPatientId = null;
+  document.getElementById('modalTitle').textContent = 'Nuevo Paciente';
+  ['expediente','curp','nombre','apellido_p','apellido_m','nacimiento','sexo','telefono','email','alergias','antecedentes'].forEach(id => {
+    const el = document.getElementById('f_' + id);
+    if (el) el.value = '';
+  });
+  document.getElementById('modalError').textContent = '';
+  document.getElementById('patientModal').classList.add('open');
+}
+
+function editPatient(id) {
+  const p = allPatients.find(x => x.id === id);
+  if (!p) return;
+  editingPatientId = id;
+  document.getElementById('modalTitle').textContent = 'Editar Paciente';
+  document.getElementById('f_expediente').value = p.expediente || '';
+  document.getElementById('f_curp').value = p.curp || '';
+  document.getElementById('f_nombre').value = p.nombre || '';
+  document.getElementById('f_apellido_p').value = p.apellido_paterno || '';
+  document.getElementById('f_apellido_m').value = p.apellido_materno || '';
+  document.getElementById('f_nacimiento').value = p.fecha_nacimiento?.split('T')[0] || '';
+  document.getElementById('f_sexo').value = p.sexo || '';
+  document.getElementById('f_telefono').value = p.telefono || '';
+  document.getElementById('f_email').value = p.email || '';
+  document.getElementById('f_alergias').value = p.alergias || '';
+  document.getElementById('f_antecedentes').value = p.antecedentes || '';
+  document.getElementById('modalError').textContent = '';
+  document.getElementById('patientModal').classList.add('open');
+}
+
+async function savePatient() {
+  const body = {
+    expediente: document.getElementById('f_expediente').value,
+    nombre: document.getElementById('f_nombre').value,
+    apellido_paterno: document.getElementById('f_apellido_p').value,
+    apellido_materno: document.getElementById('f_apellido_m').value,
+    fecha_nacimiento: document.getElementById('f_nacimiento').value,
+    sexo: document.getElementById('f_sexo').value,
+    curp: document.getElementById('f_curp').value,
+    email: document.getElementById('f_email').value,
+    telefono: document.getElementById('f_telefono').value,
+    alergias: document.getElementById('f_alergias').value,
+    antecedentes: document.getElementById('f_antecedentes').value,
+  };
+  document.getElementById('modalError').textContent = '';
+  try {
+    if (editingPatientId) {
+      await api('/api/patients/' + editingPatientId, { method: 'PUT', body: JSON.stringify(body) });
+    } else {
+      await api('/api/patients', { method: 'POST', body: JSON.stringify(body) });
+    }
+    closeModal('patientModal');
+    renderPatients();
+  } catch (e) { document.getElementById('modalError').textContent = e.message; }
+}
+
+async function addNote(patientId) {
+  const tipo = prompt('Tipo de nota:', 'consulta');
+  if (!tipo) return;
+  const motivo = prompt('Motivo de consulta:');
+  const diagnostico = prompt('Diagnostico:');
+  const plan = prompt('Plan de tratamiento:');
+  try {
+    await api('/api/patients/' + patientId + '/notes', { method: 'POST', body: JSON.stringify({ tipo, motivo_consulta: motivo, diagnostico, plan_tratamiento: plan }) });
+    viewPatient(patientId);
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+function renderResearch() {
+  const c = document.getElementById('mainContent');
+  c.innerHTML = `<div class="section-title">Asistente de IA Medica</div>
+    <div class="ai-box">
+      <h3>Consulta Clinica con Claude</h3>
+      <p style="font-size:0.85rem;color:#4a5568;margin-bottom:12px">Resuelve dudas clinicas, consulta guias de practica yobtiene recomendaciones basadas en evidencia.</p>
+      <div class="form-group">
+        <textarea id="aiQuestion" rows="4" placeholder="Paciente con DM2, HbA1c 9.2%, metformina 2g/dia. Recomienda siguiente paso Terapeutico ara ADA 2025..."></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-primary" style="width:auto" onclick="askAI()">Consultar IA</button>
+      </div>
+      <div id="aiResponse" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;margin-bottom:8px">
+          <b>Respuesta:</b>
+          <small id="aiTokens" style="color:#a0aec0"></small>
+        </div>
+        <div class="ai-response" id="aiResponseText"></div>
+      </div>
+    </div>`;
+}
+
+async function askAI() {
+  const q = document.getElementById('aiQuestion').value.trim();
+  if (!q) return;
+  const btn = document.querySelector('.ai-box .btn-primary');
+  btn.textContent = 'Consultando...'; btn.disabled = true;
+  document.getElementById('aiResponse').style.display = 'none';
+  try {
+    const data = await api('/api/research/ask', { method: 'POST', body: JSON.stringify({ question: q }) });
+    document.getElementById('aiResponseText').textContent = data.answer;
+    document.getElementById('aiTokens').textContent = 'Tokens: ' + data.tokens_used;
+    document.getElementById('aiResponse').style.display = 'block';
+  } catch (e) { alert('Error IA: ' + e.message); }
+  finally { btn.textContent = 'Consultar IA'; btn.disabled = false; }
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') doLogin();
+});
+
+if (token && currentUser) showApp();
+</script>
+</body>
+</html>
