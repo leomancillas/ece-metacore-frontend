@@ -214,7 +214,7 @@
 <div class="modal-overlay" id="noteModal">
   <div class="modal" style="width:780px">
     <div class="modal-header">
-      <h2 class="modal-title">Nueva Nota Clinica · NOM-004-SSA3-2012</h2>
+      <h2 class="modal-title" id="noteModalTitle">Nueva Nota Clínica · NOM-004-SSA3-2012</h2>
       <button class="btn btn-secondary btn-sm" onclick="closeModal('noteModal')">✕</button>
     </div>
 
@@ -395,6 +395,7 @@ const API = (window.location.hostname === 'localhost' || window.location.hostnam
 let token = localStorage.getItem('ece_token');
 let currentUser = JSON.parse(localStorage.getItem('ece_user') || 'null');
 let editingPatientId = null;
+let editingNoteId = null;
 let currentNotePatientId = null;
 let currentNoteType = 'evolucion';
 let voiceRecognition = null;
@@ -603,7 +604,9 @@ function renderNotesList(notes, patId) {
 
 function renderLegacyNote(n, fecha, hora) {
   return `<div class="nota-card">
-    <div class="nota-header">${notaBadge(n.tipo)}<small style="color:#718096">${fecha} ${hora} · ${n.author_name || ''}</small></div>
+    <div class="nota-header">${notaBadge(n.tipo)}<small style="color:#718096">${fecha} ${hora} · ${n.author_name || ''}</small>
+      <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="openEditNote('${n.id}')">✏️ Editar</button>
+    </div>
     ${n.motivo_consulta ? `<div class="nota-field"><b>Motivo:</b> ${n.motivo_consulta}</div>` : ''}
     ${n.diagnostico ? `<div class="nota-field"><b>Diagnóstico:</b> ${n.diagnostico}</div>` : ''}
     ${n.plan_tratamiento ? `<div class="nota-field"><b>Plan:</b> ${n.plan_tratamiento}</div>` : ''}
@@ -681,8 +684,11 @@ function renderStructuredNote(n, meta, fecha, hora) {
       ${meta.diagnostico ? `<div class="nota-section"><div class="nota-section-title">Diagnóstico</div>${f('', meta.diagnostico)}</div>` : ''}
       ${meta.instrucciones ? `<div class="nota-section"><div class="nota-section-title">Indicaciones</div>${f('', meta.instrucciones)}</div>` : ''}`;
   }
+  const editBtn = tipo !== 'receta'
+    ? `<button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="openEditNote('${n.id}')">✏️ Editar</button>`
+    : '';
   return `<div class="nota-card">
-    <div class="nota-header">${notaBadge(tipo)}<small style="color:#718096">${fecha} ${hora} · ${n.author_name || ''}</small></div>
+    <div class="nota-header">${notaBadge(tipo)}<small style="color:#718096">${fecha} ${hora} · ${n.author_name || ''}</small>${editBtn}</div>
     ${body}
   </div>`;
 }
@@ -695,8 +701,11 @@ function f(label, val) {
 // ── MODAL NOTA ─────────────────────────────────────────────────────
 function openNoteModal(patientId) {
   currentNotePatientId = patientId;
+  editingNoteId = null;
   currentNoteType = 'evolucion';
   document.getElementById('noteError').textContent = '';
+  document.getElementById('noteModalTitle').textContent = 'Nueva Nota Clínica · NOM-004-SSA3-2012';
+  document.getElementById('notTypeSelector').style.display = '';
   const st = document.getElementById('analyzeStatus');
   if (st) st.style.display = 'none';
   const transcriptEl = document.getElementById('n_transcript');
@@ -705,6 +714,75 @@ function openNoteModal(patientId) {
   document.querySelectorAll('.note-type-btn').forEach((b,i) => b.classList.toggle('selected', i===0));
   renderNoteForm('evolucion');
   document.getElementById('noteModal').classList.add('open');
+}
+
+function openEditNote(noteId) {
+  const note = currentNotes.find(n => n.id === noteId);
+  if (!note) return;
+  const meta = (() => { try { return typeof note.plan_tratamiento === 'string' && note.plan_tratamiento.startsWith('{') ? JSON.parse(note.plan_tratamiento) : null; } catch(e){ return null; } })();
+  const tipo = (meta && meta._tipo) ? meta._tipo : (note.tipo || 'evolucion');
+  if (tipo === 'receta') {
+    alert('Las recetas se generan desde el botón "💊 Receta". Para cambiarla, genera una nueva.');
+    return;
+  }
+  editingNoteId = noteId;
+  currentNotePatientId = currentPatient.id;
+  currentNoteType = tipo;
+  document.getElementById('noteError').textContent = '';
+  document.getElementById('noteModalTitle').textContent = '✏️ Editar Nota Clínica · NOM-004-SSA3-2012';
+  // Hide type selector while editing (type is fixed to what was saved)
+  document.getElementById('notTypeSelector').style.display = 'none';
+  const st = document.getElementById('analyzeStatus');
+  if (st) st.style.display = 'none';
+  const transcriptEl = document.getElementById('n_transcript');
+  if (transcriptEl) transcriptEl.value = '';
+  renderNoteForm(tipo);
+  if (meta) fillFormForEdit(tipo, meta);
+  document.getElementById('noteModal').classList.add('open');
+}
+
+function fillFormForEdit(tipo, meta) {
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
+  if (tipo === 'evolucion') {
+    set('n_motivo', meta.motivo); set('n_sintomas', meta.sintomas);
+    set('n_sint_asociados', meta.sint_asociados); set('n_exfisica', meta.exfisica);
+    set('n_estudios', meta.estudios); set('n_diagnostico', meta.diagnostico);
+    set('n_impresion', meta.impresion); set('n_tx_farmaco', meta.tx_farmaco);
+    set('n_tx_nofarmaco', meta.tx_nofarmaco); set('n_seguimiento', meta.seguimiento);
+    if (meta.signos_vitales) {
+      const sv = meta.signos_vitales;
+      const rv = p => { const m = sv.match(p); return m ? m[1].trim() : ''; };
+      set('n_ta', rv(/TA:([^\s]+)/i));
+      set('n_fc', rv(/FC:([^\s]+)/i));
+      set('n_fr', rv(/FR:([^\s]+)/i));
+      set('n_temp', rv(/T:([^\s]+)/i));
+      set('n_sat', rv(/Sat:([^\s]+)/i));
+      set('n_peso', rv(/Peso:([^\s]+)/i));
+    }
+  } else if (tipo === 'historia_clinica') {
+    set('n_ahf', meta.ahf); set('n_apnp', meta.apnp); set('n_app', meta.app);
+    set('n_padecimiento', meta.padecimiento); set('n_interrogatorio', meta.interrogatorio);
+    set('n_exfisica', meta.exfisica); set('n_diagnostico', meta.diagnostico);
+    set('n_plan', meta.plan); set('n_pronostico', meta.pronostico);
+  } else if (tipo === 'urgencias') {
+    set('n_hora_llegada', meta.hora_llegada); set('n_hora_egreso', meta.hora_egreso);
+    set('n_motivo', meta.motivo); set('n_estado_ingreso', meta.estado_ingreso);
+    set('n_exfisica', meta.exfisica); set('n_diagnostico', meta.diagnostico);
+    set('n_tratamiento', meta.tratamiento);
+    selectClosestOption('n_estado_egreso', meta.estado_egreso);
+  } else if (tipo === 'interconsulta') {
+    set('n_especialidad', meta.especialidad); set('n_motivo', meta.motivo);
+    set('n_resumen', meta.resumen); set('n_diagnostico', meta.diagnostico);
+    set('n_solicitud', meta.solicitud);
+  } else if (tipo === 'egreso') {
+    set('n_diagnostico', meta.diagnostico); set('n_pronostico', meta.pronostico);
+    set('n_instrucciones', meta.instrucciones); set('n_seguimiento', meta.seguimiento);
+    selectClosestOption('n_condicion', meta.condicion);
+  } else if (tipo === 'referencia') {
+    set('n_unidad_envio', meta.unidad_envio); set('n_unidad_receptora', meta.unidad_receptora);
+    set('n_motivo', meta.motivo); set('n_estado_clinico', meta.estado_clinico);
+    set('n_diagnostico', meta.diagnostico); set('n_tratamiento', meta.tratamiento);
+  }
 }
 
 function selectNoteType(tipo, btn) {
@@ -871,10 +949,18 @@ async function saveNote() {
   document.getElementById('noteError').textContent = '';
   try {
     stopVoice();
-    await api('/api/patients/' + currentNotePatientId + '/notes', {
-      method: 'POST',
-      body: JSON.stringify({ tipo, motivo_consulta, diagnostico, plan_tratamiento })
-    });
+    if (editingNoteId) {
+      await api('/api/patients/' + currentNotePatientId + '/notes/' + editingNoteId, {
+        method: 'PUT',
+        body: JSON.stringify({ tipo, motivo_consulta, diagnostico, plan_tratamiento })
+      });
+    } else {
+      await api('/api/patients/' + currentNotePatientId + '/notes', {
+        method: 'POST',
+        body: JSON.stringify({ tipo, motivo_consulta, diagnostico, plan_tratamiento })
+      });
+    }
+    editingNoteId = null;
     closeModal('noteModal');
     viewPatient(currentNotePatientId);
   } catch (e) { document.getElementById('noteError').textContent = 'Error: ' + e.message; }
