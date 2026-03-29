@@ -107,6 +107,12 @@
     .analyze-status.ok { background: #d1fae5; color: #065f46; }
     .analyze-status.loading { background: #ede9fe; color: #4338ca; font-style: italic; }
     .analyze-status.error { background: #fee2e2; color: #991b1b; }
+    /* Receta médica modal */
+    .rx-cons-btn { flex: 1; padding: 12px 14px; border: 2px solid var(--border); border-radius: 10px; background: white; cursor: pointer; font-size: 0.85rem; font-weight: 600; text-align: center; transition: all 0.2s; line-height: 1.5; }
+    .rx-cons-btn:hover { border-color: var(--primary-light); background: #f0fff4; }
+    .rx-cons-btn.selected { border-color: var(--primary); background: #f0fff4; color: var(--primary); }
+    .rx-cons-btn small { display: block; font-weight: 400; color: #718096; font-size: 0.75rem; }
+    .rx-cons-btn.selected small { color: var(--primary); }
 </style>
 </head>
 <body>
@@ -238,6 +244,54 @@
   </div>
 </div>
 
+<!-- MODAL RECETA MEDICA -->
+<div class="modal-overlay" id="prescriptionModal">
+  <div class="modal" style="width:740px">
+    <div class="modal-header">
+      <h2 class="modal-title">💊 Generar Receta Médica</h2>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('prescriptionModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Consultorio</label>
+      <div style="display:flex;gap:12px">
+        <button class="rx-cons-btn selected" id="rxBtn1" onclick="selectRxConsultorio(1)">🏥 Hospital Zambrano Hellion<br><small>San Pedro Garza García, N.L.</small></button>
+        <button class="rx-cons-btn" id="rxBtn2" onclick="selectRxConsultorio(2)">🏛 Centro Regional Diabetes<br><small>Col. Mitras Centro, Monterrey, N.L.</small></button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 80px 140px;gap:12px">
+      <div class="form-group"><label>Paciente</label><input id="rx_nombre" placeholder="Nombre completo"></div>
+      <div class="form-group"><label>Edad</label><input id="rx_edad" type="number" placeholder="45" min="0" max="120"></div>
+      <div class="form-group"><label>Fecha</label><input id="rx_fecha"></div>
+    </div>
+    <div class="form-group">
+      <label>Medicamentos (Rp.) *</label>
+      <div class="voice-row">
+        <textarea id="rx_medicamentos" rows="6" placeholder="1. Metformina 850 mg tabletas, 1 tableta VO c/12h con alimentos × 60 días&#10;2. Omeprazol 20 mg cápsulas, 1 cápsula VO c/24h en ayuno × 30 días&#10;3. ..."></textarea>
+        <button class="btn-voice" title="Dictar medicamentos" onclick="toggleVoice('rx_medicamentos',this)">🎤</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="rx_show_diag" checked style="width:auto;padding:0;margin:0;width:16px;height:16px">
+        Incluir diagnóstico en la receta
+      </label>
+      <input id="rx_diagnostico" placeholder="Ej: Diabetes mellitus tipo 2 (E11) · Gastropatía" style="margin-top:8px">
+    </div>
+    <div class="form-group">
+      <label>Indicaciones generales (opcional)</label>
+      <div class="voice-row">
+        <textarea id="rx_instrucciones" rows="2" placeholder="Dieta, actividad física, signos de alarma, próxima cita..."></textarea>
+        <button class="btn-voice" title="Dictar indicaciones" onclick="toggleVoice('rx_instrucciones',this)">🎤</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px;align-items:center">
+      <span style="font-size:0.78rem;color:#718096;flex:1">Se abrirá una ventana de impresión</span>
+      <button class="btn btn-secondary" onclick="closeModal('prescriptionModal')">Cancelar</button>
+      <button class="btn btn-primary" style="width:auto;background:linear-gradient(135deg,#6b21a8,#1a5c8a)" onclick="printPrescription()">🖨 Imprimir Receta</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
@@ -250,6 +304,9 @@ let currentNotePatientId = null;
 let currentNoteType = 'evolucion';
 let voiceRecognition = null;
 let activeVoiceField = null;
+let currentPatient = null;
+let currentNotes = [];
+let rxConsultorio = 1;
 
 // ── API ────────────────────────────────────────────────────────────
 async function api(path, opts = {}) {
@@ -366,6 +423,8 @@ async function viewPatient(id) {
       api('/api/patients/' + id + '/labs'),
       api('/api/patients/' + id + '/notes'),
     ]);
+    currentPatient = pat;
+    currentNotes = notes;
     const age = pat.fecha_nacimiento ? Math.floor((Date.now() - new Date(pat.fecha_nacimiento)) / (365.25*24*3600*1000)) : '?';
     const lastV = vitals[0] || {};
     c.innerHTML = `
@@ -398,7 +457,10 @@ async function viewPatient(id) {
       <div class="card">
         <div class="card-header">
           <span class="card-title">Notas clinicas · NOM-004-SSA3-2012</span>
-          <button class="btn btn-primary btn-sm" style="width:auto" onclick='openNoteModal("${pat.id}")'>🖊 Nueva nota</button>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" style="background:#6b21a8;color:white;border:none" onclick='openPrescriptionModal("${pat.id}")'>💊 Receta</button>
+            <button class="btn btn-primary btn-sm" style="width:auto" onclick='openNoteModal("${pat.id}")'>🖊 Nueva nota</button>
+          </div>
         </div>
         ${renderNotesList(notes, pat.id)}
       </div>`;
@@ -839,6 +901,174 @@ async function askAI() {
     document.getElementById('aiResponse').style.display = 'block';
   } catch (e) { alert('Error IA: ' + e.message); }
   finally { btn.textContent = 'Consultar IA →'; btn.disabled = false; }
+}
+
+// ── RECETA MEDICA ─────────────────────────────────────────────────
+function selectRxConsultorio(n) {
+  rxConsultorio = n;
+  document.getElementById('rxBtn1').classList.toggle('selected', n === 1);
+  document.getElementById('rxBtn2').classList.toggle('selected', n === 2);
+}
+
+function openPrescriptionModal(patientId) {
+  const pat = currentPatient;
+  if (!pat) return;
+  const lastSoap = (currentNotes || []).find(n => {
+    try { return JSON.parse(n.plan_tratamiento)?._tipo === 'evolucion'; } catch { return false; }
+  });
+  const meta = (() => { try { return lastSoap ? JSON.parse(lastSoap.plan_tratamiento) : {}; } catch { return {}; } })();
+  const age = pat.fecha_nacimiento ? Math.floor((Date.now() - new Date(pat.fecha_nacimiento)) / (365.25*24*3600*1000)) : '';
+  document.getElementById('rx_nombre').value = [pat.nombre, pat.apellido_paterno, pat.apellido_materno].filter(Boolean).join(' ');
+  document.getElementById('rx_edad').value = age;
+  document.getElementById('rx_fecha').value = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit', year:'numeric'});
+  document.getElementById('rx_medicamentos').value = meta.tx_farmaco || '';
+  document.getElementById('rx_diagnostico').value = meta.diagnostico || '';
+  document.getElementById('rx_instrucciones').value = meta.tx_nofarmaco || '';
+  document.getElementById('rx_show_diag').checked = true;
+  selectRxConsultorio(1);
+  document.getElementById('prescriptionModal').classList.add('open');
+}
+
+function formatRxMeds(text) {
+  if (!text) return '<p style="color:#aaa;font-style:italic">(sin medicamentos)</p>';
+  const lines = text.split('\n').filter(l => l.trim());
+  let n = 0;
+  return lines.map(line => {
+    const trimmed = line.trim();
+    const hasNum = /^\d+[\.\-\)]\s*/.test(trimmed);
+    if (!hasNum) n++;
+    const numStr = hasNum ? '' : `${n}. `;
+    return `<p style="margin-bottom:10px;line-height:1.6">${numStr}${trimmed}</p>`;
+  }).join('');
+}
+
+function rxCommonCss() {
+  return `@page{size:letter;margin:14mm 20mm 18mm 20mm}*{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;color:#000;background:white}
+  .hdr{display:flex;align-items:flex-start;padding-bottom:8px}
+  .hdr-c{flex:1;text-align:center}
+  .dr-name{font-size:15pt;font-weight:bold;letter-spacing:.4px}
+  .dr-spec{font-size:11pt;font-weight:600;margin-top:3px}
+  .dr-ced{font-size:8.5pt;margin-top:5px;line-height:1.6}
+  .logo-box{width:110px;display:flex;align-items:center;justify-content:center;padding-top:4px}
+  .divider{border:none;border-top:1.5px solid #000;margin:8px 0 12px}
+  .pat-row{display:flex;gap:6px;align-items:baseline;border-bottom:.5px solid #555;padding-bottom:7px;margin-bottom:16px}
+  .plabel{font-size:8.5pt;font-weight:700;text-transform:uppercase;white-space:nowrap;margin-right:3px}
+  .pval{border-bottom:1px solid #333;padding-bottom:1px;font-size:10pt}
+  .pval-name{flex:1}
+  .pval-age{width:60px}
+  .pval-date{width:95px}
+  .rx-sym{font-size:22pt;font-weight:bold;font-style:italic;font-family:Georgia,serif;margin-bottom:12px}
+  .meds{min-height:200px;padding:0 0 12px;border-bottom:.5px solid #ccc}
+  .diag{margin-top:10px;font-size:10pt}
+  .dlabel{font-weight:700;font-size:9pt;text-transform:uppercase;margin-right:4px}
+  .instr{margin-top:8px;font-size:9.5pt;color:#333}
+  .notice{font-size:7.5pt;color:#888;margin-top:10px;font-style:italic}
+  .sig-area{margin-top:28px;text-align:right}
+  .sig-line{border-top:1px solid #000;width:200px;display:inline-block;text-align:center;padding-top:4px;font-size:8.5pt}
+  .footer{position:fixed;bottom:14mm;left:20mm;right:20mm;display:flex;justify-content:space-between;font-size:7.5pt;color:#555;border-top:.5px solid #aaa;padding-top:5px}
+  @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}`;
+}
+
+function generateRxZH(nombre, edad, fecha, meds, diag, instr, showDiag) {
+  const medsHtml = formatRxMeds(meds);
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Receta</title><style>
+  ${rxCommonCss()}
+  .dr-name{color:#003087}.dr-spec{color:#003087}
+  .zh-logo{font-weight:800;color:#003087;line-height:1.35;font-size:10pt}
+  .zh-tec{color:#0072ce;font-size:11pt}
+  </style></head><body>
+  <div class="hdr">
+    <div class="logo-box"><div class="zh-logo">Hospital<br>Zambrano<br>Hellion<br><span class="zh-tec">TecSalud</span></div></div>
+    <div class="hdr-c">
+      <div class="dr-name">DR. LEONARDO G. MANCILLAS ADAME</div>
+      <div class="dr-spec">MEDICINA INTERNA - ENDOCRINOLOGÍA</div>
+      <div class="dr-ced">
+        Cédula Profesional 2569867 U.A.N.L.<br>
+        Cédula de Especialista en Medicina Interna 3277802 U.N.A.M. &nbsp;·&nbsp; Cédula de Especialista en Endocrinología 5240480 U.N.A.M.
+      </div>
+    </div>
+  </div>
+  <hr class="divider">
+  <div class="pat-row">
+    <span class="plabel">Nombre:</span><span class="pval pval-name">${nombre}</span>
+    <span class="plabel" style="margin-left:14px">Edad:</span><span class="pval pval-age">${edad} años</span>
+    <span class="plabel" style="margin-left:14px">Fecha:</span><span class="pval pval-date">${fecha}</span>
+  </div>
+  <div class="rx-sym">&#x211E;</div>
+  <div class="meds">${medsHtml}</div>
+  ${showDiag && diag ? `<div class="diag"><span class="dlabel">Diagnóstico:</span>${diag}</div>` : ''}
+  ${instr ? `<div class="instr"><b>Indicaciones:</b> ${instr}</div>` : ''}
+  <p class="notice">Este medicamento solo debe ser usado bajo prescripción y vigilancia médica. Vigencia 30 días.</p>
+  <div class="sig-area"><div class="sig-line">Dr. Leonardo G. Mancillas Adame<br>Firma y Sello</div></div>
+  <div class="footer">
+    <div>Batallón de San Patricio 112, Col. Real San Agustín 66278<br>San Pedro Garza García, Nuevo León, México &nbsp;·&nbsp; Tels. (+52) 81 8888 0653, 88880650</div>
+    <div style="text-align:right">Tel. 8123924358 · 8117666193<br>drmancillasadame@gmail.com &nbsp;·&nbsp; www.cmzh.com.mx</div>
+  </div>
+  </body></html>`;
+}
+
+function generateRxCD(nombre, edad, fecha, meds, diag, instr, showDiag) {
+  const medsHtml = formatRxMeds(meds);
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Receta</title><style>
+  ${rxCommonCss()}
+  .dr-name{color:#4b0082;font-size:14pt;letter-spacing:.5px}
+  .dr-spec{color:#4b0082;letter-spacing:1px;text-transform:uppercase}
+  .dr-ced{text-transform:uppercase;letter-spacing:.2px}
+  .divider{border-top-color:#4b0082;border-top-width:1.5px}
+  .uanl{font-size:8.5pt;font-weight:800;color:#4b0082;text-align:center;line-height:1.3}
+  .imss{font-size:8.5pt;font-weight:800;color:#336633;text-align:center;line-height:1.3}
+  .footer-cd{position:fixed;bottom:14mm;left:20mm;right:20mm;text-align:center;font-size:7.5pt;color:#555;border-top:.5px solid #aaa;padding-top:5px}
+  </style></head><body>
+  <div class="hdr">
+    <div class="logo-box"><div class="uanl">UNIVERSIDAD<br>AUTÓNOMA DE<br>NUEVO LEÓN</div></div>
+    <div class="hdr-c">
+      <div class="dr-name">DR. LEONARDO G. MANCILLAS ADAME</div>
+      <div class="dr-spec">Medicina Interna – Endocrinología</div>
+      <div class="dr-ced">Cédula Profesional 2569867 UANL<br>
+        Cédula Esp. Medicina Interna 3277802 UNAM &nbsp;·&nbsp; Cédula Esp. Endocrinología 5240480 UNAM
+      </div>
+    </div>
+    <div class="logo-box"><div class="imss">CIENCIAS<br>MÉDICAS Y<br>NUTRICIÓN<br>NL</div></div>
+  </div>
+  <hr class="divider">
+  <div class="pat-row">
+    <span class="plabel">Nombre:</span><span class="pval pval-name">${nombre}</span>
+    <span class="plabel" style="margin-left:14px">Edad:</span><span class="pval pval-age">${edad} años</span>
+    <span class="plabel" style="margin-left:14px">Fecha:</span><span class="pval pval-date">${fecha}</span>
+  </div>
+  <div class="rx-sym">&#x211E;</div>
+  <div class="meds">${medsHtml}</div>
+  ${showDiag && diag ? `<div class="diag"><span class="dlabel">Diagnóstico:</span>${diag}</div>` : ''}
+  ${instr ? `<div class="instr"><b>Indicaciones:</b> ${instr}</div>` : ''}
+  <p class="notice">Este medicamento solo debe ser usado bajo prescripción y vigilancia médica. Vigencia 30 días.</p>
+  <div class="sig-area"><div class="sig-line">Dr. Leonardo G. Mancillas Adame<br>Firma y Sello</div></div>
+  <div class="footer-cd">
+    Centro Regional para la Prevención y Control de la Diabetes y Enfermedades Metabólicas<br>
+    Av. Madero y Gonzalitos, Col. Mitras Centro, Monterrey, N.L. México C.P. 64460<br>
+    +52(81) 81231241 &nbsp;·&nbsp; +52(81) 83487871 &nbsp;·&nbsp; drmancillasadame@gmail.com
+  </div>
+  </body></html>`;
+}
+
+function printPrescription() {
+  const nombre = document.getElementById('rx_nombre').value.trim();
+  const edad = document.getElementById('rx_edad').value.trim();
+  const fecha = document.getElementById('rx_fecha').value.trim();
+  const meds = document.getElementById('rx_medicamentos').value.trim();
+  const diag = document.getElementById('rx_diagnostico').value.trim();
+  const instr = document.getElementById('rx_instrucciones').value.trim();
+  const showDiag = document.getElementById('rx_show_diag').checked;
+  if (!meds) { alert('Agrega al menos un medicamento en el campo Rp.'); return; }
+  stopVoice();
+  const html = rxConsultorio === 1
+    ? generateRxZH(nombre, edad, fecha, meds, diag, instr, showDiag)
+    : generateRxCD(nombre, edad, fecha, meds, diag, instr, showDiag);
+  const win = window.open('', '_blank', 'width=820,height=1050');
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 700);
 }
 
 // ── DICTADO INTELIGENTE ────────────────────────────────────────────
