@@ -258,10 +258,11 @@
         <button class="rx-cons-btn" id="rxBtn2" onclick="selectRxConsultorio(2)">🏛 Centro Regional Diabetes<br><small>Col. Mitras Centro, Monterrey, N.L.</small></button>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 80px 140px;gap:12px">
+    <div style="display:grid;grid-template-columns:1fr 130px 80px 140px;gap:12px">
       <div class="form-group"><label>Paciente</label><input id="rx_nombre" placeholder="Nombre completo"></div>
+      <div class="form-group"><label>Fecha de nacimiento</label><input id="rx_nacimiento" type="date"></div>
       <div class="form-group"><label>Edad</label><input id="rx_edad" type="number" placeholder="45" min="0" max="120"></div>
-      <div class="form-group"><label>Fecha</label><input id="rx_fecha"></div>
+      <div class="form-group"><label>Fecha receta</label><input id="rx_fecha"></div>
     </div>
     <div class="form-group">
       <label>Medicamentos (Rp.) *</label>
@@ -919,6 +920,7 @@ function openPrescriptionModal(patientId) {
   const meta = (() => { try { return lastSoap ? JSON.parse(lastSoap.plan_tratamiento) : {}; } catch { return {}; } })();
   const age = pat.fecha_nacimiento ? Math.floor((Date.now() - new Date(pat.fecha_nacimiento)) / (365.25*24*3600*1000)) : '';
   document.getElementById('rx_nombre').value = [pat.nombre, pat.apellido_paterno, pat.apellido_materno].filter(Boolean).join(' ');
+  document.getElementById('rx_nacimiento').value = pat.fecha_nacimiento ? pat.fecha_nacimiento.split('T')[0] : '';
   document.getElementById('rx_edad').value = age;
   document.getElementById('rx_fecha').value = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit', year:'numeric'});
   document.getElementById('rx_medicamentos').value = meta.tx_farmaco || '';
@@ -970,7 +972,7 @@ function rxCommonCss() {
   @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}`;
 }
 
-function generateRxZH(nombre, edad, fecha, meds, diag, instr, showDiag) {
+function generateRxZH(nombre, nacimiento, edad, fecha, meds, diag, instr, showDiag) {
   const medsHtml = formatRxMeds(meds);
   return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Receta</title><style>
   ${rxCommonCss()}
@@ -992,6 +994,7 @@ function generateRxZH(nombre, edad, fecha, meds, diag, instr, showDiag) {
   <hr class="divider">
   <div class="pat-row">
     <span class="plabel">Nombre:</span><span class="pval pval-name">${nombre}</span>
+    ${nacimiento ? `<span class="plabel" style="margin-left:14px">F. Nac.:</span><span class="pval" style="width:80px">${nacimiento}</span>` : ''}
     <span class="plabel" style="margin-left:14px">Edad:</span><span class="pval pval-age">${edad} años</span>
     <span class="plabel" style="margin-left:14px">Fecha:</span><span class="pval pval-date">${fecha}</span>
   </div>
@@ -1008,7 +1011,7 @@ function generateRxZH(nombre, edad, fecha, meds, diag, instr, showDiag) {
   </body></html>`;
 }
 
-function generateRxCD(nombre, edad, fecha, meds, diag, instr, showDiag) {
+function generateRxCD(nombre, nacimiento, edad, fecha, meds, diag, instr, showDiag) {
   const medsHtml = formatRxMeds(meds);
   return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Receta</title><style>
   ${rxCommonCss()}
@@ -1034,6 +1037,7 @@ function generateRxCD(nombre, edad, fecha, meds, diag, instr, showDiag) {
   <hr class="divider">
   <div class="pat-row">
     <span class="plabel">Nombre:</span><span class="pval pval-name">${nombre}</span>
+    ${nacimiento ? `<span class="plabel" style="margin-left:14px">F. Nac.:</span><span class="pval" style="width:80px">${nacimiento}</span>` : ''}
     <span class="plabel" style="margin-left:14px">Edad:</span><span class="pval pval-age">${edad} años</span>
     <span class="plabel" style="margin-left:14px">Fecha:</span><span class="pval pval-date">${fecha}</span>
   </div>
@@ -1053,6 +1057,12 @@ function generateRxCD(nombre, edad, fecha, meds, diag, instr, showDiag) {
 
 function printPrescription() {
   const nombre = document.getElementById('rx_nombre').value.trim();
+  const nacimiento = (() => {
+    const v = document.getElementById('rx_nacimiento').value;
+    if (!v) return '';
+    const [y, m, d] = v.split('-');
+    return `${d}/${m}/${y}`;
+  })();
   const edad = document.getElementById('rx_edad').value.trim();
   const fecha = document.getElementById('rx_fecha').value.trim();
   const meds = document.getElementById('rx_medicamentos').value.trim();
@@ -1062,8 +1072,8 @@ function printPrescription() {
   if (!meds) { alert('Agrega al menos un medicamento en el campo Rp.'); return; }
   stopVoice();
   const html = rxConsultorio === 1
-    ? generateRxZH(nombre, edad, fecha, meds, diag, instr, showDiag)
-    : generateRxCD(nombre, edad, fecha, meds, diag, instr, showDiag);
+    ? generateRxZH(nombre, nacimiento, edad, fecha, meds, diag, instr, showDiag)
+    : generateRxCD(nombre, nacimiento, edad, fecha, meds, diag, instr, showDiag);
   const win = window.open('', '_blank', 'width=820,height=1050');
   win.document.write(html);
   win.document.close();
