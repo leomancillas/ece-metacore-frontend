@@ -244,6 +244,13 @@
 
 <!-- APP -->
 <div id="app">
+  <!-- IMPERSONATION BANNER -->
+  <div id="impersonationBanner" style="display:none;position:sticky;top:0;z-index:1200;background:#d97706;color:#fff;padding:8px 20px;display:none;align-items:center;gap:14px;font-size:0.88rem;box-shadow:0 2px 8px rgba(0,0,0,0.25)">
+    <span style="font-size:1.1rem">👁</span>
+    <span style="flex:1">Simulando sesión como <strong id="impersonationName"></strong> &nbsp;·&nbsp; <span id="impersonationRole" style="background:rgba(0,0,0,0.2);padding:1px 8px;border-radius:10px;font-size:0.8rem"></span></span>
+    <span style="opacity:0.8;font-size:0.8rem">El token del admin sigue activo — tienes acceso completo</span>
+    <button onclick="stopImpersonation()" style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.5);color:#fff;padding:5px 14px;border-radius:6px;cursor:pointer;font-weight:700;font-size:0.82rem">← Volver a mi cuenta</button>
+  </div>
   <nav>
     <h1>ECE META CORE</h1>
     <span class="user-info" id="navUser" style="margin-right:8px"></span>
@@ -640,6 +647,8 @@ let currentVitals = [];
 let currentLabs = [];
 let currentCitas = [];
 let navRequestId = 0;
+let realAdminSession = null;   // { user } — guardado mientras se impersona
+let adminUsersMap = {};        // id → user — para impersonar por id
 let rxConsultorio = 1;
 
 // ── LOGOS RECETA (base64) ──────────────────────────────────────────
@@ -670,7 +679,9 @@ async function doLogin() {
 }
 
 function logout() {
-  token = null; currentUser = null;
+  // If impersonating, stop first
+  if (realAdminSession) { stopImpersonation(); return; }
+  token = null; currentUser = null; realAdminSession = null;
   localStorage.removeItem('ece_token'); localStorage.removeItem('ece_user');
   document.getElementById('app').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
@@ -692,10 +703,23 @@ function showApp() {
   renderNavAvatar();
   // Hide research/AI section for recepcion role
   const sidebar = document.querySelectorAll('.sidebar a');
-  if (!isMedico() && sidebar[2]) sidebar[2].style.display = 'none';
-  // Show admin panel link for admin users
+  sidebar.forEach(a => a.style.display = ''); // reset all
+  if (currentUser?.role === 'recepcion' && sidebar[2]) sidebar[2].style.display = 'none';
+  // Show admin panel link ONLY for real admin (not while impersonating)
   const adminLink = document.getElementById('sidebarAdmin');
-  if (adminLink) adminLink.style.display = currentUser?.role === 'admin' ? '' : 'none';
+  if (adminLink) adminLink.style.display = (!realAdminSession && currentUser?.role === 'admin') ? '' : 'none';
+  // Impersonation banner
+  const banner = document.getElementById('impersonationBanner');
+  if (banner) {
+    if (realAdminSession) {
+      const roleLabel = {medico:'Médico',admin:'Administrador',recepcion:'Recepción',enfermera:'Enfermera'};
+      document.getElementById('impersonationName').textContent = currentUser?.name || '';
+      document.getElementById('impersonationRole').textContent = roleLabel[currentUser?.role] || currentUser?.role || '';
+      banner.style.display = 'flex';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
   showSection('dashboard');
 }
 
@@ -2716,6 +2740,42 @@ function statCard(icon, val, label, color) {
   </div>`;
 }
 
+// ── IMPERSONACIÓN ──────────────────────────────────────────────────
+function startImpersonation(userId) {
+  const targetUser = adminUsersMap[userId];
+  if (!targetUser) return alert('Usuario no encontrado');
+  if (targetUser.id === currentUser?.id) return;
+  if (targetUser.status !== 'active') return alert('Solo se puede simular usuarios activos');
+
+  // Save real admin session
+  realAdminSession = { user: { ...currentUser } };
+
+  // Swap currentUser (token stays — admin token has full API access)
+  currentUser = {
+    id: targetUser.id,
+    name: targetUser.name,
+    email: targetUser.email,
+    role: targetUser.role,
+    especialidad: targetUser.especialidad || '',
+    institucion: targetUser.institucion || '',
+    foto_url: targetUser.foto_url || null,
+    color_primario: targetUser.color_primario || '#1a6b3c',
+    plan: targetUser.plan || 'free',
+  };
+
+  // Re-render full app as the impersonated user
+  showApp();
+}
+
+function stopImpersonation() {
+  if (!realAdminSession) return;
+  currentUser = realAdminSession.user;
+  realAdminSession = null;
+  showApp();
+  // Return to admin panel after restoring
+  setTimeout(() => showSection('admin'), 50);
+}
+
 // ── PANEL ADMINISTRADOR ────────────────────────────────────────────
 async function showAdminPanel() {
   const c = document.getElementById('mainContent');
@@ -2726,6 +2786,9 @@ async function showAdminPanel() {
     const active   = users.filter(u => u.status === 'active');
     const rejected = users.filter(u => u.status === 'rejected');
 
+    // Store users in global map for impersonation
+    users.forEach(u => { adminUsersMap[u.id] = u; });
+
     const userRow = (u) => {
       const initials = (u.name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
       const avatarEl = u.foto_url
@@ -2734,6 +2797,13 @@ async function showAdminPanel() {
       const statusBadge = `<span class="badge badge-${u.status||'active'}">${u.status||'active'}</span>`;
       const planBadge   = `<span class="plan-${u.plan||'free'}">${u.plan||'free'}</span>`;
       const rolLabel    = {admin:'Admin',medico:'Médico',recepcion:'Recepción',enfermera:'Enfermera'}[u.role]||u.role;
+      const isSelf = u.id === currentUser?.id;
+      const impersonateBtn = (!isSelf && u.status === 'active') ? `
+        <button onclick="startImpersonation('${u.id}')"
+          style="background:#d97706;color:#fff;border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:0.8rem;font-weight:600;display:flex;align-items:center;gap:5px"
+          title="Ver el sistema como este usuario">
+          👁 Ver como
+        </button>` : (isSelf ? `<span style="font-size:0.75rem;color:#a0aec0;padding:5px 12px">Tú</span>` : '');
       const actions = u.status === 'pending' ? `
         <button class="btn btn-primary btn-sm" style="width:auto" onclick="adminUpdateUser('${u.id}','active')">✓ Aprobar</button>
         <button class="btn btn-danger btn-sm" onclick="adminUpdateUser('${u.id}','rejected')">✕ Rechazar</button>` :
@@ -2750,7 +2820,7 @@ async function showAdminPanel() {
           <div class="user-row-name">${u.name} &nbsp;${statusBadge} ${planBadge}</div>
           <div class="user-row-meta">${u.email} · ${rolLabel} ${u.especialidad?'· '+u.especialidad:''} ${u.institucion?'· '+u.institucion:''}</div>
         </div>
-        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">${actions}</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">${impersonateBtn}${actions}</div>
       </div>`;
     };
 
