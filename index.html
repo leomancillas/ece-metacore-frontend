@@ -689,25 +689,199 @@ function showSection(s) {
   else if (s === 'admin') showAdminPanel();
 }
 
-// ── DASHBOARD ──────────────────────────────────────────────────────
+// ── DASHBOARD PERSONALIZADO ────────────────────────────────────────
 async function renderDashboard() {
   const c = document.getElementById('mainContent');
-  c.innerHTML = '<p class="loading">Cargando...</p>';
-  try {
-    const data = await api('/api/patients?limit=5');
-    c.innerHTML = `<div class="section-title">Dashboard</div>
-      <div class="stats-grid">
-        <div class="stat-card"><div class="stat-num">${data.count || 0}</div><div class="stat-label">Pacientes registrados</div></div>
-        <div class="stat-card"><div class="stat-num">NOM</div><div class="stat-label">004-SSA3-2012</div></div>
-        <div class="stat-card"><div class="stat-num">🎤</div><div class="stat-label">Dictado por voz activo</div></div>
+  const role = currentUser?.role || 'medico';
+  const now = new Date();
+  const greeting = now.getHours() < 12 ? 'Buenos días' : now.getHours() < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const dayNames = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const dateStr = `${dayNames[now.getDay()]} ${now.getDate()} de ${monthNames[now.getMonth()]}, ${now.getFullYear()}`;
+  const roleLabel = { medico:'Médico', admin:'Administrador', recepcion:'Recepción', enfermera:'Enfermera' };
+  const roleColor = { medico:'var(--primary)', admin:'#7c3aed', recepcion:'#2b6cb0', enfermera:'#b7791f' };
+
+  c.innerHTML = `
+    <!-- HERO GREETING -->
+    <div style="background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);border-radius:16px;padding:24px 28px;margin-bottom:22px;color:#fff;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+      <div id="heroAvatar" style="width:56px;height:56px;border-radius:50%;border:3px solid rgba(255,255,255,0.5);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.5rem;background:rgba(255,255,255,0.2)"></div>
+      <div style="flex:1;min-width:180px">
+        <div style="font-size:0.8rem;opacity:0.85;text-transform:uppercase;letter-spacing:1px">${dateStr}</div>
+        <div style="font-size:1.6rem;font-weight:800;margin:2px 0">${greeting}, ${(currentUser?.name || '').split(' ')[0]}</div>
+        <div style="opacity:0.9;font-size:0.9rem">
+          <span style="background:rgba(255,255,255,0.2);padding:2px 10px;border-radius:12px;font-weight:600">${roleLabel[role]||role}</span>
+          ${currentUser?.especialidad ? `&nbsp;·&nbsp;${currentUser.especialidad}` : ''}
+          ${currentUser?.institucion  ? `&nbsp;·&nbsp;${currentUser.institucion}` : ''}
+        </div>
       </div>
-      <div class="card">
-        <div class="card-header"><span class="card-title">Ultimos pacientes</span><button class="btn btn-primary btn-sm" style="width:auto" onclick="showSection('patients')">Ver todos</button></div>
-        <table><thead><tr><th>Expediente</th><th>Paciente</th><th>Nacimiento</th><th>Sexo</th></tr></thead>
-        <tbody>${(data.patients || []).map(p => `<tr onclick="viewPatient('${p.id}')" style="cursor:pointer"><td><span class="badge badge-blue">${p.expediente}</span></td><td>${p.nombre} ${p.apellido_paterno}</td><td>${p.fecha_nacimiento?.split('T')[0] || ''}</td><td>${p.sexo || '-'}</td></tr>`).join('') || '<tr><td colspan=4 style="text-align:center;color:#a0aec0">Sin pacientes aun</td></tr>'}
-        </tbody></table>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        ${role !== 'recepcion' ? `<button onclick="showSection('patients')" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600">🖊 Nueva nota</button>` : ''}
+        <button onclick="showSection('patients')" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600">👥 Pacientes</button>
+      </div>
+    </div>
+    <p class="loading" id="dashLoading">Cargando datos…</p>`;
+
+  // Set hero avatar
+  const ha = document.getElementById('heroAvatar');
+  if (ha) {
+    if (currentUser?.foto_url) {
+      ha.innerHTML = `<img src="${currentUser.foto_url}" style="width:100%;height:100%;object-fit:cover">`;
+    } else {
+      const initials = (currentUser?.name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+      ha.textContent = initials;
+    }
+  }
+
+  try {
+    // Fetch in parallel based on role
+    const requests = [
+      api('/api/patients?limit=6'),
+      api('/api/stats/my'),
+      api('/api/stats/agenda?days=7'),
+    ];
+    if (role === 'admin') requests.push(api('/api/stats/users?month=' + now.toISOString().slice(0,7)));
+
+    const [patientsData, myStats, agenda, usersData] = await Promise.all(requests);
+    document.getElementById('dashLoading')?.remove();
+
+    // ── Stats row ──────────────────────────────────────────────────
+    const statsHtml = role !== 'recepcion' ? `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:22px">
+        ${dashStatCard('🩺', myStats.notas_mes ?? 0, 'Consultas este mes', 'var(--primary)')}
+        ${dashStatCard('👥', myStats.pacientes_total ?? 0, 'Pacientes totales', '#2b6cb0')}
+        ${dashStatCard('⏱️', myStats.tiempo_promedio ? myStats.tiempo_promedio + ' min' : '—', 'Duración promedio', '#6b46c1')}
+        ${dashStatCard('📋', myStats.notas_total ?? 0, 'Notas históricas', '#c05621')}
+      </div>` : '';
+
+    // ── Today's agenda ─────────────────────────────────────────────
+    const todayCitas = (agenda || []).filter(a => {
+      const d = new Date(a.fecha_cita);
+      return d.toDateString() === now.toDateString();
+    });
+    const futureCitas = (agenda || []).filter(a => {
+      const d = new Date(a.fecha_cita);
+      return d.toDateString() !== now.toDateString();
+    }).slice(0, 5);
+
+    const citaRow = (a, compact) => {
+      const d = new Date(a.fecha_cita);
+      const timeStr = d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+      const dateShort = compact ? '' : `<span style="font-size:0.75rem;color:var(--text-secondary)">${d.toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'})}</span>`;
+      const estadoColor = {programada:'#2b6cb0',atendida:'#276749',cancelada:'#9b2c2c'}[a.estado]||'#718096';
+      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer" onclick="viewPatient('${a.patient_id || ''}')">
+        <div style="background:var(--primary);color:#fff;border-radius:6px;padding:4px 8px;font-size:0.85rem;font-weight:700;white-space:nowrap">${timeStr}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.paciente_ap}, ${a.paciente_nombre}</div>
+          <div style="font-size:0.78rem;color:var(--text-secondary)">${a.motivo||a.especialidad||'Consulta'} ${dateShort}</div>
+        </div>
+        <span style="background:${estadoColor}22;color:${estadoColor};font-size:0.72rem;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap">${a.estado}</span>
       </div>`;
-  } catch (e) { c.innerHTML = '<p class="error-msg">' + e.message + '</p>'; }
+    };
+
+    const agendaHtml = `
+      <div style="display:grid;grid-template-columns:${futureCitas.length?`1fr 1fr`:`1fr`};gap:16px;margin-bottom:22px">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden">
+          <div style="padding:12px 16px;font-weight:700;border-bottom:1px solid var(--border);background:var(--bg-secondary);display:flex;justify-content:space-between;align-items:center">
+            <span>🗓 Hoy — ${todayCitas.length} cita${todayCitas.length!==1?'s':''}</span>
+            <span style="font-size:0.78rem;color:var(--text-secondary)">${now.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}</span>
+          </div>
+          ${todayCitas.length ? todayCitas.map(a=>citaRow(a,true)).join('') : `<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:0.9rem">Sin citas programadas para hoy</div>`}
+        </div>
+        ${futureCitas.length ? `
+        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden">
+          <div style="padding:12px 16px;font-weight:700;border-bottom:1px solid var(--border);background:var(--bg-secondary)">📅 Próximas citas</div>
+          ${futureCitas.map(a=>citaRow(a,false)).join('')}
+        </div>` : ''}
+      </div>`;
+
+    // ── Recent patients ────────────────────────────────────────────
+    const patients = patientsData?.patients || [];
+    const patientsHtml = `
+      <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:22px">
+        <div style="padding:12px 16px;font-weight:700;border-bottom:1px solid var(--border);background:var(--bg-secondary);display:flex;justify-content:space-between;align-items:center">
+          <span>👥 ${role==='recepcion'?'Pacientes recientes':'Mis pacientes recientes'}</span>
+          <button onclick="showSection('patients')" style="background:none;border:1px solid var(--border);color:var(--primary);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:0.8rem;font-weight:600">Ver todos →</button>
+        </div>
+        ${patients.length ? `
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:0.87rem">
+            <thead><tr style="background:var(--bg-secondary);font-size:0.75rem;text-transform:uppercase;color:var(--text-secondary)">
+              <th style="padding:7px 14px;text-align:left">Expediente</th>
+              <th style="padding:7px 14px;text-align:left">Paciente</th>
+              <th style="padding:7px 14px;text-align:left">Edad</th>
+              <th style="padding:7px 14px;text-align:left">Acciones</th>
+            </tr></thead>
+            <tbody>${patients.map(p => {
+              const age = p.fecha_nacimiento ? Math.floor((Date.now()-new Date(p.fecha_nacimiento).getTime())/31557600000) : '—';
+              return `<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="viewPatient('${p.id}')">
+                <td style="padding:9px 14px"><span class="badge badge-blue">${p.expediente}</span></td>
+                <td style="padding:9px 14px;font-weight:600">${p.apellido_paterno} ${p.apellido_materno||''}, ${p.nombre}</td>
+                <td style="padding:9px 14px;color:var(--text-secondary)">${age} años</td>
+                <td style="padding:9px 14px"><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();viewPatient('${p.id}')">Ver expediente</button></td>
+              </tr>`;
+            }).join('')}</tbody>
+          </table>
+        </div>` : `<div style="padding:24px;text-align:center;color:var(--text-secondary)">Sin pacientes registrados. <a href="#" onclick="openNewPatient();return false" style="color:var(--primary)">Registrar el primero</a></div>`}
+      </div>`;
+
+    // ── Admin: team overview ───────────────────────────────────────
+    let teamHtml = '';
+    if (role === 'admin' && usersData?.users?.length) {
+      const topUsers = usersData.users.slice(0, 4);
+      teamHtml = `
+        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:22px">
+          <div style="padding:12px 16px;font-weight:700;border-bottom:1px solid var(--border);background:var(--bg-secondary);display:flex;justify-content:space-between;align-items:center">
+            <span>🏅 Equipo este mes</span>
+            <button onclick="showSection('indicators')" style="background:none;border:1px solid var(--border);color:var(--primary);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:0.8rem;font-weight:600">Ver indicadores →</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0">
+            ${topUsers.map((u,i)=>`
+              <div style="padding:14px 16px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                  <span style="font-size:1.1rem">${['🥇','🥈','🥉','🎖️'][i]||'🎖️'}</span>
+                  <span style="font-weight:700;font-size:0.9rem">${u.name||'—'}</span>
+                </div>
+                <div style="font-size:0.78rem;color:var(--text-secondary)">${u.especialidad||'Médico'}</div>
+                <div style="display:flex;gap:12px;margin-top:8px">
+                  <span style="font-size:1.1rem;font-weight:800;color:var(--primary)">${u.notas_mes}</span><span style="font-size:0.75rem;color:var(--text-secondary);align-self:flex-end">consultas</span>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>`;
+    }
+
+    // ── Quick actions ──────────────────────────────────────────────
+    const quickActions = [
+      role!=='recepcion' ? {icon:'🖊',label:'Nueva nota clínica',action:`showSection('patients')`,color:'var(--primary)'} : null,
+      {icon:'👤',label:'Nuevo paciente',action:`openNewPatient()`,color:'#2b6cb0'},
+      role!=='recepcion' ? {icon:'📈',label:'Ver indicadores',action:`showSection('indicators')`,color:'#6b46c1'} : null,
+      role!=='recepcion' ? {icon:'🤖',label:'Asistente IA',action:`showSection('research')`,color:'#c05621'} : null,
+    ].filter(Boolean);
+
+    const quickActionsHtml = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px">
+        ${quickActions.map(a=>`
+          <button onclick="${a.action}" style="background:#fff;border:2px solid ${a.color}22;border-radius:12px;padding:16px;cursor:pointer;text-align:left;transition:all 0.15s">
+            <div style="font-size:1.6rem;margin-bottom:6px">${a.icon}</div>
+            <div style="font-weight:600;font-size:0.88rem;color:${a.color}">${a.label}</div>
+          </button>`).join('')}
+      </div>`;
+
+    c.insertAdjacentHTML('beforeend', statsHtml + agendaHtml + quickActionsHtml + teamHtml + patientsHtml);
+
+  } catch (e) {
+    document.getElementById('dashLoading').textContent = 'Error: ' + e.message;
+  }
+}
+
+function dashStatCard(icon, val, label, color) {
+  return `<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px">
+    <div style="font-size:1.8rem;flex-shrink:0">${icon}</div>
+    <div>
+      <div style="font-size:1.4rem;font-weight:800;color:${color};line-height:1">${val}</div>
+      <div style="font-size:0.72rem;color:var(--text-secondary);margin-top:2px">${label}</div>
+    </div>
+  </div>`;
 }
 
 // ── PACIENTES ──────────────────────────────────────────────────────
