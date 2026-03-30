@@ -397,6 +397,9 @@
       <label>Notas adicionales</label>
       <textarea id="cita_notas" rows="2" placeholder="Indicaciones previas, preparación especial..."></textarea>
     </div>
+    <div style="background:#f0f9ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;margin-top:8px;font-size:0.82rem;color:#1e40af">
+      <b>💡 Google Calendar:</b> Al guardar, aparecerá un botón junto a la cita para agregarla directamente a tu Google Calendar con un click.
+    </div>
     <p id="citaError" class="error-msg"></p>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
       <button class="btn btn-secondary" onclick="closeModal('citaModal')">Cancelar</button>
@@ -1814,23 +1817,47 @@ function toggleLabView() {
 }
 
 // ── CITAS ──────────────────────────────────────────────────────────
+function buildGCalUrl(cita, patientName) {
+  const dt = new Date(cita.fecha_cita);
+  const end = new Date(dt.getTime() + 60*60*1000); // +1 hora
+  const fmt = d => d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+  const title = encodeURIComponent(`Consulta: ${patientName} — ${cita.motivo || cita.especialidad || 'Cita médica'}`);
+  const dates = `${fmt(dt)}/${fmt(end)}`;
+  const details = encodeURIComponent(
+    `Paciente: ${patientName}\n` +
+    (cita.especialidad ? `Especialidad: ${cita.especialidad}\n` : '') +
+    (cita.notas ? `Notas: ${cita.notas}\n` : '') +
+    `\nCreado desde ECE META CORE`
+  );
+  const location = encodeURIComponent('Consultorio médico');
+  return `https://calendar.google.com/calendar/r/eventedit?text=${title}&dates=${dates}&details=${details}&location=${location}`;
+}
+
 function renderCitasList(citas) {
   if (!citas || !citas.length) return '<p class="empty-state" style="padding:20px">Sin citas programadas. Usa el botón para agendar.</p>';
   const estadoClass = { programada: 'cita-programada', completada: 'cita-completada', cancelada: 'cita-cancelada' };
+  const patName = currentPatient ? `${currentPatient.nombre} ${currentPatient.apellido_paterno}` : 'Paciente';
   return citas.sort((a,b) => new Date(a.fecha_cita)-new Date(b.fecha_cita)).map(c => {
     const dt = new Date(c.fecha_cita);
     const dateStr = dt.toLocaleDateString('es-MX',{weekday:'short',day:'2-digit',month:'short'});
     const timeStr = dt.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
     const cls = estadoClass[c.estado] || 'cita-programada';
+    const gcalUrl = buildGCalUrl(c, patName);
     return `<div class="cita-card">
       <div class="cita-date">${dateStr}<br><small>${timeStr}</small></div>
       <div class="cita-body">
         <div class="cita-motivo">${c.motivo || 'Consulta'}</div>
-        <div class="cita-meta">${c.especialidad || ''} ${c.doctor_name ? '· Dr. '+c.doctor_name : ''} ${c.notas ? '· '+c.notas : ''}</div>
+        <div class="cita-meta">${c.especialidad ? c.especialidad+' · ' : ''}${c.doctor_name ? 'Dr. '+c.doctor_name+' · ' : ''}${c.notas || ''}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end" class="no-print">
         <span class="cita-estado ${cls}">${c.estado}</span>
-        ${c.estado==='programada' ? `<button class="btn btn-secondary btn-sm" onclick="updateCitaEstado('${c.id}','completada')">✓ Completar</button>` : ''}
+        ${c.estado==='programada' ? `
+          <a href="${gcalUrl}" target="_blank" title="Abrir en Google Calendar"
+             style="font-size:0.75rem;color:#1a73e8;text-decoration:none;font-weight:600;display:flex;align-items:center;gap:3px">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="#1a73e8"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>
+            Google Cal
+          </a>
+          <button class="btn btn-secondary btn-sm" onclick="updateCitaEstado('${c.id}','completada')">✓ Completar</button>` : ''}
         <button class="btn btn-danger btn-sm" onclick="deleteCita('${c.id}')">🗑</button>
       </div>
     </div>`;
