@@ -162,6 +162,33 @@
     /* PDF export button */
     .btn-pdf { background: #dc2626; color: white; border: none; border-radius: 8px; padding: 7px 14px; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
     .btn-pdf:hover { background: #b91c1c; }
+    /* Avatar / navbar */
+    .nav-avatar { width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.5);cursor:pointer;flex-shrink:0; }
+    .nav-avatar-placeholder { width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;cursor:pointer;border:2px solid rgba(255,255,255,0.4);flex-shrink:0; }
+    /* Perfil modal */
+    .color-palette { display:flex;gap:8px;flex-wrap:wrap;margin-top:6px; }
+    .color-swatch { width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all 0.15s; }
+    .color-swatch:hover,.color-swatch.active { border-color: #fff; box-shadow:0 0 0 2px #000; transform:scale(1.1); }
+    .foto-preview { width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--border);display:block;margin:0 auto 10px; }
+    .foto-upload-btn { display:block;text-align:center;padding:7px 16px;background:#edf2f7;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;color:#4a5568;border:2px dashed var(--border);transition:all 0.2s; }
+    .foto-upload-btn:hover { background:#e2e8f0; }
+    /* Admin panel */
+    .user-row { display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);transition:background 0.15s; }
+    .user-row:hover { background:#f7fafc; }
+    .user-row-avatar { width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-weight:700;color:#718096; }
+    .user-row-info { flex:1; }
+    .user-row-name { font-weight:600;font-size:0.9rem; }
+    .user-row-meta { font-size:0.78rem;color:#718096; }
+    .badge-pending { background:#fef3c7;color:#92400e; }
+    .badge-active  { background:#c6f6d5;color:#276749; }
+    .badge-rejected{ background:#fed7d7;color:#9b2c2c; }
+    /* Plan badges */
+    .plan-free { background:#e2e8f0;color:#4a5568;padding:2px 8px;border-radius:8px;font-size:0.7rem;font-weight:700; }
+    .plan-basic { background:#bee3f8;color:#2a69ac;padding:2px 8px;border-radius:8px;font-size:0.7rem;font-weight:700; }
+    .plan-pro { background:#e9d8fd;color:#553c9a;padding:2px 8px;border-radius:8px;font-size:0.7rem;font-weight:700; }
+    /* Register request form */
+    .register-link { text-align:center;margin-top:16px;font-size:0.85rem; }
+    .register-link a { color:#9ae6b4;cursor:pointer;text-decoration:underline; }
     @media print {
       .no-print { display: none !important; }
       .card { box-shadow: none !important; border: 1px solid #ccc !important; }
@@ -188,8 +215,24 @@
       <input type="password" id="loginPassword" placeholder="••••••">
     </div>
     <p id="loginError" class="error-msg"></p>
-    <button class="btn btn-primary" onclick="doLogin()">Iniciar sesion</button>
-    <p style="text-align:center;margin-top:16px;font-size:0.8rem;color:#a0aec0;">ECE META CORE 2026 · NOM-004-SSA3-2012</p>
+    <button class="btn btn-primary" onclick="doLogin()">Iniciar sesión</button>
+    <div class="register-link">
+      <a onclick="showRegisterForm()">¿Primera vez? Solicitar acceso</a>
+    </div>
+    <p style="text-align:center;margin-top:12px;font-size:0.8rem;color:#a0aec0;">ECE META CORE 2026 · NOM-004-SSA3-2012</p>
+    <!-- Register request form (hidden by default) -->
+    <div id="registerForm" style="display:none;margin-top:16px;border-top:1px solid #e2e8f0;padding-top:16px">
+      <p style="font-weight:700;color:var(--primary);margin-bottom:12px;font-size:0.95rem">Solicitud de acceso</p>
+      <div class="form-group"><label>Nombre completo *</label><input id="reg_name" placeholder="Dra. Ana Martínez López"></div>
+      <div class="form-group"><label>Correo *</label><input type="email" id="reg_email" placeholder="ana@hospital.mx"></div>
+      <div class="form-group"><label>Contraseña *</label><input type="password" id="reg_pass" placeholder="Mínimo 8 caracteres"></div>
+      <div class="form-group"><label>Especialidad</label><input id="reg_esp" placeholder="Medicina Interna, Cardiología..."></div>
+      <div class="form-group"><label>Institución</label><input id="reg_inst" placeholder="Hospital, clínica u organización"></div>
+      <p id="reg_error" class="error-msg"></p>
+      <p id="reg_ok" style="color:#276749;font-size:0.85rem;display:none">✅ Solicitud enviada. Recibirás acceso una vez que el administrador la apruebe.</p>
+      <button class="btn btn-primary" onclick="submitAccessRequest()">Enviar solicitud</button>
+      <button class="btn btn-secondary" style="width:100%;margin-top:8px" onclick="document.getElementById('registerForm').style.display='none'">Cancelar</button>
+    </div>
   </div>
 </div>
 
@@ -197,14 +240,16 @@
 <div id="app">
   <nav>
     <h1>ECE META CORE</h1>
-    <span class="user-info" id="navUser"></span>
-    <button onclick="logout()">Salir</button>
+    <span class="user-info" id="navUser" style="margin-right:8px"></span>
+    <div id="navAvatar" onclick="openProfileModal()" title="Mi perfil" style="cursor:pointer"></div>
+    <button onclick="logout()" style="margin-left:8px">Salir</button>
   </nav>
   <div class="main-layout">
     <div class="sidebar">
       <a href="#" class="active" onclick="showSection('dashboard')">📊 Dashboard</a>
       <a href="#" onclick="showSection('patients')">👥 Pacientes</a>
       <a href="#" onclick="showSection('research')">🤖 Asistente IA</a>
+      <a href="#" id="sidebarAdmin" style="display:none" onclick="showSection('admin')">⚙️ Administrador</a>
     </div>
     <div class="content" id="mainContent"></div>
   </div>
@@ -371,6 +416,51 @@
     </div>
 
     <p id="labModalError" class="error-msg" style="margin-top:8px"></p>
+  </div>
+</div>
+
+<!-- MODAL PERFIL DE USUARIO -->
+<div class="modal-overlay" id="profileModal">
+  <div class="modal" style="width:520px">
+    <div class="modal-header">
+      <h2 class="modal-title">👤 Mi Perfil</h2>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('profileModal')">✕</button>
+    </div>
+    <!-- Foto -->
+    <div style="text-align:center;margin-bottom:16px">
+      <img id="profileFotoPreview" class="foto-preview" src="" style="display:none">
+      <div id="profileFotoPlaceholder" style="width:90px;height:90px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:2rem;color:white;margin:0 auto 10px;font-weight:700" id="profileInitials"></div>
+      <label class="foto-upload-btn" style="max-width:200px;margin:0 auto">
+        📷 Cambiar foto
+        <input type="file" accept="image/*" style="display:none" onchange="handleFotoUpload(this)">
+      </label>
+    </div>
+    <div class="grid-2">
+      <div class="form-group"><label>Nombre completo</label><input id="prof_name" placeholder="Dr. Leonardo Mancillas"></div>
+      <div class="form-group"><label>Especialidad</label><input id="prof_esp" placeholder="Medicina Interna"></div>
+    </div>
+    <div class="form-group"><label>Institución</label><input id="prof_inst" placeholder="Hospital Zambrano Hellion, UANL..."></div>
+    <!-- Paleta de colores -->
+    <div class="form-group">
+      <label>Color del sistema</label>
+      <div class="color-palette" id="colorPalette">
+        <div class="color-swatch" data-color="#1a6b3c" style="background:#1a6b3c" title="Verde médico" onclick="selectColor(this)"></div>
+        <div class="color-swatch" data-color="#1e40af" style="background:#1e40af" title="Azul profundo" onclick="selectColor(this)"></div>
+        <div class="color-swatch" data-color="#0f766e" style="background:#0f766e" title="Teal" onclick="selectColor(this)"></div>
+        <div class="color-swatch" data-color="#6b21a8" style="background:#6b21a8" title="Púrpura" onclick="selectColor(this)"></div>
+        <div class="color-swatch" data-color="#9f1239" style="background:#9f1239" title="Granate" onclick="selectColor(this)"></div>
+        <div class="color-swatch" data-color="#b45309" style="background:#b45309" title="Ámbar" onclick="selectColor(this)"></div>
+        <div class="color-swatch" data-color="#374151" style="background:#374151" title="Grafito" onclick="selectColor(this)"></div>
+        <input type="color" id="customColorPicker" value="#1a6b3c" oninput="selectCustomColor(this.value)"
+          style="width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;padding:0" title="Color personalizado">
+      </div>
+    </div>
+    <p id="profileError" class="error-msg"></p>
+    <p id="profileOk" style="color:#276749;font-size:0.85rem;display:none">✅ Perfil actualizado</p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-secondary" onclick="closeModal('profileModal')">Cancelar</button>
+      <button class="btn btn-primary" style="width:auto" onclick="saveProfile()">💾 Guardar cambios</button>
+    </div>
   </div>
 </div>
 
@@ -566,20 +656,28 @@ function showApp() {
   const rolLabel = { medico: 'Médico', admin: 'Administrador', recepcion: 'Recepción', enfermera: 'Enfermera' };
   const badge = isMedico() ? '' : ` <span style="background:#fed7d7;color:#9b2c2c;font-size:0.7rem;padding:2px 8px;border-radius:8px;font-weight:700">${rolLabel[currentUser.role]||currentUser.role}</span>`;
   document.getElementById('navUser').innerHTML = (currentUser?.name || '') + badge;
+  // Apply per-user color theme
+  applyUserTheme(currentUser?.color_primario);
+  // Render avatar in navbar
+  renderNavAvatar();
   // Hide research/AI section for recepcion role
   const sidebar = document.querySelectorAll('.sidebar a');
   if (!isMedico() && sidebar[2]) sidebar[2].style.display = 'none';
+  // Show admin panel link for admin users
+  const adminLink = document.getElementById('sidebarAdmin');
+  if (adminLink) adminLink.style.display = currentUser?.role === 'admin' ? '' : 'none';
   showSection('dashboard');
 }
 
 // ── NAVEGACION ─────────────────────────────────────────────────────
 function showSection(s) {
   document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-  const idx = ['dashboard','patients','research'].indexOf(s);
-  if (idx >= 0) document.querySelectorAll('.sidebar a')[idx].classList.add('active');
+  const idx = ['dashboard','patients','research','admin'].indexOf(s);
+  if (idx >= 0) document.querySelectorAll('.sidebar a')[idx]?.classList.add('active');
   if (s === 'dashboard') renderDashboard();
   else if (s === 'patients') renderPatients();
   else if (s === 'research') renderResearch();
+  else if (s === 'admin') showAdminPanel();
 }
 
 // ── DASHBOARD ──────────────────────────────────────────────────────
@@ -1830,6 +1928,212 @@ function clearTranscript() {
   if (el) el.value = '';
   const st = document.getElementById('analyzeStatus');
   if (st) st.style.display = 'none';
+}
+
+// ── TEMA DINÁMICO ──────────────────────────────────────────────────
+function applyUserTheme(color) {
+  if (!color) return;
+  const root = document.documentElement;
+  root.style.setProperty('--primary', color);
+  // Auto-generate lighter accent (+30% lightness via simple tint)
+  const hex = color.replace('#','');
+  const r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
+  const lr = Math.min(255, r + Math.round((255-r)*0.35));
+  const lg = Math.min(255, g + Math.round((255-g)*0.35));
+  const lb = Math.min(255, b + Math.round((255-b)*0.35));
+  const light = '#' + [lr,lg,lb].map(x=>x.toString(16).padStart(2,'0')).join('');
+  root.style.setProperty('--primary-light', light);
+}
+
+// ── PERFIL ─────────────────────────────────────────────────────────
+let profileFotoBase64 = null;
+let selectedColor = null;
+
+function renderNavAvatar() {
+  const el = document.getElementById('navAvatar');
+  if (!el) return;
+  if (currentUser?.foto_url) {
+    el.innerHTML = `<img src="${currentUser.foto_url}" class="nav-avatar" onclick="openProfileModal()" title="Mi perfil">`;
+  } else {
+    const initials = (currentUser?.name || 'U').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    el.innerHTML = `<div class="nav-avatar-placeholder" onclick="openProfileModal()" title="Mi perfil">${initials}</div>`;
+  }
+}
+
+function openProfileModal() {
+  document.getElementById('prof_name').value  = currentUser?.name || '';
+  document.getElementById('prof_esp').value   = currentUser?.especialidad || '';
+  document.getElementById('prof_inst').value  = currentUser?.institucion || '';
+  document.getElementById('profileError').textContent = '';
+  document.getElementById('profileOk').style.display = 'none';
+  profileFotoBase64 = null;
+  selectedColor = currentUser?.color_primario || '#1a6b3c';
+  // Show current photo or initials
+  const preview = document.getElementById('profileFotoPreview');
+  const placeholder = document.getElementById('profileFotoPlaceholder');
+  if (currentUser?.foto_url) {
+    preview.src = currentUser.foto_url; preview.style.display = 'block'; placeholder.style.display = 'none';
+  } else {
+    const initials = (currentUser?.name || 'U').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    placeholder.textContent = initials; placeholder.style.display = 'flex'; preview.style.display = 'none';
+  }
+  // Highlight current color swatch
+  document.querySelectorAll('.color-swatch').forEach(s => {
+    s.classList.toggle('active', s.dataset.color === selectedColor);
+  });
+  document.getElementById('profileModal').classList.add('open');
+}
+
+function handleFotoUpload(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    profileFotoBase64 = e.target.result;
+    const preview = document.getElementById('profileFotoPreview');
+    const placeholder = document.getElementById('profileFotoPlaceholder');
+    preview.src = profileFotoBase64; preview.style.display = 'block'; placeholder.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function selectColor(el) {
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  selectedColor = el.dataset.color;
+  applyUserTheme(selectedColor);
+}
+
+function selectCustomColor(val) {
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+  selectedColor = val;
+  applyUserTheme(val);
+}
+
+async function saveProfile() {
+  const name        = document.getElementById('prof_name').value.trim();
+  const especialidad= document.getElementById('prof_esp').value.trim();
+  const institucion = document.getElementById('prof_inst').value.trim();
+  const body = {};
+  if (name) body.name = name;
+  if (especialidad) body.especialidad = especialidad;
+  if (institucion)  body.institucion  = institucion;
+  if (selectedColor) body.color_primario = selectedColor;
+  if (profileFotoBase64) body.foto_url = profileFotoBase64;
+  try {
+    const updated = await api('/api/profile', { method:'PUT', body: JSON.stringify(body) });
+    currentUser = { ...currentUser, ...updated };
+    localStorage.setItem('ece_user', JSON.stringify(currentUser));
+    applyUserTheme(currentUser.color_primario);
+    renderNavAvatar();
+    document.getElementById('navUser').textContent = currentUser.name || '';
+    document.getElementById('profileOk').style.display = '';
+    setTimeout(() => closeModal('profileModal'), 1200);
+  } catch(e) { document.getElementById('profileError').textContent = e.message; }
+}
+
+// ── SOLICITAR ACCESO ───────────────────────────────────────────────
+function showRegisterForm() {
+  document.getElementById('registerForm').style.display = '';
+  document.getElementById('reg_error').textContent = '';
+  document.getElementById('reg_ok').style.display = 'none';
+}
+
+async function submitAccessRequest() {
+  const name   = document.getElementById('reg_name').value.trim();
+  const email  = document.getElementById('reg_email').value.trim();
+  const pass   = document.getElementById('reg_pass').value;
+  const esp    = document.getElementById('reg_esp').value.trim();
+  const inst   = document.getElementById('reg_inst').value.trim();
+  if (!name || !email || !pass) {
+    document.getElementById('reg_error').textContent = 'Nombre, correo y contraseña son requeridos.'; return;
+  }
+  if (pass.length < 8) {
+    document.getElementById('reg_error').textContent = 'La contraseña debe tener al menos 8 caracteres.'; return;
+  }
+  try {
+    await api('/api/auth/request-access', {
+      method: 'POST', body: JSON.stringify({ email, password:pass, name, especialidad:esp, institucion:inst })
+    });
+    document.getElementById('reg_ok').style.display = '';
+    document.getElementById('reg_error').textContent = '';
+    ['reg_name','reg_email','reg_pass','reg_esp','reg_inst'].forEach(id => { document.getElementById(id).value = ''; });
+  } catch(e) { document.getElementById('reg_error').textContent = e.message; }
+}
+
+// ── PANEL ADMINISTRADOR ────────────────────────────────────────────
+async function showAdminPanel() {
+  const c = document.getElementById('mainContent');
+  c.innerHTML = '<p class="loading">Cargando usuarios...</p>';
+  try {
+    const users = await api('/api/admin/users');
+    const pending  = users.filter(u => u.status === 'pending');
+    const active   = users.filter(u => u.status === 'active');
+    const rejected = users.filter(u => u.status === 'rejected');
+
+    const userRow = (u) => {
+      const initials = (u.name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+      const avatarEl = u.foto_url
+        ? `<img src="${u.foto_url}" class="user-row-avatar" style="width:38px;height:38px;border-radius:50%">`
+        : `<div class="user-row-avatar">${initials}</div>`;
+      const statusBadge = `<span class="badge badge-${u.status||'active'}">${u.status||'active'}</span>`;
+      const planBadge   = `<span class="plan-${u.plan||'free'}">${u.plan||'free'}</span>`;
+      const rolLabel    = {admin:'Admin',medico:'Médico',recepcion:'Recepción',enfermera:'Enfermera'}[u.role]||u.role;
+      const actions = u.status === 'pending' ? `
+        <button class="btn btn-primary btn-sm" style="width:auto" onclick="adminUpdateUser('${u.id}','active')">✓ Aprobar</button>
+        <button class="btn btn-danger btn-sm" onclick="adminUpdateUser('${u.id}','rejected')">✕ Rechazar</button>` :
+        u.status === 'active' ? `
+        <select onchange="adminUpdateRole('${u.id}',this.value)" style="font-size:0.8rem;padding:4px 8px;border-radius:6px;border:1px solid var(--border)">
+          <option value="medico" ${u.role==='medico'?'selected':''}>Médico</option>
+          <option value="recepcion" ${u.role==='recepcion'?'selected':''}>Recepción</option>
+          <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+        </select>
+        <button class="btn btn-danger btn-sm" onclick="adminDeactivate('${u.id}')">🚫</button>` :
+        `<button class="btn btn-secondary btn-sm" onclick="adminUpdateUser('${u.id}','active')">Reactivar</button>`;
+      return `<div class="user-row">${avatarEl}
+        <div class="user-row-info">
+          <div class="user-row-name">${u.name} &nbsp;${statusBadge} ${planBadge}</div>
+          <div class="user-row-meta">${u.email} · ${rolLabel} ${u.especialidad?'· '+u.especialidad:''} ${u.institucion?'· '+u.institucion:''}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">${actions}</div>
+      </div>`;
+    };
+
+    c.innerHTML = `
+      <div class="section-title">⚙️ Administrador · Usuarios</div>
+      ${pending.length ? `<div class="card" style="border-color:#f6ad55">
+        <div class="card-header"><span class="card-title" style="color:#d69e2e">⏳ Solicitudes pendientes (${pending.length})</span></div>
+        ${pending.map(userRow).join('')}
+      </div>` : ''}
+      <div class="card">
+        <div class="card-header"><span class="card-title">✅ Usuarios activos (${active.length})</span></div>
+        ${active.map(userRow).join('') || '<p class="empty-state">Sin usuarios activos</p>'}
+      </div>
+      ${rejected.length ? `<div class="card">
+        <div class="card-header"><span class="card-title" style="color:#c53030">🚫 Rechazados / Desactivados (${rejected.length})</span></div>
+        ${rejected.map(userRow).join('')}
+      </div>` : ''}`;
+  } catch(e) { c.innerHTML = `<p class="error-msg">${e.message}</p>`; }
+}
+
+async function adminUpdateUser(userId, status) {
+  try {
+    await api('/api/admin/users/' + userId, { method:'PUT', body: JSON.stringify({ status }) });
+    showAdminPanel();
+  } catch(e) { alert(e.message); }
+}
+
+async function adminUpdateRole(userId, role) {
+  try {
+    await api('/api/admin/users/' + userId, { method:'PUT', body: JSON.stringify({ role }) });
+  } catch(e) { alert(e.message); }
+}
+
+async function adminDeactivate(userId) {
+  if (!confirm('¿Desactivar este usuario?')) return;
+  try {
+    await api('/api/admin/users/' + userId, { method:'DELETE' });
+    showAdminPanel();
+  } catch(e) { alert(e.message); }
 }
 
 // ── SIGNOS VITALES ─────────────────────────────────────────────────
