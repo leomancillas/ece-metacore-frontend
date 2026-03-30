@@ -2304,7 +2304,15 @@ async function submitAccessRequest() {
 function generateEpicrisis() {
   if (!currentPatient) return;
   const pat = currentPatient;
-  const notes = [...currentNotes].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+  // Sort: historia_clinica first, then rest chronologically, prescriptions last
+  const notePriority = { historia_clinica: 0, urgencias: 1, evolucion: 2, interconsulta: 3, referencia: 4, egreso: 5, receta: 9 };
+  const notes = [...currentNotes].sort((a, b) => {
+    const pa = notePriority[a.tipo] ?? 2;
+    const pb = notePriority[b.tipo] ?? 2;
+    // historia_clinica always first; receta always last; same type → chronological
+    if (pa !== pb) return pa - pb;
+    return new Date(a.created_at) - new Date(b.created_at);
+  });
   const vitals = [...currentVitals].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
   const labs = [...currentLabs].sort((a,b) => new Date(a.fecha_toma||a.created_at) - new Date(b.fecha_toma||b.created_at));
   const citas = [...currentCitas].sort((a,b) => new Date(a.fecha_cita) - new Date(b.fecha_cita));
@@ -2374,47 +2382,96 @@ function generateEpicrisis() {
     </div>` : ''}
 
     <!-- EVOLUCIÓN CLÍNICA -->
-    <div class="epic-section" style="margin-bottom:20px">
-      <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#718096;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:12px">Evolución Clínica Cronológica (${notes.length} ${notes.length===1?'nota':'notas'})</div>
-      ${notes.length ? notes.map(n => {
+    ${(() => {
+      if (!notes.length) return `<div class="epic-section" style="margin-bottom:20px"><p style="color:#a0aec0;font-size:0.88rem">Sin notas clínicas registradas.</p></div>`;
+
+      const initialTypes  = new Set(['historia_clinica', 'urgencias']);
+      const followupTypes = new Set(['evolucion', 'interconsulta', 'referencia', 'egreso']);
+      const initialNotes  = notes.filter(n => initialTypes.has(n.tipo));
+      const followupNotes = notes.filter(n => followupTypes.has(n.tipo));
+      const rxNotes       = notes.filter(n => n.tipo === 'receta');
+
+      const noteContent = n => {
         const meta = parseNoteMeta(n);
-        const tipo = tipoLabel[n.tipo] || n.tipo || 'Nota';
-        const isReceta = n.tipo === 'receta';
-        let content = '';
-        if (isReceta) {
-          content = `<div style="font-size:0.83rem;color:#553c9a;font-style:italic">Prescripción emitida</div>`;
-        } else if (meta && meta._tipo === 'evolucion') {
-          content = `
-            ${meta.motivo ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Motivo:</b> ${meta.motivo}</div>` : ''}
-            ${meta.sintomas ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Síntomas:</b> ${meta.sintomas}</div>` : ''}
-            ${n.diagnostico ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Diagnóstico:</b> ${n.diagnostico}</div>` : ''}
-            ${meta.tx_farmaco ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Tratamiento:</b> ${meta.tx_farmaco}</div>` : ''}
-            ${meta.seguimiento ? `<div style="font-size:0.85rem"><b>Seguimiento:</b> ${meta.seguimiento}</div>` : ''}`;
-        } else if (meta && meta._tipo === 'historia_clinica') {
-          content = `
-            ${meta.padecimiento ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Padecimiento:</b> ${meta.padecimiento}</div>` : ''}
-            ${n.diagnostico ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Diagnóstico:</b> ${n.diagnostico}</div>` : ''}
-            ${meta.plan ? `<div style="font-size:0.85rem"><b>Plan:</b> ${meta.plan}</div>` : ''}`;
-        } else {
-          content = `
-            ${n.motivo_consulta ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Motivo:</b> ${n.motivo_consulta}</div>` : ''}
-            ${n.diagnostico ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Diagnóstico:</b> ${n.diagnostico}</div>` : ''}
-            ${n.plan_tratamiento && !n.plan_tratamiento.startsWith('{') ? `<div style="font-size:0.85rem"><b>Plan:</b> ${n.plan_tratamiento}</div>` : ''}`;
-        }
+        if (n.tipo === 'receta') return `<div style="font-size:0.83rem;color:#553c9a;font-style:italic">Prescripción emitida</div>`;
+        if (meta?._tipo === 'historia_clinica') return `
+          ${meta.ahf    ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>AHF:</b> ${meta.ahf}</div>` : ''}
+          ${meta.apnp   ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>APNP:</b> ${meta.apnp}</div>` : ''}
+          ${meta.app    ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>APP:</b> ${meta.app}</div>` : ''}
+          ${meta.padecimiento ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Padecimiento actual:</b> ${meta.padecimiento}</div>` : ''}
+          ${meta.interrogatorio ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Interrogatorio:</b> ${meta.interrogatorio}</div>` : ''}
+          ${meta.exfisica ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Exploración física:</b> ${meta.exfisica}</div>` : ''}
+          ${n.diagnostico ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Diagnóstico:</b> ${n.diagnostico}</div>` : ''}
+          ${meta.plan  ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Plan:</b> ${meta.plan}</div>` : ''}
+          ${meta.pronostico ? `<div style="font-size:0.85rem"><b>Pronóstico:</b> ${meta.pronostico}</div>` : ''}`;
+        if (meta?._tipo === 'evolucion') return `
+          ${meta.motivo   ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Motivo:</b> ${meta.motivo}</div>` : ''}
+          ${meta.sintomas ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Síntomas:</b> ${meta.sintomas}</div>` : ''}
+          ${meta.exfisica ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Exploración:</b> ${meta.exfisica}</div>` : ''}
+          ${n.diagnostico ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Diagnóstico:</b> ${n.diagnostico}</div>` : ''}
+          ${meta.tx_farmaco   ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Tratamiento:</b> ${meta.tx_farmaco}</div>` : ''}
+          ${meta.tx_nofarmaco ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Tx no farmacológico:</b> ${meta.tx_nofarmaco}</div>` : ''}
+          ${meta.seguimiento  ? `<div style="font-size:0.85rem"><b>Seguimiento:</b> ${meta.seguimiento}</div>` : ''}`;
+        if (meta?._tipo === 'urgencias') return `
+          ${meta.motivo        ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Motivo:</b> ${meta.motivo}</div>` : ''}
+          ${meta.estado_ingreso? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Estado al ingreso:</b> ${meta.estado_ingreso}</div>` : ''}
+          ${n.diagnostico      ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Diagnóstico:</b> ${n.diagnostico}</div>` : ''}
+          ${meta.tratamiento   ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Tratamiento:</b> ${meta.tratamiento}</div>` : ''}
+          ${meta.estado_egreso ? `<div style="font-size:0.85rem"><b>Estado al egreso:</b> ${meta.estado_egreso}</div>` : ''}`;
+        // generic fallback
         return `
-          <div style="display:flex;gap:12px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #f0f0f0">
-            <div style="flex-shrink:0;text-align:right;min-width:90px">
-              <div style="font-size:0.78rem;font-weight:700;color:#1a202c">${fmtDate(n.created_at)}</div>
-              <div style="font-size:0.7rem;color:#718096">${new Date(n.created_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</div>
-              ${n.duracion_minutos ? `<div style="font-size:0.68rem;color:#a0aec0">${n.duracion_minutos} min</div>` : ''}
+          ${n.motivo_consulta ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Motivo:</b> ${n.motivo_consulta}</div>` : ''}
+          ${n.diagnostico     ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Diagnóstico:</b> ${n.diagnostico}</div>` : ''}
+          ${n.plan_tratamiento && !n.plan_tratamiento.startsWith('{') ? `<div style="font-size:0.85rem"><b>Plan:</b> ${n.plan_tratamiento}</div>` : ''}`;
+      };
+
+      const noteRow = (n, accent) => `
+        <div style="display:flex;gap:14px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #f0f0f0">
+          <div style="flex-shrink:0;text-align:right;min-width:88px;padding-top:2px">
+            <div style="font-size:0.82rem;font-weight:700;color:#1a202c">${fmtDate(n.created_at)}</div>
+            <div style="font-size:0.72rem;color:#718096">${new Date(n.created_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</div>
+            ${n.duracion_minutos ? `<div style="font-size:0.68rem;color:#a0aec0;margin-top:2px">⏱ ${n.duracion_minutos} min</div>` : ''}
+          </div>
+          <div style="flex:1;border-left:3px solid ${accent};padding-left:12px">
+            <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:${accent};margin-bottom:5px">
+              ${tipoLabel[n.tipo]||n.tipo||'Nota'}
+              ${n.es_defuncion ? ` &nbsp;<span style="color:#e53e3e;background:#fff5f5;padding:1px 6px;border-radius:4px">🕊 DEFUNCIÓN</span>` : ''}
+              ${n.author_name  ? ` &nbsp;<span style="color:#a0aec0;font-weight:400;text-transform:none">· ${n.author_name}</span>` : ''}
             </div>
-            <div style="flex:1">
-              <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#553c9a;margin-bottom:4px">${tipo}${n.es_defuncion?` &nbsp;<span style="color:#e53e3e">· DEFUNCIÓN</span>`:''}${n.author_name?` &nbsp;<span style="color:#a0aec0;font-weight:400">· ${n.author_name}</span>`:''}</div>
-              ${content}
-            </div>
-          </div>`;
-      }).join('') : '<p style="color:#a0aec0;font-size:0.88rem">Sin notas clínicas registradas.</p>'}
-    </div>
+            ${noteContent(n)}
+          </div>
+        </div>`;
+
+      const initialColor  = '#1a6b3c';   // green — first visit
+      const followupColor = '#2b6cb0';   // blue  — evolution
+      const rxColor       = '#553c9a';   // purple — prescriptions
+
+      return `
+        ${initialNotes.length ? `
+        <div class="epic-section" style="margin-bottom:20px">
+          <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#718096;border-bottom:2px solid #1a6b3c;padding-bottom:4px;margin-bottom:14px">
+            Atención Inicial (${initialNotes.length})
+          </div>
+          ${initialNotes.map(n => noteRow(n, initialColor)).join('')}
+        </div>` : ''}
+
+        ${followupNotes.length ? `
+        <div class="epic-section" style="margin-bottom:20px">
+          <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#718096;border-bottom:2px solid #2b6cb0;padding-bottom:4px;margin-bottom:14px">
+            Evoluciones Clínicas — cronológico (${followupNotes.length})
+          </div>
+          ${followupNotes.map(n => noteRow(n, followupColor)).join('')}
+        </div>` : ''}
+
+        ${rxNotes.length ? `
+        <div class="epic-section" style="margin-bottom:20px">
+          <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#718096;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:14px">
+            Prescripciones (${rxNotes.length})
+          </div>
+          ${rxNotes.map(n => noteRow(n, rxColor)).join('')}
+        </div>` : ''}
+      `;
+    })()}
 
     <!-- VITALES -->
     ${vitals.length ? `
