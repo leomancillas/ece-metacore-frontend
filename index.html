@@ -509,10 +509,19 @@ function logout() {
   document.getElementById('loginScreen').style.display = 'flex';
 }
 
+function isMedico() {
+  return !currentUser || currentUser.role === 'medico' || currentUser.role === 'admin';
+}
+
 function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  document.getElementById('navUser').textContent = currentUser?.name + ' · ' + currentUser?.role;
+  const rolLabel = { medico: 'Médico', admin: 'Administrador', recepcion: 'Recepción', enfermera: 'Enfermera' };
+  const badge = isMedico() ? '' : ` <span style="background:#fed7d7;color:#9b2c2c;font-size:0.7rem;padding:2px 8px;border-radius:8px;font-weight:700">${rolLabel[currentUser.role]||currentUser.role}</span>`;
+  document.getElementById('navUser').innerHTML = (currentUser?.name || '') + badge;
+  // Hide research/AI section for recepcion role
+  const sidebar = document.querySelectorAll('.sidebar a');
+  if (!isMedico() && sidebar[2]) sidebar[2].style.display = 'none';
   showSection('dashboard');
 }
 
@@ -629,7 +638,7 @@ async function viewPatient(id) {
         <span class="badge badge-blue">${pat.expediente}</span>
         <div style="margin-left:auto;display:flex;gap:8px">
           <button class="btn-pdf" onclick="exportPatientPDF()">📄 Exportar PDF</button>
-          <button class="btn btn-secondary btn-sm" onclick="generateAiSummary()">🤖 Resumen IA</button>
+          ${isMedico() ? `<button class="btn btn-secondary btn-sm" onclick="generateAiSummary()">🤖 Resumen IA</button>` : ''}
         </div>
       </div>
       ${criticalBanner}
@@ -663,7 +672,7 @@ async function viewPatient(id) {
             <span class="card-title">Laboratorios y Gabinete</span>
             <div style="display:flex;gap:6px">
               <button class="btn btn-secondary btn-sm" onclick="toggleLabView()" id="labViewToggle">📈 Ver gráficas</button>
-              <button class="btn btn-secondary btn-sm no-print" style="background:#6366f1;color:white;border:none" onclick="openLabReportModal()">🔬 Analizar</button>
+              ${isMedico() ? `<button class="btn btn-secondary btn-sm no-print" style="background:#6366f1;color:white;border:none" onclick="openLabReportModal()">🔬 Analizar</button>` : ''}
             </div>
           </div>
           <div id="labListView">
@@ -695,8 +704,10 @@ async function viewPatient(id) {
         <div class="card-header">
           <span class="card-title">Notas clinicas · NOM-004-SSA3-2012</span>
           <div style="display:flex;gap:8px" class="no-print">
+            ${isMedico() ? `
             <button class="btn btn-secondary btn-sm" style="background:#6b21a8;color:white;border:none" onclick='openPrescriptionModal("${pat.id}")'>💊 Receta</button>
             <button class="btn btn-primary btn-sm" style="width:auto" onclick='openNoteModal("${pat.id}")'>🖊 Nueva nota</button>
+            ` : `<span style="font-size:0.8rem;color:#718096;font-style:italic">Solo el médico puede crear notas clínicas</span>`}
           </div>
         </div>
         ${renderNotesList(notes, pat.id)}
@@ -737,7 +748,7 @@ function renderNotesList(notes, patId) {
 function renderLegacyNote(n, fecha, hora) {
   return `<div class="nota-card">
     <div class="nota-header">${notaBadge(n.tipo)}<small style="color:#718096">${fecha} ${hora} · ${n.author_name || ''}</small>
-      <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="openEditNote('${n.id}')">✏️ Editar</button>
+      ${isMedico() ? `<button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="openEditNote('${n.id}')">✏️ Editar</button>` : ''}
     </div>
     ${n.motivo_consulta ? `<div class="nota-field"><b>Motivo:</b> ${n.motivo_consulta}</div>` : ''}
     ${n.diagnostico ? `<div class="nota-field"><b>Diagnóstico:</b> ${n.diagnostico}</div>` : ''}
@@ -816,7 +827,7 @@ function renderStructuredNote(n, meta, fecha, hora) {
       ${meta.diagnostico ? `<div class="nota-section"><div class="nota-section-title">Diagnóstico</div>${f('', meta.diagnostico)}</div>` : ''}
       ${meta.instrucciones ? `<div class="nota-section"><div class="nota-section-title">Indicaciones</div>${f('', meta.instrucciones)}</div>` : ''}`;
   }
-  const editBtn = tipo !== 'receta'
+  const editBtn = (tipo !== 'receta' && isMedico())
     ? `<button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="openEditNote('${n.id}')">✏️ Editar</button>`
     : '';
   return `<div class="nota-card">
