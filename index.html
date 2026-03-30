@@ -647,7 +647,7 @@ let currentVitals = [];
 let currentLabs = [];
 let currentCitas = [];
 let navRequestId = 0;
-let realAdminSession = null;   // { user } — guardado mientras se impersona
+let realAdminSession = null;   // { token, user } — guardado mientras se impersona
 let adminUsersMap = {};        // id → user — para impersonar por id
 let rxConsultorio = 1;
 
@@ -679,7 +679,7 @@ async function doLogin() {
 }
 
 function logout() {
-  // If impersonating, stop first
+  // If impersonating, stop and return to admin — don't actually log out
   if (realAdminSession) { stopImpersonation(); return; }
   token = null; currentUser = null; realAdminSession = null;
   localStorage.removeItem('ece_token'); localStorage.removeItem('ece_user');
@@ -2741,34 +2741,34 @@ function statCard(icon, val, label, color) {
 }
 
 // ── IMPERSONACIÓN ──────────────────────────────────────────────────
-function startImpersonation(userId) {
-  const targetUser = adminUsersMap[userId];
-  if (!targetUser) return alert('Usuario no encontrado');
-  if (targetUser.id === currentUser?.id) return;
-  if (targetUser.status !== 'active') return alert('Solo se puede simular usuarios activos');
+async function startImpersonation(userId) {
+  if (userId === currentUser?.id) return;
+  const btn = document.querySelector(`[onclick="startImpersonation('${userId}')"]`);
+  if (btn) { btn.textContent = '⏳ Cargando…'; btn.disabled = true; }
 
-  // Save real admin session
-  realAdminSession = { user: { ...currentUser } };
+  try {
+    // Request a real JWT for the target user — backend enforces their role in all API calls
+    const data = await api(`/api/admin/impersonate/${userId}`, { method: 'POST' });
 
-  // Swap currentUser (token stays — admin token has full API access)
-  currentUser = {
-    id: targetUser.id,
-    name: targetUser.name,
-    email: targetUser.email,
-    role: targetUser.role,
-    especialidad: targetUser.especialidad || '',
-    institucion: targetUser.institucion || '',
-    foto_url: targetUser.foto_url || null,
-    color_primario: targetUser.color_primario || '#1a6b3c',
-    plan: targetUser.plan || 'free',
-  };
+    // Save real admin session (token + user)
+    realAdminSession = { token, user: { ...currentUser } };
 
-  // Re-render full app as the impersonated user
-  showApp();
+    // Swap to impersonated token AND user — all API calls now go as that user
+    token = data.token;
+    currentUser = data.user;
+
+    // Re-render full app as the impersonated user
+    showApp();
+  } catch(e) {
+    alert('Error al iniciar simulación: ' + e.message);
+    if (btn) { btn.textContent = '👁 Ver como'; btn.disabled = false; }
+  }
 }
 
 function stopImpersonation() {
   if (!realAdminSession) return;
+  // Restore real admin token and user
+  token = realAdminSession.token;
   currentUser = realAdminSession.user;
   realAdminSession = null;
   showApp();
