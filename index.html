@@ -374,6 +374,53 @@
   </div>
 </div>
 
+<!-- MODAL SIGNOS VITALES -->
+<div class="modal-overlay" id="vitalsModal">
+  <div class="modal" style="width:700px">
+    <div class="modal-header">
+      <h2 class="modal-title">📏 Signos Vitales y Antropometría</h2>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('vitalsModal')">✕</button>
+    </div>
+
+    <!-- Sección: Signos vitales clásicos -->
+    <div class="section-tag" style="margin-bottom:12px">Signos Vitales</div>
+    <div class="grid-3">
+      <div class="form-group"><label>T/A Sistólica (mmHg)</label><input type="number" id="v_tas" placeholder="120" oninput="calcVitals()"></div>
+      <div class="form-group"><label>T/A Diastólica (mmHg)</label><input type="number" id="v_tad" placeholder="80" oninput="calcVitals()"></div>
+      <div class="form-group"><label>FC (lpm)</label><input type="number" id="v_fc" placeholder="72" oninput="calcVitals()"></div>
+      <div class="form-group"><label>FR (rpm)</label><input type="number" id="v_fr" placeholder="16" oninput="calcVitals()"></div>
+      <div class="form-group"><label>Temperatura (°C)</label><input type="number" step="0.1" id="v_temp" placeholder="36.5" oninput="calcVitals()"></div>
+      <div class="form-group"><label>SatO₂ (%)</label><input type="number" id="v_sat" placeholder="98" oninput="calcVitals()"></div>
+      <div class="form-group"><label>Glucosa (mg/dL)</label><input type="number" id="v_gluc" placeholder="100" oninput="calcVitals()"></div>
+    </div>
+
+    <!-- Sección: Antropometría -->
+    <div class="section-tag" style="margin:12px 0">Antropometría</div>
+    <div class="grid-3">
+      <div class="form-group"><label>Peso (kg)</label><input type="number" step="0.1" id="v_peso" placeholder="70.0" oninput="calcVitals()"></div>
+      <div class="form-group"><label>Talla (cm)</label><input type="number" step="0.1" id="v_talla" placeholder="170" oninput="calcVitals()"></div>
+      <div class="form-group"><label>Cintura (cm)</label><input type="number" step="0.1" id="v_cintura" placeholder="88" oninput="calcVitals()"></div>
+      <div class="form-group"><label>Cadera (cm)</label><input type="number" step="0.1" id="v_cadera" placeholder="96" oninput="calcVitals()"></div>
+      <div class="form-group"><label>Perímetro de cuello (cm)</label><input type="number" step="0.1" id="v_cuello" placeholder="38" oninput="calcVitals()"></div>
+    </div>
+
+    <!-- Panel de índices calculados en tiempo real -->
+    <div id="vitalsCalcPanel" style="display:none;margin-top:4px">
+      <div class="section-tag" style="margin-bottom:10px">Índices calculados</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px" id="vitalsIndexGrid"></div>
+    </div>
+
+    <div class="form-group" style="margin-top:14px"><label>Notas adicionales</label>
+      <input id="v_notas" placeholder="Observaciones, contexto clínico...">
+    </div>
+    <p id="vitalsError" class="error-msg"></p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-secondary" onclick="closeModal('vitalsModal')">Cancelar</button>
+      <button class="btn btn-primary" style="width:auto" onclick="saveVitals()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CITA -->
 <div class="modal-overlay" id="citaModal">
   <div class="modal" style="width:520px">
@@ -637,8 +684,9 @@ async function viewPatient(id) {
         <div class="section-title" style="margin:0">${pat.nombre} ${pat.apellido_paterno} ${pat.apellido_materno || ''}</div>
         <span class="badge badge-blue">${pat.expediente}</span>
         <div style="margin-left:auto;display:flex;gap:8px">
-          <button class="btn-pdf" onclick="exportPatientPDF()">📄 Exportar PDF</button>
-          ${isMedico() ? `<button class="btn btn-secondary btn-sm" onclick="generateAiSummary()">🤖 Resumen IA</button>` : ''}
+          <button class="btn btn-secondary btn-sm no-print" onclick="openVitalsModal()" style="background:#0891b2;color:white;border:none">📏 Signos vitales</button>
+          <button class="btn-pdf no-print" onclick="exportPatientPDF()">📄 Exportar PDF</button>
+          ${isMedico() ? `<button class="btn btn-secondary btn-sm no-print" onclick="generateAiSummary()">🤖 Resumen IA</button>` : ''}
         </div>
       </div>
       ${criticalBanner}
@@ -651,10 +699,23 @@ async function viewPatient(id) {
         <div id="aiSummaryContent" class="ai-summary-content">Generando resumen...</div>
       </div>
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-num">${age}</div><div class="stat-label">Años de edad</div></div>
+        <div class="stat-card"><div class="stat-num">${age}</div><div class="stat-label">Años · ${pat.sexo==='M'?'Masc':'Fem'}</div></div>
+        <div class="stat-card"><div class="stat-num">${lastV.presion_sistolica ? lastV.presion_sistolica+'/'+lastV.presion_diastolica : '-'}</div><div class="stat-label">T/A (mmHg)</div></div>
+        <div class="stat-card"><div class="stat-num">${lastV.frecuencia_cardiaca || '-'}</div><div class="stat-label">FC (lpm)</div></div>
+        <div class="stat-card"><div class="stat-num">${lastV.saturacion_o2 ? lastV.saturacion_o2+'%' : '-'}</div><div class="stat-label">SatO₂</div></div>
         <div class="stat-card"><div class="stat-num">${lastV.peso_kg || '-'}</div><div class="stat-label">Peso (kg)</div></div>
-        <div class="stat-card"><div class="stat-num">${lastV.imc || '-'}</div><div class="stat-label">IMC</div></div>
-        <div class="stat-card"><div class="stat-num">${lastV.presion_sistolica ? lastV.presion_sistolica+'/'+lastV.presion_diastolica : '-'}</div><div class="stat-label">T/A mmHg</div></div>
+        <div class="stat-card"><div class="stat-num">${lastV.talla_cm ? lastV.talla_cm+' cm' : '-'}</div><div class="stat-label">Talla</div></div>
+        ${lastV.imc ? `<div class="stat-card" style="border-color:${imcColor(lastV.imc)}">
+          <div class="stat-num" style="color:${imcColor(lastV.imc)}">${lastV.imc}</div>
+          <div class="stat-label">IMC · ${imcLabel(lastV.imc)}</div></div>` : ''}
+        ${lastV.cintura_cm ? `<div class="stat-card"><div class="stat-num">${lastV.cintura_cm}</div><div class="stat-label">Cintura (cm)</div></div>` : ''}
+        ${lastV.icc ? `<div class="stat-card" style="border-color:${iccColor(lastV.icc, pat.sexo)}">
+          <div class="stat-num" style="color:${iccColor(lastV.icc, pat.sexo)}">${lastV.icc}</div>
+          <div class="stat-label">ICC · ${iccLabel(lastV.icc, pat.sexo)}</div></div>` : ''}
+        ${lastV.ict ? `<div class="stat-card" style="border-color:${ictColor(lastV.ict)}">
+          <div class="stat-num" style="color:${ictColor(lastV.ict)}">${lastV.ict}</div>
+          <div class="stat-label">ICT · ${ictLabel(lastV.ict)}</div></div>` : ''}
+        ${lastV.cuello_cm ? `<div class="stat-card"><div class="stat-num">${lastV.cuello_cm} cm</div><div class="stat-label">Perímetro cuello</div></div>` : ''}
         ${proxCitaHtml}
       </div>
       <div class="grid-2">
@@ -1769,6 +1830,122 @@ function clearTranscript() {
   if (el) el.value = '';
   const st = document.getElementById('analyzeStatus');
   if (st) st.style.display = 'none';
+}
+
+// ── SIGNOS VITALES ─────────────────────────────────────────────────
+function imcColor(imc) {
+  const v = parseFloat(imc);
+  if (v < 18.5) return '#2a69ac';
+  if (v < 25)   return '#276749';
+  if (v < 30)   return '#d69e2e';
+  if (v < 35)   return '#dd6b20';
+  return '#c53030';
+}
+function imcLabel(imc) {
+  const v = parseFloat(imc);
+  if (v < 18.5) return 'Bajo peso';
+  if (v < 25)   return 'Normal';
+  if (v < 30)   return 'Sobrepeso';
+  if (v < 35)   return 'Obesidad I';
+  if (v < 40)   return 'Obesidad II';
+  return 'Obesidad III';
+}
+function iccColor(icc, sexo) {
+  const v = parseFloat(icc);
+  const umbral = sexo === 'F' ? 0.85 : 0.90;
+  return v > umbral ? '#c53030' : '#276749';
+}
+function iccLabel(icc, sexo) {
+  const v = parseFloat(icc);
+  const umbral = sexo === 'F' ? 0.85 : 0.90;
+  return v > umbral ? 'Riesgo alto' : 'Normal';
+}
+function ictColor(ict) {
+  return parseFloat(ict) > 0.5 ? '#c53030' : '#276749';
+}
+function ictLabel(ict) {
+  return parseFloat(ict) > 0.5 ? 'Riesgo elevado' : 'Normal';
+}
+
+function openVitalsModal() {
+  ['v_tas','v_tad','v_fc','v_fr','v_temp','v_sat','v_gluc',
+   'v_peso','v_talla','v_cintura','v_cadera','v_cuello','v_notas'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('vitalsError').textContent = '';
+  document.getElementById('vitalsCalcPanel').style.display = 'none';
+  document.getElementById('vitalsModal').classList.add('open');
+}
+
+function calcVitals() {
+  const peso   = parseFloat(document.getElementById('v_peso')?.value);
+  const talla  = parseFloat(document.getElementById('v_talla')?.value);
+  const cintura= parseFloat(document.getElementById('v_cintura')?.value);
+  const cadera = parseFloat(document.getElementById('v_cadera')?.value);
+  const cuello = parseFloat(document.getElementById('v_cuello')?.value);
+  const sexo   = currentPatient?.sexo || 'M';
+
+  const indices = [];
+
+  if (peso > 0 && talla > 0) {
+    const imc = peso / Math.pow(talla / 100, 2);
+    indices.push({ label: 'IMC', value: imc.toFixed(1), sub: imcLabel(imc), color: imcColor(imc) });
+  }
+  if (cintura > 0 && cadera > 0) {
+    const icc = cintura / cadera;
+    indices.push({ label: 'ICC', value: icc.toFixed(2), sub: iccLabel(icc, sexo), color: iccColor(icc, sexo) });
+  }
+  if (cintura > 0 && talla > 0) {
+    const ict = cintura / talla;
+    indices.push({ label: 'ICT', value: ict.toFixed(2), sub: ictLabel(ict), color: ictColor(ict) });
+  }
+  if (cuello > 0) {
+    const umbralCuello = sexo === 'F' ? 35 : 40;
+    const cuelloRiesgo = cuello >= umbralCuello;
+    indices.push({ label: 'Cuello', value: cuello + ' cm', sub: cuelloRiesgo ? '⚠ Elevado' : 'Normal', color: cuelloRiesgo ? '#c53030' : '#276749' });
+  }
+
+  const panel = document.getElementById('vitalsCalcPanel');
+  const grid  = document.getElementById('vitalsIndexGrid');
+  if (!indices.length) { panel.style.display = 'none'; return; }
+
+  panel.style.display = '';
+  grid.innerHTML = indices.map(idx => `
+    <div style="background:#f7fafc;border-radius:10px;padding:12px;text-align:center;border:2px solid ${idx.color}20">
+      <div style="font-size:1.4rem;font-weight:700;color:${idx.color}">${idx.value}</div>
+      <div style="font-size:0.75rem;font-weight:700;color:#4a5568;margin-top:2px">${idx.label}</div>
+      <div style="font-size:0.7rem;color:${idx.color};font-weight:600">${idx.sub}</div>
+    </div>`).join('');
+}
+
+async function saveVitals() {
+  const body = {
+    presion_sistolica:    parseFloat(document.getElementById('v_tas').value) || null,
+    presion_diastolica:   parseFloat(document.getElementById('v_tad').value) || null,
+    frecuencia_cardiaca:  parseFloat(document.getElementById('v_fc').value)  || null,
+    frecuencia_respiratoria: parseFloat(document.getElementById('v_fr').value) || null,
+    temperatura_c:        parseFloat(document.getElementById('v_temp').value)|| null,
+    saturacion_o2:        parseFloat(document.getElementById('v_sat').value) || null,
+    glucosa_mg:           parseFloat(document.getElementById('v_gluc').value)|| null,
+    peso_kg:              parseFloat(document.getElementById('v_peso').value) || null,
+    talla_cm:             parseFloat(document.getElementById('v_talla').value)|| null,
+    cintura_cm:           parseFloat(document.getElementById('v_cintura').value)||null,
+    cadera_cm:            parseFloat(document.getElementById('v_cadera').value) ||null,
+    cuello_cm:            parseFloat(document.getElementById('v_cuello').value) ||null,
+    notas:                document.getElementById('v_notas').value.trim() || null,
+  };
+  // Remove nulls
+  Object.keys(body).forEach(k => { if (body[k] === null) delete body[k]; });
+  if (!Object.keys(body).length) {
+    document.getElementById('vitalsError').textContent = 'Ingresa al menos un valor.'; return;
+  }
+  try {
+    await api('/api/patients/' + currentPatient.id + '/vitals', {
+      method: 'POST', body: JSON.stringify(body)
+    });
+    closeModal('vitalsModal');
+    viewPatient(currentPatient.id);
+  } catch(e) { document.getElementById('vitalsError').textContent = e.message; }
 }
 
 // ── LAB TREND CHARTS (SVG Sparklines) ─────────────────────────────
