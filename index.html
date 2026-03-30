@@ -248,6 +248,7 @@
     <div class="sidebar">
       <a href="#" class="active" onclick="showSection('dashboard')">📊 Dashboard</a>
       <a href="#" onclick="showSection('patients')">👥 Pacientes</a>
+      <a href="#" onclick="showSection('indicators')">📈 Indicadores</a>
       <a href="#" onclick="showSection('research')">🤖 Asistente IA</a>
       <a href="#" id="sidebarAdmin" style="display:none" onclick="showSection('admin')">⚙️ Administrador</a>
     </div>
@@ -336,8 +337,14 @@
 
     <div id="noteFormContainer"></div>
 
+    <div style="display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 0;border-top:1px solid var(--border)">
+      <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:0.87rem;color:#718096;user-select:none">
+        <input type="checkbox" id="noteEsDefuncion" style="width:16px;height:16px;accent-color:#e53e3e">
+        <span>🕊️ Certificado de defunción</span>
+      </label>
+    </div>
     <p id="noteError" class="error-msg"></p>
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
       <button class="btn btn-secondary" onclick="closeModal('noteModal')">Cancelar</button>
       <button class="btn btn-primary" style="width:auto" onclick="saveNote()">💾 Guardar Nota</button>
     </div>
@@ -604,6 +611,7 @@ let currentUser = JSON.parse(localStorage.getItem('ece_user') || 'null');
 let editingPatientId = null;
 let editingNoteId = null;
 let currentNotePatientId = null;
+let noteOpenTime = null;
 let currentNoteType = 'evolucion';
 let voiceRecognition = null;
 let activeVoiceField = null;
@@ -672,10 +680,11 @@ function showApp() {
 // ── NAVEGACION ─────────────────────────────────────────────────────
 function showSection(s) {
   document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-  const idx = ['dashboard','patients','research','admin'].indexOf(s);
+  const idx = ['dashboard','patients','indicators','research','admin'].indexOf(s);
   if (idx >= 0) document.querySelectorAll('.sidebar a')[idx]?.classList.add('active');
   if (s === 'dashboard') renderDashboard();
   else if (s === 'patients') renderPatients();
+  else if (s === 'indicators') showIndicadores();
   else if (s === 'research') renderResearch();
   else if (s === 'admin') showAdminPanel();
 }
@@ -1014,7 +1023,9 @@ function openNoteModal(patientId) {
   if (transcriptEl) transcriptEl.value = '';
   // Reset selector
   document.querySelectorAll('.note-type-btn').forEach((b,i) => b.classList.toggle('selected', i===0));
+  document.getElementById('noteEsDefuncion').checked = false;
   renderNoteForm('evolucion');
+  noteOpenTime = Date.now();
   document.getElementById('noteModal').classList.add('open');
 }
 
@@ -1038,8 +1049,10 @@ function openEditNote(noteId) {
   if (st) st.style.display = 'none';
   const transcriptEl = document.getElementById('n_transcript');
   if (transcriptEl) transcriptEl.value = '';
+  document.getElementById('noteEsDefuncion').checked = false;
   renderNoteForm(tipo);
   if (meta) fillFormForEdit(tipo, meta);
+  noteOpenTime = Date.now();
   document.getElementById('noteModal').classList.add('open');
 }
 
@@ -1251,17 +1264,20 @@ async function saveNote() {
   document.getElementById('noteError').textContent = '';
   try {
     stopVoice();
+    const duracion_minutos = noteOpenTime ? Math.round((Date.now() - noteOpenTime) / 60000) : null;
+    const es_defuncion = document.getElementById('noteEsDefuncion')?.checked || false;
     if (editingNoteId) {
       await api('/api/patients/' + currentNotePatientId + '/notes/' + editingNoteId, {
         method: 'PUT',
-        body: JSON.stringify({ tipo, motivo_consulta, diagnostico, plan_tratamiento })
+        body: JSON.stringify({ tipo, motivo_consulta, diagnostico, plan_tratamiento, duracion_minutos, es_defuncion })
       });
     } else {
       await api('/api/patients/' + currentNotePatientId + '/notes', {
         method: 'POST',
-        body: JSON.stringify({ tipo, motivo_consulta, diagnostico, plan_tratamiento })
+        body: JSON.stringify({ tipo, motivo_consulta, diagnostico, plan_tratamiento, duracion_minutos, es_defuncion })
       });
     }
+    noteOpenTime = null;
     editingNoteId = null;
     closeModal('noteModal');
     viewPatient(currentNotePatientId);
@@ -2058,6 +2074,160 @@ async function submitAccessRequest() {
     document.getElementById('reg_error').textContent = '';
     ['reg_name','reg_email','reg_pass','reg_esp','reg_inst'].forEach(id => { document.getElementById(id).value = ''; });
   } catch(e) { document.getElementById('reg_error').textContent = e.message; }
+}
+
+// ── INDICADORES ────────────────────────────────────────────────────
+let indMonth = new Date().toISOString().slice(0, 7);
+
+async function showIndicadores() {
+  const c = document.getElementById('mainContent');
+  c.innerHTML = `
+    <div class="section-title">📈 Indicadores Clínicos</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+      <label style="font-weight:600;color:var(--text-secondary);font-size:0.85rem">Mes de ranking:</label>
+      <input type="month" id="indMonthPicker" value="${indMonth}"
+        style="border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:0.9rem;cursor:pointer"
+        onchange="indMonth=this.value;showIndicadores()">
+    </div>
+    <p class="loading" id="indLoading">Cargando indicadores…</p>`;
+
+  try {
+    const [overview, diagnostics, usersData, monthly] = await Promise.all([
+      api('/api/stats/overview'),
+      api('/api/stats/diagnostics?days=90'),
+      api(`/api/stats/users?month=${indMonth}`),
+      api('/api/stats/monthly'),
+    ]);
+
+    const users = usersData.users || [];
+    const topUser = users[0];
+
+    // ── Overview cards ──────────────────────────────────────────────
+    const overviewHtml = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:28px">
+        ${statCard('🩺', overview.notes || 0, 'Consultas totales', 'var(--primary)')}
+        ${statCard('👥', overview.patients || 0, 'Pacientes activos', '#2b6cb0')}
+        ${statCard('⏱️', overview.avg_duracion ? overview.avg_duracion + ' min' : '—', 'Duración promedio', '#6b46c1')}
+        ${statCard('📋', overview.citas_atendidas || 0, 'Citas atendidas', '#c05621')}
+        ${statCard('🕊️', overview.defunciones || 0, 'Defunciones certificadas', '#718096')}
+      </div>`;
+
+    // ── Médico del mes ───────────────────────────────────────────────
+    const [yy, mm] = indMonth.split('-');
+    const monthName = new Date(parseInt(yy), parseInt(mm) - 1, 1).toLocaleString('es-MX', { month: 'long', year: 'numeric' });
+    const employeeHtml = topUser && topUser.notas_mes > 0 ? `
+      <div style="background:linear-gradient(135deg,var(--primary),var(--primary-light));border-radius:14px;padding:20px 24px;margin-bottom:28px;color:#fff;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+        <div style="font-size:2.8rem">🏆</div>
+        <div style="flex:1;min-width:180px">
+          <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:0.85">Médico del mes — ${monthName}</div>
+          <div style="font-size:1.5rem;font-weight:800;margin:2px 0">${topUser.name || '—'}</div>
+          <div style="opacity:0.9;font-size:0.88rem">${topUser.especialidad || ''}</div>
+        </div>
+        <div style="display:flex;gap:24px;flex-wrap:wrap">
+          <div style="text-align:center"><div style="font-size:1.8rem;font-weight:800">${topUser.notas_mes}</div><div style="font-size:0.75rem;opacity:0.85">consultas</div></div>
+          <div style="text-align:center"><div style="font-size:1.8rem;font-weight:800">${topUser.pacientes_mes}</div><div style="font-size:0.75rem;opacity:0.85">pacientes</div></div>
+          ${topUser.tiempo_promedio ? `<div style="text-align:center"><div style="font-size:1.8rem;font-weight:800">${topUser.tiempo_promedio}</div><div style="font-size:0.75rem;opacity:0.85">min / cita</div></div>` : ''}
+        </div>
+      </div>` : '';
+
+    // ── Rankings table ───────────────────────────────────────────────
+    const medals = ['🥇','🥈','🥉'];
+    const rankingRows = users.map((u, i) => `
+      <tr style="border-bottom:1px solid var(--border);${i===0?'background:rgba(var(--primary-rgb,26,107,60),0.06)':''}">
+        <td style="padding:10px 12px;font-size:1.1rem">${medals[i] || (i+1)}</td>
+        <td style="padding:10px 12px;font-weight:600">${u.name || '—'}</td>
+        <td style="padding:10px 12px;color:var(--text-secondary);font-size:0.85rem">${u.especialidad || '—'}</td>
+        <td style="padding:10px 12px;text-align:center;font-weight:700;color:var(--primary)">${u.notas_mes}</td>
+        <td style="padding:10px 12px;text-align:center">${u.pacientes_mes}</td>
+        <td style="padding:10px 12px;text-align:center">${u.tiempo_promedio ? u.tiempo_promedio + ' min' : '—'}</td>
+        <td style="padding:10px 12px;text-align:center;color:var(--text-secondary)">${u.notas_total}</td>
+      </tr>`).join('');
+    const rankingHtml = users.length ? `
+      <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:28px">
+        <div style="padding:14px 16px;font-weight:700;font-size:1rem;border-bottom:1px solid var(--border);background:var(--bg-secondary)">🏅 Ranking del mes — ${monthName}</div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:0.88rem">
+            <thead><tr style="background:var(--bg-secondary);font-size:0.78rem;text-transform:uppercase;color:var(--text-secondary)">
+              <th style="padding:8px 12px;text-align:left">#</th>
+              <th style="padding:8px 12px;text-align:left">Médico</th>
+              <th style="padding:8px 12px;text-align:left">Especialidad</th>
+              <th style="padding:8px 12px;text-align:center">Consultas</th>
+              <th style="padding:8px 12px;text-align:center">Pacientes</th>
+              <th style="padding:8px 12px;text-align:center">T. Promedio</th>
+              <th style="padding:8px 12px;text-align:center">Total histórico</th>
+            </tr></thead>
+            <tbody>${rankingRows}</tbody>
+          </table>
+        </div>
+      </div>` : '';
+
+    // ── Diagnósticos frecuentes (horizontal bar chart) ───────────────
+    const diagData = (diagnostics || []).filter(d => d.term && d.term.trim().length > 3).slice(0, 12);
+    const maxFreq = diagData.length ? Math.max(...diagData.map(d => parseInt(d.frequency))) : 1;
+    const diagBars = diagData.map(d => {
+      const pct = Math.round((parseInt(d.frequency) / maxFreq) * 100);
+      const cap = d.term.charAt(0).toUpperCase() + d.term.slice(1);
+      return `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="width:180px;font-size:0.82rem;color:var(--text-primary);text-align:right;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${cap}">${cap}</div>
+          <div style="flex:1;background:var(--bg-secondary);border-radius:4px;height:22px;position:relative;overflow:hidden">
+            <div style="width:${pct}%;background:var(--primary);height:100%;border-radius:4px;transition:width 0.4s ease;opacity:0.85"></div>
+          </div>
+          <div style="width:28px;font-size:0.82rem;font-weight:700;color:var(--primary);text-align:right">${d.frequency}</div>
+        </div>`;
+    }).join('');
+    const diagHtml = diagData.length ? `
+      <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:28px">
+        <div style="font-weight:700;font-size:1rem;margin-bottom:16px">🔬 Diagnósticos más frecuentes <span style="font-size:0.75rem;font-weight:400;color:var(--text-secondary)">(últimos 90 días)</span></div>
+        ${diagBars}
+      </div>` : '<div style="color:var(--text-secondary);margin-bottom:28px;padding:16px">Sin diagnósticos registrados en los últimos 90 días.</div>';
+
+    // ── Tendencia mensual (sparkline SVG) ────────────────────────────
+    const trend = monthly || [];
+    let trendHtml = '';
+    if (trend.length > 1) {
+      const W = 420, H = 80, pad = 20;
+      const vals = trend.map(t => t.count);
+      const maxV = Math.max(...vals, 1);
+      const pts = vals.map((v, i) => {
+        const x = pad + (i / (vals.length - 1)) * (W - 2 * pad);
+        const y = H - pad - ((v / maxV) * (H - 2 * pad));
+        return `${x},${y}`;
+      });
+      const line = `<polyline points="${pts.join(' ')}" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+      const dots = vals.map((v, i) => {
+        const [x, y] = pts[i].split(',');
+        return `<circle cx="${x}" cy="${y}" r="4" fill="var(--primary)"/><text x="${x}" y="${parseFloat(y)-8}" text-anchor="middle" font-size="10" fill="var(--text-secondary)">${v}</text>`;
+      }).join('');
+      const labels = trend.map((t, i) => {
+        const x = pad + (i / (vals.length - 1)) * (W - 2 * pad);
+        return `<text x="${x}" y="${H}" text-anchor="middle" font-size="9" fill="var(--text-secondary)">${t.label}</text>`;
+      }).join('');
+      trendHtml = `
+        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:28px">
+          <div style="font-weight:700;font-size:1rem;margin-bottom:12px">📅 Consultas por mes <span style="font-size:0.75rem;font-weight:400;color:var(--text-secondary)">(últimos 6 meses)</span></div>
+          <div style="overflow-x:auto">
+            <svg viewBox="0 0 ${W} ${H+12}" width="100%" style="max-width:${W}px">
+              ${line}${dots}${labels}
+            </svg>
+          </div>
+        </div>`;
+    }
+
+    document.getElementById('indLoading').remove();
+    c.insertAdjacentHTML('beforeend', overviewHtml + employeeHtml + rankingHtml + diagHtml + trendHtml);
+
+  } catch(e) {
+    document.getElementById('indLoading').textContent = 'Error cargando indicadores: ' + e.message;
+  }
+}
+
+function statCard(icon, val, label, color) {
+  return `<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">
+    <div style="font-size:1.6rem">${icon}</div>
+    <div style="font-size:1.5rem;font-weight:800;color:${color};margin:4px 0">${val}</div>
+    <div style="font-size:0.75rem;color:var(--text-secondary)">${label}</div>
+  </div>`;
 }
 
 // ── PANEL ADMINISTRADOR ────────────────────────────────────────────
