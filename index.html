@@ -132,6 +132,42 @@
     .interp-bajo { background: #bee3f8; color: #2a69ac; }
     .interp-anormal { background: #fef3c7; color: #92400e; }
     .btn-del-row { background: none; border: none; cursor: pointer; color: #e53e3e; font-size: 1rem; padding: 2px 6px; }
+    /* Critical alerts banner */
+    .alert-banner { background: #fff5f5; border: 2px solid #fc8181; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: flex-start; gap: 10px; }
+    .alert-banner-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .alert-banner-body { flex: 1; }
+    .alert-banner-title { font-weight: 700; color: #c53030; font-size: 0.9rem; margin-bottom: 4px; }
+    .alert-banner-items { font-size: 0.83rem; color: #742a2a; line-height: 1.6; }
+    /* AI summary panel */
+    .ai-summary-card { background: linear-gradient(135deg, #f0fff4, #e6fffa); border: 1.5px solid #9ae6b4; border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; }
+    .ai-summary-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .ai-summary-title { font-weight: 700; color: var(--primary); font-size: 1rem; flex: 1; }
+    .ai-summary-content { white-space: pre-wrap; font-size: 0.88rem; line-height: 1.7; color: #2d3748; background: white; border-radius: 8px; padding: 14px; border: 1px solid var(--border); }
+    /* Lab sparklines */
+    .lab-chart-section { margin-top: 14px; }
+    .lab-chart-item { border-bottom: 1px solid var(--border); padding: 8px 0; display: flex; align-items: center; gap: 12px; }
+    .lab-chart-label { font-size: 0.82rem; font-weight: 600; color: #4a5568; min-width: 130px; }
+    .lab-chart-sparkline { flex: 1; height: 34px; }
+    .lab-chart-value { font-size: 0.82rem; color: #718096; min-width: 80px; text-align: right; }
+    /* Citas cards */
+    .cita-card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; }
+    .cita-date { font-size: 0.82rem; font-weight: 700; color: var(--primary); min-width: 90px; text-align: center; background: #f0fff4; border-radius: 8px; padding: 6px 8px; }
+    .cita-body { flex: 1; }
+    .cita-motivo { font-size: 0.9rem; font-weight: 600; }
+    .cita-meta { font-size: 0.78rem; color: #718096; margin-top: 2px; }
+    .cita-estado { padding: 2px 10px; border-radius: 10px; font-size: 0.72rem; font-weight: 700; }
+    .cita-programada { background: #bee3f8; color: #2a69ac; }
+    .cita-completada { background: #c6f6d5; color: #276749; }
+    .cita-cancelada { background: #fed7d7; color: #9b2c2c; }
+    /* PDF export button */
+    .btn-pdf { background: #dc2626; color: white; border: none; border-radius: 8px; padding: 7px 14px; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+    .btn-pdf:hover { background: #b91c1c; }
+    @media print {
+      .no-print { display: none !important; }
+      .card { box-shadow: none !important; border: 1px solid #ccc !important; }
+      nav, .sidebar { display: none !important; }
+      .content { max-width: none; padding: 0; }
+    }
 </style>
 </head>
 <body>
@@ -338,6 +374,37 @@
   </div>
 </div>
 
+<!-- MODAL CITA -->
+<div class="modal-overlay" id="citaModal">
+  <div class="modal" style="width:520px">
+    <div class="modal-header">
+      <h2 class="modal-title">📅 Agendar Cita</h2>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('citaModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Fecha y hora de la cita *</label>
+      <input type="datetime-local" id="cita_fecha">
+    </div>
+    <div class="form-group">
+      <label>Motivo / tipo de consulta</label>
+      <input id="cita_motivo" placeholder="Consulta de seguimiento, revisión de labs, etc.">
+    </div>
+    <div class="form-group">
+      <label>Especialidad / servicio</label>
+      <input id="cita_especialidad" placeholder="Medicina Interna, Cardiología, Nutrición...">
+    </div>
+    <div class="form-group">
+      <label>Notas adicionales</label>
+      <textarea id="cita_notas" rows="2" placeholder="Indicaciones previas, preparación especial..."></textarea>
+    </div>
+    <p id="citaError" class="error-msg"></p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+      <button class="btn btn-secondary" onclick="closeModal('citaModal')">Cancelar</button>
+      <button class="btn btn-primary" style="width:auto" onclick="saveCita()">📅 Guardar Cita</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL RECETA MEDICA -->
 <div class="modal-overlay" id="prescriptionModal">
   <div class="modal" style="width:740px">
@@ -402,6 +469,7 @@ let voiceRecognition = null;
 let activeVoiceField = null;
 let currentPatient = null;
 let currentNotes = [];
+let navRequestId = 0;
 let rxConsultorio = 1;
 
 // ── LOGOS RECETA (base64) ──────────────────────────────────────────
@@ -514,34 +582,72 @@ async function renderPatients(search = '') {
 
 // ── EXPEDIENTE PACIENTE ────────────────────────────────────────────
 async function viewPatient(id) {
+  const myReqId = ++navRequestId;
   const c = document.getElementById('mainContent');
   c.innerHTML = '<p class="loading">Cargando expediente...</p>';
   try {
-    const [pat, vitals, labs, notes] = await Promise.all([
+    const [pat, vitals, labs, notes, citas] = await Promise.all([
       api('/api/patients/' + id),
       api('/api/patients/' + id + '/vitals'),
       api('/api/patients/' + id + '/labs'),
       api('/api/patients/' + id + '/notes'),
+      api('/api/patients/' + id + '/citas').catch(() => []),
     ]);
+    if (navRequestId !== myReqId) return; // race condition guard
     currentPatient = pat;
     currentNotes = notes;
     const age = pat.fecha_nacimiento ? Math.floor((Date.now() - new Date(pat.fecha_nacimiento)) / (365.25*24*3600*1000)) : '?';
     const lastV = vitals[0] || {};
+
+    // ── Critical alerts
+    const criticalLabs = labs.filter(l => l.interpretacion && ['alto','bajo'].includes(l.interpretacion.toLowerCase()));
+    const criticalBanner = criticalLabs.length ? `
+      <div class="alert-banner no-print">
+        <div class="alert-banner-icon">⚠️</div>
+        <div class="alert-banner-body">
+          <div class="alert-banner-title">Valores críticos detectados (${criticalLabs.length})</div>
+          <div class="alert-banner-items">${criticalLabs.slice(0,5).map(l =>
+            `<b>${l.nombre_estudio}:</b> ${l.resultado}${l.unidades?' '+l.unidades:''} — <span style="color:${l.interpretacion.toLowerCase()==='alto'?'#c53030':'#2b6cb0'}">${l.interpretacion.toUpperCase()}</span>`
+          ).join(' &nbsp;·&nbsp; ')}</div>
+        </div>
+      </div>` : '';
+
+    // ── Próxima cita
+    const proxCita = (citas||[]).filter(c=>c.estado==='programada').sort((a,b)=>new Date(a.fecha_cita)-new Date(b.fecha_cita))[0];
+    const proxCitaHtml = proxCita ? `<div class="stat-card">
+        <div class="stat-num" style="font-size:1.1rem">${new Date(proxCita.fecha_cita).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</div>
+        <div class="stat-label">Próxima cita</div>
+      </div>` : '';
+
     c.innerHTML = `
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap" class="no-print">
         <button class="btn btn-secondary btn-sm" onclick="renderPatients()">← Volver</button>
         <div class="section-title" style="margin:0">${pat.nombre} ${pat.apellido_paterno} ${pat.apellido_materno || ''}</div>
         <span class="badge badge-blue">${pat.expediente}</span>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn-pdf" onclick="exportPatientPDF()">📄 Exportar PDF</button>
+          <button class="btn btn-secondary btn-sm" onclick="generateAiSummary()">🤖 Resumen IA</button>
+        </div>
+      </div>
+      ${criticalBanner}
+      <div id="aiSummaryPanel" style="display:none" class="ai-summary-card">
+        <div class="ai-summary-header">
+          <span>🤖</span>
+          <span class="ai-summary-title">Resumen Clínico Automático · IA</span>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('aiSummaryPanel').style.display='none'">✕</button>
+        </div>
+        <div id="aiSummaryContent" class="ai-summary-content">Generando resumen...</div>
       </div>
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-num">${age}</div><div class="stat-label">Años de edad</div></div>
         <div class="stat-card"><div class="stat-num">${lastV.peso_kg || '-'}</div><div class="stat-label">Peso (kg)</div></div>
         <div class="stat-card"><div class="stat-num">${lastV.imc || '-'}</div><div class="stat-label">IMC</div></div>
         <div class="stat-card"><div class="stat-num">${lastV.presion_sistolica ? lastV.presion_sistolica+'/'+lastV.presion_diastolica : '-'}</div><div class="stat-label">T/A mmHg</div></div>
+        ${proxCitaHtml}
       </div>
       <div class="grid-2">
         <div class="card">
-          <div class="card-header"><span class="card-title">Datos del paciente</span><button class="btn btn-secondary btn-sm" onclick='editPatient("${pat.id}")'>Editar</button></div>
+          <div class="card-header"><span class="card-title">Datos del paciente</span><button class="btn btn-secondary btn-sm no-print" onclick='editPatient("${pat.id}")'>Editar</button></div>
           <p class="nota-field"><b>CURP:</b> ${pat.curp || '-'}</p>
           <p class="nota-field"><b>Sexo:</b> ${pat.sexo || '-'}</p>
           <p class="nota-field"><b>Tel:</b> ${pat.telefono || '-'}</p>
@@ -552,31 +658,50 @@ async function viewPatient(id) {
         <div class="card">
           <div class="card-header">
             <span class="card-title">Laboratorios y Gabinete</span>
-            <button class="btn btn-secondary btn-sm" style="background:#6366f1;color:white;border:none" onclick="openLabReportModal()">🔬 Analizar reporte</button>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-secondary btn-sm" onclick="toggleLabView()" id="labViewToggle">📈 Ver gráficas</button>
+              <button class="btn btn-secondary btn-sm no-print" style="background:#6366f1;color:white;border:none" onclick="openLabReportModal()">🔬 Analizar</button>
+            </div>
           </div>
-          ${labs.slice(0,10).map(l => {
-            const ic = l.interpretacion ? (l.interpretacion.toLowerCase()==='normal'?'#276749':l.interpretacion.toLowerCase()==='alto'?'#9b2c2c':l.interpretacion.toLowerCase()==='bajo'?'#2a69ac':'#92400e') : '#718096';
-            return `<div style="border-bottom:1px solid var(--border);padding:7px 0;font-size:0.88rem;display:flex;justify-content:space-between;align-items:center">
-              <span><b>${l.nombre_estudio}:</b> ${l.resultado}${l.unidades?' '+l.unidades:''}</span>
-              <span style="display:flex;gap:8px;align-items:center">
-                ${l.interpretacion?`<span style="font-size:0.72rem;font-weight:700;color:${ic}">${l.interpretacion}</span>`:''}
-                <small style="color:#a0aec0">${l.fecha_toma?.split('T')[0]||l.created_at?.split('T')[0]||''}</small>
-              </span>
-            </div>`;
-          }).join('') || '<p class="empty-state" style="padding:24px">Sin resultados de laboratorio</p>'}
+          <div id="labListView">
+            ${labs.slice(0,12).map(l => {
+              const interp = (l.interpretacion||'').toLowerCase();
+              const ic = interp==='normal'?'#276749':interp==='alto'?'#9b2c2c':interp==='bajo'?'#2a69ac':'#92400e';
+              return `<div style="border-bottom:1px solid var(--border);padding:7px 0;font-size:0.88rem;display:flex;justify-content:space-between;align-items:center">
+                <span><b>${l.nombre_estudio}:</b> ${l.resultado}${l.unidades?' '+l.unidades:''}</span>
+                <span style="display:flex;gap:8px;align-items:center">
+                  ${l.interpretacion?`<span style="font-size:0.72rem;font-weight:700;color:${ic}">${l.interpretacion}</span>`:''}
+                  <small style="color:#a0aec0">${l.fecha_toma?.split('T')[0]||l.created_at?.split('T')[0]||''}</small>
+                </span>
+              </div>`;
+            }).join('') || '<p class="empty-state" style="padding:24px">Sin resultados de laboratorio</p>'}
+          </div>
+          <div id="labChartView" style="display:none">
+            <div class="lab-chart-section" id="labChartsContainer"></div>
+          </div>
         </div>
       </div>
       <div class="card">
         <div class="card-header">
+          <span class="card-title">📅 Citas y seguimiento</span>
+          <button class="btn btn-primary btn-sm no-print" style="width:auto" onclick='openCitaModal()'>+ Agendar cita</button>
+        </div>
+        <div id="citasList">${renderCitasList(citas||[])}</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
           <span class="card-title">Notas clinicas · NOM-004-SSA3-2012</span>
-          <div style="display:flex;gap:8px">
+          <div style="display:flex;gap:8px" class="no-print">
             <button class="btn btn-secondary btn-sm" style="background:#6b21a8;color:white;border:none" onclick='openPrescriptionModal("${pat.id}")'>💊 Receta</button>
             <button class="btn btn-primary btn-sm" style="width:auto" onclick='openNoteModal("${pat.id}")'>🖊 Nueva nota</button>
           </div>
         </div>
         ${renderNotesList(notes, pat.id)}
       </div>`;
-  } catch (e) { c.innerHTML = '<p class="error-msg">' + e.message + '</p>'; }
+
+    // Render lab charts after DOM is ready
+    setTimeout(() => renderLabCharts(labs), 0);
+  } catch (e) { if (navRequestId === myReqId) c.innerHTML = '<p class="error-msg">' + e.message + '</p>'; }
 }
 
 // ── RENDERIZAR NOTAS ───────────────────────────────────────────────
@@ -1630,6 +1755,164 @@ function clearTranscript() {
   if (el) el.value = '';
   const st = document.getElementById('analyzeStatus');
   if (st) st.style.display = 'none';
+}
+
+// ── LAB TREND CHARTS (SVG Sparklines) ─────────────────────────────
+function renderLabCharts(labs) {
+  const container = document.getElementById('labChartsContainer');
+  if (!container) return;
+  // Group by nombre_estudio
+  const groups = {};
+  for (const l of labs) {
+    const key = l.nombre_estudio;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push({ val: parseFloat(l.resultado), date: l.fecha_toma || l.created_at, unidades: l.unidades, interp: l.interpretacion });
+  }
+  const tracked = Object.entries(groups).filter(([,arr]) => arr.length > 1 && arr.some(v => !isNaN(v.val)));
+  if (!tracked.length) {
+    container.innerHTML = '<p style="font-size:0.83rem;color:#718096;padding:8px 0">Necesitas al menos 2 resultados del mismo estudio para mostrar tendencias.</p>';
+    return;
+  }
+  container.innerHTML = tracked.slice(0,8).map(([name, arr]) => {
+    arr = arr.filter(v => !isNaN(v.val)).sort((a,b) => new Date(a.date)-new Date(b.date));
+    const vals = arr.map(v => v.val);
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const range = max - min || 1;
+    const W = 180, H = 34, PAD = 4;
+    const points = vals.map((v,i) => {
+      const x = PAD + (W - 2*PAD) * (i / (vals.length-1 || 1));
+      const y = H - PAD - (H - 2*PAD) * ((v - min) / range);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    const lastVal = arr[arr.length-1];
+    const interpColor = lastVal.interp ? (lastVal.interp.toLowerCase()==='normal'?'#276749':lastVal.interp.toLowerCase()==='alto'?'#c53030':'#2b6cb0') : '#718096';
+    const trendIcon = vals.length > 1 ? (vals[vals.length-1] > vals[vals.length-2] ? '↑' : vals[vals.length-1] < vals[vals.length-2] ? '↓' : '→') : '';
+    return `<div class="lab-chart-item">
+      <div class="lab-chart-label">${name}</div>
+      <svg class="lab-chart-sparkline" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+        <polyline points="${points}" fill="none" stroke="#48bb78" stroke-width="1.8" stroke-linejoin="round"/>
+        ${vals.map((v,i) => { const x = PAD + (W-2*PAD)*(i/(vals.length-1||1)); const y = H-PAD-(H-2*PAD)*((v-min)/range); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="${i===vals.length-1?'#2d9e5a':'#9ae6b4'}"/>`; }).join('')}
+      </svg>
+      <div class="lab-chart-value" style="color:${interpColor}">${lastVal.val}${lastVal.unidades?' '+lastVal.unidades:''} ${trendIcon}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleLabView() {
+  const listView = document.getElementById('labListView');
+  const chartView = document.getElementById('labChartView');
+  const btn = document.getElementById('labViewToggle');
+  if (chartView.style.display === 'none') {
+    listView.style.display = 'none';
+    chartView.style.display = '';
+    btn.textContent = '📋 Ver lista';
+  } else {
+    listView.style.display = '';
+    chartView.style.display = 'none';
+    btn.textContent = '📈 Ver gráficas';
+  }
+}
+
+// ── CITAS ──────────────────────────────────────────────────────────
+function renderCitasList(citas) {
+  if (!citas || !citas.length) return '<p class="empty-state" style="padding:20px">Sin citas programadas. Usa el botón para agendar.</p>';
+  const estadoClass = { programada: 'cita-programada', completada: 'cita-completada', cancelada: 'cita-cancelada' };
+  return citas.sort((a,b) => new Date(a.fecha_cita)-new Date(b.fecha_cita)).map(c => {
+    const dt = new Date(c.fecha_cita);
+    const dateStr = dt.toLocaleDateString('es-MX',{weekday:'short',day:'2-digit',month:'short'});
+    const timeStr = dt.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    const cls = estadoClass[c.estado] || 'cita-programada';
+    return `<div class="cita-card">
+      <div class="cita-date">${dateStr}<br><small>${timeStr}</small></div>
+      <div class="cita-body">
+        <div class="cita-motivo">${c.motivo || 'Consulta'}</div>
+        <div class="cita-meta">${c.especialidad || ''} ${c.doctor_name ? '· Dr. '+c.doctor_name : ''} ${c.notas ? '· '+c.notas : ''}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end" class="no-print">
+        <span class="cita-estado ${cls}">${c.estado}</span>
+        ${c.estado==='programada' ? `<button class="btn btn-secondary btn-sm" onclick="updateCitaEstado('${c.id}','completada')">✓ Completar</button>` : ''}
+        <button class="btn btn-danger btn-sm" onclick="deleteCita('${c.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openCitaModal() {
+  document.getElementById('cita_fecha').value = '';
+  document.getElementById('cita_motivo').value = '';
+  document.getElementById('cita_especialidad').value = '';
+  document.getElementById('cita_notas').value = '';
+  document.getElementById('citaError').textContent = '';
+  // Default to tomorrow at 10am
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1); tomorrow.setHours(10,0,0,0);
+  document.getElementById('cita_fecha').value = tomorrow.toISOString().slice(0,16);
+  document.getElementById('citaModal').classList.add('open');
+}
+
+async function saveCita() {
+  const fecha = document.getElementById('cita_fecha').value;
+  const motivo = document.getElementById('cita_motivo').value.trim();
+  const especialidad = document.getElementById('cita_especialidad').value.trim();
+  const notas = document.getElementById('cita_notas').value.trim();
+  if (!fecha) { document.getElementById('citaError').textContent = 'La fecha es requerida.'; return; }
+  try {
+    await api('/api/patients/' + currentPatient.id + '/citas', {
+      method: 'POST',
+      body: JSON.stringify({ fecha_cita: fecha, motivo, especialidad, notas })
+    });
+    closeModal('citaModal');
+    viewPatient(currentPatient.id);
+  } catch(e) { document.getElementById('citaError').textContent = e.message; }
+}
+
+async function updateCitaEstado(citaId, estado) {
+  try {
+    await api('/api/patients/' + currentPatient.id + '/citas/' + citaId, {
+      method: 'PUT',
+      body: JSON.stringify({ estado })
+    });
+    viewPatient(currentPatient.id);
+  } catch(e) { alert(e.message); }
+}
+
+async function deleteCita(citaId) {
+  if (!confirm('¿Eliminar esta cita?')) return;
+  try {
+    await api('/api/patients/' + currentPatient.id + '/citas/' + citaId, { method: 'DELETE' });
+    viewPatient(currentPatient.id);
+  } catch(e) { alert(e.message); }
+}
+
+// ── AI RESUMEN CLÍNICO ─────────────────────────────────────────────
+async function generateAiSummary() {
+  const panel = document.getElementById('aiSummaryPanel');
+  const content = document.getElementById('aiSummaryContent');
+  panel.style.display = '';
+  content.textContent = 'Generando resumen clínico...';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  try {
+    const pat = currentPatient;
+    const notes = currentNotes || [];
+    const lastNote = notes[0];
+    const lastMeta = lastNote && lastNote.plan_tratamiento?.startsWith('{') ? JSON.parse(lastNote.plan_tratamiento) : null;
+    const prompt = `Genera un resumen clínico ejecutivo breve para: ${pat.nombre} ${pat.apellido_paterno}, ${Math.floor((Date.now()-new Date(pat.fecha_nacimiento))/(365.25*24*3600*1000))} años, ${pat.sexo==='M'?'masculino':'femenino'}.
+APP: ${pat.antecedentes || 'No referidos'}. Alergias: ${pat.alergias || 'Ninguna'}.
+${lastMeta ? `Última nota (${lastNote.created_at?.split('T')[0]}): Dx: ${lastMeta.diagnostico||''}. Plan: ${lastMeta.tx_farmaco||lastMeta.plan||''}` : ''}
+${notes.length} nota(s) en el expediente.
+Formato: resumen en viñetas breves: ▸ Diagnósticos activos ▸ Medicamentos actuales ▸ Últimos labs relevantes ▸ Próximo paso clínico. Máximo 150 palabras.`;
+    const data = await api('/api/research/ask', {
+      method: 'POST',
+      body: JSON.stringify({ question: prompt })
+    });
+    content.textContent = data.answer || data.response || JSON.stringify(data);
+  } catch(e) {
+    content.textContent = 'Error al generar resumen: ' + e.message;
+  }
+}
+
+// ── EXPORTAR PDF ───────────────────────────────────────────────────
+function exportPatientPDF() {
+  window.print();
 }
 
 // ── UTILS ──────────────────────────────────────────────────────────
