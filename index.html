@@ -194,6 +194,12 @@
       .card { box-shadow: none !important; border: 1px solid #ccc !important; }
       nav, .sidebar { display: none !important; }
       .content { max-width: none; padding: 0; }
+      /* Epicrisis print mode */
+      body > *:not(#epicrisisOverlay) { display: none !important; }
+      #epicrisisOverlay { display: block !important; position: static !important; background: #fff !important; }
+      #epicrisisToolbar { display: none !important; }
+      #epicrisisDoc { padding: 0 !important; font-size: 10pt !important; }
+      .epic-section { page-break-inside: avoid; }
     }
 </style>
 </head>
@@ -289,6 +295,19 @@
       <button class="btn btn-secondary" onclick="closeModal('patientModal')">Cancelar</button>
       <button class="btn btn-primary" style="width:auto" onclick="savePatient()">Guardar</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL EPICRISIS -->
+<div id="epicrisisOverlay" style="display:none;position:fixed;inset:0;background:#f7f8fa;z-index:9999;overflow-y:auto">
+  <div id="epicrisisDoc" style="max-width:860px;margin:0 auto;padding:40px 32px 60px;font-family:'Georgia',serif;color:#1a202c">
+    <!-- content injected by JS -->
+  </div>
+  <div id="epicrisisToolbar" style="position:fixed;top:0;left:0;right:0;background:#1a1a2e;padding:10px 24px;display:flex;align-items:center;gap:12px;z-index:10000;box-shadow:0 2px 8px rgba(0,0,0,0.3)">
+    <span style="color:#fff;font-weight:700;font-size:0.95rem;flex:1">📋 Epicrisis</span>
+    <button id="epicrisisAiBtn" onclick="enrichEpicrisisWithAI()" style="background:#7c3aed;color:#fff;border:none;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:0.85rem;font-weight:600">✨ Enriquecer con IA</button>
+    <button onclick="window.print()" style="background:#276749;color:#fff;border:none;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:0.85rem;font-weight:600">🖨️ Imprimir / PDF</button>
+    <button onclick="document.getElementById('epicrisisOverlay').style.display='none'" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:0.85rem">✕ Cerrar</button>
   </div>
 </div>
 
@@ -617,6 +636,9 @@ let voiceRecognition = null;
 let activeVoiceField = null;
 let currentPatient = null;
 let currentNotes = [];
+let currentVitals = [];
+let currentLabs = [];
+let currentCitas = [];
 let navRequestId = 0;
 let rxConsultorio = 1;
 
@@ -936,6 +958,9 @@ async function viewPatient(id) {
     if (navRequestId !== myReqId) return; // race condition guard
     currentPatient = pat;
     currentNotes = notes;
+    currentVitals = vitals || [];
+    currentLabs = labs || [];
+    currentCitas = citas || [];
     const age = pat.fecha_nacimiento ? Math.floor((Date.now() - new Date(pat.fecha_nacimiento)) / (365.25*24*3600*1000)) : '?';
     const lastV = vitals[0] || {};
 
@@ -966,6 +991,7 @@ async function viewPatient(id) {
         <span class="badge badge-blue">${pat.expediente}</span>
         <div style="margin-left:auto;display:flex;gap:8px">
           <button class="btn btn-secondary btn-sm no-print" onclick="openVitalsModal()" style="background:#0891b2;color:white;border:none">📏 Signos vitales</button>
+          ${isMedico() ? `<button class="btn btn-secondary btn-sm no-print" onclick="generateEpicrisis()" style="background:#7c3aed;color:white;border:none">📋 Epicrisis</button>` : ''}
           <button class="btn-pdf no-print" onclick="exportPatientPDF()">📄 Exportar PDF</button>
           ${isMedico() ? `<button class="btn btn-secondary btn-sm no-print" onclick="generateAiSummary()">🤖 Resumen IA</button>` : ''}
         </div>
@@ -2248,6 +2274,292 @@ async function submitAccessRequest() {
     document.getElementById('reg_error').textContent = '';
     ['reg_name','reg_email','reg_pass','reg_esp','reg_inst'].forEach(id => { document.getElementById(id).value = ''; });
   } catch(e) { document.getElementById('reg_error').textContent = e.message; }
+}
+
+// ── EPICRISIS ──────────────────────────────────────────────────────
+function generateEpicrisis() {
+  if (!currentPatient) return;
+  const pat = currentPatient;
+  const notes = [...currentNotes].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+  const vitals = [...currentVitals].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+  const labs = [...currentLabs].sort((a,b) => new Date(a.fecha_toma||a.created_at) - new Date(b.fecha_toma||b.created_at));
+  const citas = [...currentCitas].sort((a,b) => new Date(a.fecha_cita) - new Date(b.fecha_cita));
+
+  const age = pat.fecha_nacimiento
+    ? Math.floor((Date.now() - new Date(pat.fecha_nacimiento)) / 31557600000) : '?';
+  const fmtDate = iso => iso ? new Date(iso).toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}) : '-';
+  const fmtDateTime = iso => iso ? new Date(iso).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) + ' ' + new Date(iso).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '-';
+
+  // Unique diagnoses across all notes
+  const allDiag = [...new Set(notes
+    .map(n => n.diagnostico)
+    .filter(Boolean)
+    .join('\n')
+    .split(/[,;\n]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 3)
+  )];
+
+  // Note type labels
+  const tipoLabel = { evolucion:'Nota de Evolución', historia_clinica:'Historia Clínica', urgencias:'Urgencias', interconsulta:'Interconsulta', egreso:'Nota de Egreso', referencia:'Nota de Referencia', receta:'Prescripción' };
+
+  // Parse note meta
+  const parseNoteMeta = n => {
+    try { return typeof n.plan_tratamiento === 'string' && n.plan_tratamiento.startsWith('{') ? JSON.parse(n.plan_tratamiento) : null; } catch { return null; }
+  };
+
+  // Institution header
+  const inst = currentUser?.institucion || 'ECE Meta Core';
+  const esp  = currentUser?.especialidad || '';
+  const doctor = currentUser?.name || '';
+
+  // ── DOCUMENT HTML ──────────────────────────────────────────────
+  const doc = document.getElementById('epicrisisDoc');
+  doc.innerHTML = `
+    <!-- HEADER -->
+    <div class="epic-section" style="text-align:center;border-bottom:3px double #1a202c;padding-bottom:18px;margin-bottom:24px">
+      <div style="font-size:0.8rem;letter-spacing:2px;text-transform:uppercase;color:#718096;margin-bottom:4px">${inst}</div>
+      <div style="font-size:1.6rem;font-weight:900;letter-spacing:1px;text-transform:uppercase">Epicrisis</div>
+      <div style="font-size:0.85rem;color:#4a5568;margin-top:4px">Resumen Clínico Completo del Expediente</div>
+    </div>
+
+    <!-- IDENTIFICACIÓN -->
+    <div class="epic-section" style="margin-bottom:20px">
+      <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#718096;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:10px">Datos de Identificación</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:0.92rem">
+        <div><b>Paciente:</b> ${pat.apellido_paterno} ${pat.apellido_materno||''}, ${pat.nombre}</div>
+        <div><b>Expediente:</b> ${pat.expediente}</div>
+        <div><b>F. Nacimiento:</b> ${fmtDate(pat.fecha_nacimiento)} &nbsp;|&nbsp; <b>Edad:</b> ${age} años</div>
+        <div><b>Sexo:</b> ${pat.sexo === 'M' ? 'Masculino' : pat.sexo === 'F' ? 'Femenino' : pat.sexo || '-'}</div>
+        ${pat.curp ? `<div><b>CURP:</b> ${pat.curp}</div>` : ''}
+        ${pat.telefono ? `<div><b>Teléfono:</b> ${pat.telefono}</div>` : ''}
+        ${pat.email ? `<div><b>Email:</b> ${pat.email}</div>` : ''}
+        ${pat.direccion ? `<div style="grid-column:1/-1"><b>Dirección:</b> ${pat.direccion}</div>` : ''}
+      </div>
+      ${pat.alergias ? `<div style="margin-top:8px;padding:6px 12px;background:#fff5f5;border-left:3px solid #fc8181;font-size:0.88rem"><b>⚠️ Alergias:</b> ${pat.alergias}</div>` : ''}
+      ${pat.antecedentes ? `<div style="margin-top:8px;font-size:0.88rem"><b>Antecedentes:</b> ${pat.antecedentes}</div>` : ''}
+    </div>
+
+    <!-- DIAGNÓSTICOS -->
+    ${allDiag.length ? `
+    <div class="epic-section" style="margin-bottom:20px">
+      <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#718096;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:10px">Diagnósticos Registrados</div>
+      <ul style="margin:0;padding-left:20px;font-size:0.9rem;line-height:1.8">
+        ${allDiag.map(d=>`<li>${d.charAt(0).toUpperCase()+d.slice(1)}</li>`).join('')}
+      </ul>
+    </div>` : ''}
+
+    <!-- EVOLUCIÓN CLÍNICA -->
+    <div class="epic-section" style="margin-bottom:20px">
+      <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#718096;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:12px">Evolución Clínica Cronológica (${notes.length} ${notes.length===1?'nota':'notas'})</div>
+      ${notes.length ? notes.map(n => {
+        const meta = parseNoteMeta(n);
+        const tipo = tipoLabel[n.tipo] || n.tipo || 'Nota';
+        const isReceta = n.tipo === 'receta';
+        let content = '';
+        if (isReceta) {
+          content = `<div style="font-size:0.83rem;color:#553c9a;font-style:italic">Prescripción emitida</div>`;
+        } else if (meta && meta._tipo === 'evolucion') {
+          content = `
+            ${meta.motivo ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Motivo:</b> ${meta.motivo}</div>` : ''}
+            ${meta.sintomas ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Síntomas:</b> ${meta.sintomas}</div>` : ''}
+            ${n.diagnostico ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Diagnóstico:</b> ${n.diagnostico}</div>` : ''}
+            ${meta.tx_farmaco ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Tratamiento:</b> ${meta.tx_farmaco}</div>` : ''}
+            ${meta.seguimiento ? `<div style="font-size:0.85rem"><b>Seguimiento:</b> ${meta.seguimiento}</div>` : ''}`;
+        } else if (meta && meta._tipo === 'historia_clinica') {
+          content = `
+            ${meta.padecimiento ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Padecimiento:</b> ${meta.padecimiento}</div>` : ''}
+            ${n.diagnostico ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Diagnóstico:</b> ${n.diagnostico}</div>` : ''}
+            ${meta.plan ? `<div style="font-size:0.85rem"><b>Plan:</b> ${meta.plan}</div>` : ''}`;
+        } else {
+          content = `
+            ${n.motivo_consulta ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Motivo:</b> ${n.motivo_consulta}</div>` : ''}
+            ${n.diagnostico ? `<div style="font-size:0.85rem;margin-bottom:3px"><b>Diagnóstico:</b> ${n.diagnostico}</div>` : ''}
+            ${n.plan_tratamiento && !n.plan_tratamiento.startsWith('{') ? `<div style="font-size:0.85rem"><b>Plan:</b> ${n.plan_tratamiento}</div>` : ''}`;
+        }
+        return `
+          <div style="display:flex;gap:12px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #f0f0f0">
+            <div style="flex-shrink:0;text-align:right;min-width:90px">
+              <div style="font-size:0.78rem;font-weight:700;color:#1a202c">${fmtDate(n.created_at)}</div>
+              <div style="font-size:0.7rem;color:#718096">${new Date(n.created_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</div>
+              ${n.duracion_minutos ? `<div style="font-size:0.68rem;color:#a0aec0">${n.duracion_minutos} min</div>` : ''}
+            </div>
+            <div style="flex:1">
+              <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#553c9a;margin-bottom:4px">${tipo}${n.es_defuncion?` &nbsp;<span style="color:#e53e3e">· DEFUNCIÓN</span>`:''}${n.author_name?` &nbsp;<span style="color:#a0aec0;font-weight:400">· ${n.author_name}</span>`:''}</div>
+              ${content}
+            </div>
+          </div>`;
+      }).join('') : '<p style="color:#a0aec0;font-size:0.88rem">Sin notas clínicas registradas.</p>'}
+    </div>
+
+    <!-- VITALES -->
+    ${vitals.length ? `
+    <div class="epic-section" style="margin-bottom:20px">
+      <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#718096;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:10px">Signos Vitales y Antropometría (${vitals.length} registros)</div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:0.78rem">
+          <thead><tr style="background:#f7f8fa">
+            <th style="padding:5px 8px;text-align:left;border-bottom:1px solid #e2e8f0">Fecha</th>
+            <th style="padding:5px 8px;text-align:center;border-bottom:1px solid #e2e8f0">T/A</th>
+            <th style="padding:5px 8px;text-align:center;border-bottom:1px solid #e2e8f0">FC</th>
+            <th style="padding:5px 8px;text-align:center;border-bottom:1px solid #e2e8f0">FR</th>
+            <th style="padding:5px 8px;text-align:center;border-bottom:1px solid #e2e8f0">Temp</th>
+            <th style="padding:5px 8px;text-align:center;border-bottom:1px solid #e2e8f0">SatO₂</th>
+            <th style="padding:5px 8px;text-align:center;border-bottom:1px solid #e2e8f0">Peso</th>
+            <th style="padding:5px 8px;text-align:center;border-bottom:1px solid #e2e8f0">Talla</th>
+            <th style="padding:5px 8px;text-align:center;border-bottom:1px solid #e2e8f0">IMC</th>
+            <th style="padding:5px 8px;text-align:center;border-bottom:1px solid #e2e8f0">Cintura</th>
+            <th style="padding:5px 8px;text-align:center;border-bottom:1px solid #e2e8f0">ICC</th>
+          </tr></thead>
+          <tbody>${vitals.map((v,i) => `
+            <tr style="${i%2===0?'':'background:#f7f8fa'}">
+              <td style="padding:4px 8px;white-space:nowrap">${fmtDate(v.created_at)}</td>
+              <td style="padding:4px 8px;text-align:center">${v.presion_sistolica?v.presion_sistolica+'/'+v.presion_diastolica:'-'}</td>
+              <td style="padding:4px 8px;text-align:center">${v.frecuencia_cardiaca||'-'}</td>
+              <td style="padding:4px 8px;text-align:center">${v.frecuencia_respiratoria||'-'}</td>
+              <td style="padding:4px 8px;text-align:center">${v.temperatura||'-'}</td>
+              <td style="padding:4px 8px;text-align:center">${v.saturacion_o2?v.saturacion_o2+'%':'-'}</td>
+              <td style="padding:4px 8px;text-align:center">${v.peso_kg||'-'}</td>
+              <td style="padding:4px 8px;text-align:center">${v.talla_cm||'-'}</td>
+              <td style="padding:4px 8px;text-align:center;font-weight:600">${v.imc||'-'}</td>
+              <td style="padding:4px 8px;text-align:center">${v.cintura_cm||'-'}</td>
+              <td style="padding:4px 8px;text-align:center">${v.icc||'-'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>` : ''}
+
+    <!-- LABORATORIOS -->
+    ${labs.length ? `
+    <div class="epic-section" style="margin-bottom:20px">
+      <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#718096;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:10px">Estudios de Laboratorio y Gabinete (${labs.length} resultados)</div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+          <thead><tr style="background:#f7f8fa">
+            <th style="padding:5px 10px;text-align:left;border-bottom:1px solid #e2e8f0">Fecha</th>
+            <th style="padding:5px 10px;text-align:left;border-bottom:1px solid #e2e8f0">Estudio</th>
+            <th style="padding:5px 10px;text-align:center;border-bottom:1px solid #e2e8f0">Resultado</th>
+            <th style="padding:5px 10px;text-align:center;border-bottom:1px solid #e2e8f0">Unidades</th>
+            <th style="padding:5px 10px;text-align:center;border-bottom:1px solid #e2e8f0">Referencia</th>
+            <th style="padding:5px 10px;text-align:center;border-bottom:1px solid #e2e8f0">Interpretación</th>
+          </tr></thead>
+          <tbody>${labs.map((l,i) => {
+            const interp = (l.interpretacion||'').toLowerCase();
+            const ic = interp==='alto'?'#c53030':interp==='bajo'?'#2b6cb0':interp==='normal'?'#276749':'#718096';
+            return `<tr style="${i%2===0?'':'background:#f7f8fa'}">
+              <td style="padding:4px 10px;white-space:nowrap">${fmtDate(l.fecha_toma||l.created_at)}</td>
+              <td style="padding:4px 10px;font-weight:600">${l.nombre_estudio||'-'}</td>
+              <td style="padding:4px 10px;text-align:center;font-weight:700">${l.resultado||'-'}</td>
+              <td style="padding:4px 10px;text-align:center;color:#718096">${l.unidades||'-'}</td>
+              <td style="padding:4px 10px;text-align:center;color:#718096;font-size:0.78rem">${l.valor_referencia||'-'}</td>
+              <td style="padding:4px 10px;text-align:center">
+                ${l.interpretacion?`<span style="font-weight:700;color:${ic}">${l.interpretacion}</span>`:'-'}
+              </td>
+            </tr>`;
+          }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>` : ''}
+
+    <!-- CITAS -->
+    ${citas.length ? `
+    <div class="epic-section" style="margin-bottom:20px">
+      <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#718096;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:10px">Citas y Atenciones (${citas.length} registros)</div>
+      <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+        <thead><tr style="background:#f7f8fa">
+          <th style="padding:5px 10px;text-align:left;border-bottom:1px solid #e2e8f0">Fecha</th>
+          <th style="padding:5px 10px;text-align:left;border-bottom:1px solid #e2e8f0">Motivo</th>
+          <th style="padding:5px 10px;text-align:left;border-bottom:1px solid #e2e8f0">Especialidad</th>
+          <th style="padding:5px 10px;text-align:center;border-bottom:1px solid #e2e8f0">Estado</th>
+        </tr></thead>
+        <tbody>${citas.map((c,i)=>{
+          const ec={programada:'#2b6cb0',atendida:'#276749',cancelada:'#9b2c2c'}[c.estado]||'#718096';
+          return `<tr style="${i%2===0?'':'background:#f7f8fa'}">
+            <td style="padding:4px 10px;white-space:nowrap">${fmtDateTime(c.fecha_cita)}</td>
+            <td style="padding:4px 10px">${c.motivo||'-'}</td>
+            <td style="padding:4px 10px;color:#718096">${c.especialidad||'-'}</td>
+            <td style="padding:4px 10px;text-align:center"><span style="font-size:0.75rem;font-weight:700;color:${ec}">${c.estado}</span></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>` : ''}
+
+    <!-- AI NARRATIVE placeholder -->
+    <div id="epicrisisAiSection" style="display:none;margin-bottom:20px">
+      <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#718096;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:10px">✨ Resumen Narrativo · IA</div>
+      <div id="epicrisisAiContent" style="font-size:0.9rem;line-height:1.7;color:#2d3748;white-space:pre-wrap"></div>
+    </div>
+
+    <!-- FOOTER -->
+    <div style="margin-top:40px;padding-top:16px;border-top:2px solid #1a202c;display:flex;justify-content:space-between;align-items:flex-end;font-size:0.78rem;color:#718096">
+      <div>
+        <div style="font-weight:700;color:#1a202c;font-size:0.9rem">${doctor}</div>
+        <div>${esp}</div>
+        <div>${inst}</div>
+      </div>
+      <div style="text-align:right">
+        <div>Documento generado</div>
+        <div style="font-weight:700;color:#1a202c">${new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})} · ${new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</div>
+        <div style="margin-top:4px;font-style:italic">ECE Meta Core · Sistema de Gestión Clínica</div>
+      </div>
+    </div>
+    <!-- FIRMA -->
+    <div style="margin-top:40px;display:flex;justify-content:flex-end">
+      <div style="text-align:center;width:220px">
+        <div style="border-top:1px solid #1a202c;padding-top:6px;font-size:0.8rem;color:#4a5568">
+          ${doctor}<br>${esp}
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Show overlay
+  document.getElementById('epicrisisOverlay').style.display = 'block';
+  // Scroll to top
+  document.getElementById('epicrisisOverlay').scrollTop = 0;
+}
+
+async function enrichEpicrisisWithAI() {
+  const btn = document.getElementById('epicrisisAiBtn');
+  const section = document.getElementById('epicrisisAiSection');
+  const content = document.getElementById('epicrisisAiContent');
+  if (!currentPatient) return;
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Generando…';
+  section.style.display = '';
+  content.textContent = 'Analizando expediente completo…';
+
+  try {
+    const pat = currentPatient;
+    const age = pat.fecha_nacimiento
+      ? Math.floor((Date.now() - new Date(pat.fecha_nacimiento)) / 31557600000) : '?';
+    const context = `
+Paciente: ${pat.nombre} ${pat.apellido_paterno}, ${age} años, sexo: ${pat.sexo}.
+Alergias: ${pat.alergias || 'ninguna'}.
+Antecedentes: ${pat.antecedentes || 'ninguno referido'}.
+Diagnósticos registrados: ${[...new Set(currentNotes.map(n=>n.diagnostico).filter(Boolean))].join('; ')}.
+Número de consultas: ${currentNotes.length}.
+Número de estudios de laboratorio: ${currentLabs.length}.
+Último peso: ${currentVitals[0]?.peso_kg||'N/D'} kg. Última T/A: ${currentVitals[0]?.presion_sistolica?currentVitals[0].presion_sistolica+'/'+currentVitals[0].presion_diastolica:'N/D'}.
+`.trim();
+
+    const data = await api('/api/research/ask', {
+      method: 'POST',
+      body: JSON.stringify({
+        question: 'Genera un resumen clínico narrativo de epicrisis para este paciente. Incluye: diagnósticos principales, evolución clínica, paraclínicos relevantes, manejo aplicado y estado actual. Redáctalo en tercera persona, en lenguaje médico formal, máximo 3 párrafos.',
+        context
+      })
+    });
+    content.textContent = data.answer || data.response || 'Sin respuesta.';
+    btn.textContent = '✅ Resumen listo';
+  } catch(e) {
+    content.textContent = 'Error al generar el resumen: ' + e.message;
+    btn.textContent = '✨ Reintentar';
+    btn.disabled = false;
+  }
 }
 
 // ── INDICADORES ────────────────────────────────────────────────────
