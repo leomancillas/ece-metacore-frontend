@@ -199,14 +199,18 @@
     @media print {
       .no-print { display: none !important; }
       .card { box-shadow: none !important; border: 1px solid #ccc !important; }
-      nav, .sidebar { display: none !important; }
-      .content { max-width: none; padding: 0; }
-      /* Epicrisis print mode */
-      body > *:not(#epicrisisOverlay) { display: none !important; }
-      #epicrisisOverlay { display: block !important; position: static !important; background: #fff !important; }
+      /* Normal print (patient PDF): hide navigation only */
+      nav, .sidebar, #sidebarOverlay, .hamburger-btn { display: none !important; }
+      .content { max-width: none !important; padding: 20px !important; }
+      /* Epicrisis print mode: activated via body.print-epicrisis class */
+      body.print-epicrisis > *:not(#epicrisisOverlay) { display: none !important; }
+      body.print-epicrisis #epicrisisOverlay { display: block !important; position: static !important; background: #fff !important; }
       #epicrisisToolbar { display: none !important; }
       #epicrisisDoc { padding: 0 !important; font-size: 10pt !important; }
       .epic-section { page-break-inside: avoid; }
+      /* Patient PDF improvements */
+      .btn-pdf, .btn { display: none !important; }
+      .badge { border: 1px solid #ccc !important; }
     }
     /* ── Responsive / Mobile ───────────────────────────────────────── */
     .hamburger-btn {
@@ -438,7 +442,7 @@
   <div id="epicrisisToolbar" style="position:fixed;top:0;left:0;right:0;background:#1a1a2e;padding:10px 24px;display:flex;align-items:center;gap:12px;z-index:10000;box-shadow:0 2px 8px rgba(0,0,0,0.3)">
     <span style="color:#fff;font-weight:700;font-size:0.95rem;flex:1">📋 Epicrisis</span>
     <button id="epicrisisAiBtn" onclick="enrichEpicrisisWithAI()" style="background:#7c3aed;color:#fff;border:none;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:0.85rem;font-weight:600">✨ Enriquecer con IA</button>
-    <button onclick="window.print()" style="background:#276749;color:#fff;border:none;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:0.85rem;font-weight:600">🖨️ Imprimir / PDF</button>
+    <button onclick="printEpicrisis()" style="background:#276749;color:#fff;border:none;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:0.85rem;font-weight:600">🖨️ Imprimir / PDF</button>
     <button onclick="document.getElementById('epicrisisOverlay').style.display='none'" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:0.85rem">✕ Cerrar</button>
   </div>
 </div>
@@ -3491,6 +3495,14 @@ Formato: resumen en viñetas breves: ▸ Diagnósticos activos ▸ Medicamentos 
 
 // ── EXPORTAR PDF ───────────────────────────────────────────────────
 function exportPatientPDF() {
+  // Normal patient PDF: just print — nav/sidebar are hidden via CSS, mainContent stays visible
+  window.print();
+}
+
+function printEpicrisis() {
+  // Epicrisis PDF: hide everything except the epicrisis overlay
+  document.body.classList.add('print-epicrisis');
+  window.onafterprint = () => document.body.classList.remove('print-epicrisis');
   window.print();
 }
 
