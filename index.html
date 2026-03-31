@@ -261,6 +261,18 @@
       th, td { padding: 8px 8px; }
       .stat-num { font-size: 1.5rem; }
     }
+    /* ── Modular Template Cards ── */
+    .module-card {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; border-radius: 8px;
+      border: 1.5px solid #c6f6d5; background: #fff;
+      cursor: pointer; font-size: 0.82rem; font-weight: 500;
+      transition: border-color 0.15s, background 0.15s; color: #2d3748;
+      user-select: none;
+    }
+    .module-card:hover { border-color: var(--primary); background: #f0fff4; }
+    .module-card.selected { border-color: var(--primary); background: #c6f6d5; color: #276749; font-weight: 700; }
+    .module-card input[type=checkbox] { accent-color: var(--primary); width: 15px; height: 15px; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -440,16 +452,24 @@
       <button class="btn btn-secondary btn-sm" onclick="closeModal('noteModal')">✕</button>
     </div>
 
-    <!-- Panel de plantillas -->
+    <!-- Panel de plantillas modulares -->
     <div id="templatesPanel" style="display:none;background:linear-gradient(135deg,#f0fff4,#e6fffa);border:1.5px solid #9ae6b4;border-radius:10px;padding:14px 16px;margin-bottom:16px">
-      <div style="font-size:0.82rem;font-weight:700;color:var(--primary);margin-bottom:10px">Selecciona una plantilla para pre-llenar la nota:</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px">
-        <button class="note-type-btn" onclick="applyTemplate('dm2')">🩸 DM2 seguimiento<br><span class="nom-label">Diabetes tipo 2</span></button>
-        <button class="note-type-btn" onclick="applyTemplate('hta')">💊 HTA seguimiento<br><span class="nom-label">Hipertensión arterial</span></button>
-        <button class="note-type-btn" onclick="applyTemplate('primera_vez')">🏥 Primera consulta<br><span class="nom-label">Historia clínica</span></button>
-        <button class="note-type-btn" onclick="applyTemplate('ira')">🤧 IRA / Gripa<br><span class="nom-label">Inf. respiratoria</span></button>
-        <button class="note-type-btn" onclick="applyTemplate('dolor_abdominal')">🫃 Dolor abdominal<br><span class="nom-label">Gastroenterología</span></button>
-        <button class="note-type-btn" onclick="applyTemplate('egreso')">🏠 Nota de egreso<br><span class="nom-label">Alta hospitalaria</span></button>
+      <div style="font-size:0.82rem;font-weight:700;color:var(--primary);margin-bottom:4px">🧩 Módulos de endocrinología — combina uno o más para generar la nota SOAP:</div>
+      <div style="font-size:0.75rem;color:#4a5568;margin-bottom:10px">Los módulos seleccionados se fusionan automáticamente en un solo expediente integrado.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px;margin-bottom:12px" id="moduleCheckboxes">
+        <label class="module-card" id="mc-scrm"><input type="checkbox" value="scrm" onchange="toggleModuleCard('scrm')"> 🫀 S. Cardio-Renal-Metabólico</label>
+        <label class="module-card" id="mc-obesidad"><input type="checkbox" value="obesidad" onchange="toggleModuleCard('obesidad')"> ⚖️ Obesidad / Adiposidad</label>
+        <label class="module-card" id="mc-dm2"><input type="checkbox" value="dm2" onchange="toggleModuleCard('dm2')"> 🩸 Diabetes Mellitus tipo 2</label>
+        <label class="module-card" id="mc-dislipidemia"><input type="checkbox" value="dislipidemia" onchange="toggleModuleCard('dislipidemia')"> 🧈 Dislipidemia</label>
+        <label class="module-card" id="mc-hipotiroidismo"><input type="checkbox" value="hipotiroidismo" onchange="toggleModuleCard('hipotiroidismo')"> 🟡 Hipotiroidismo</label>
+        <label class="module-card" id="mc-hipertiroidismo"><input type="checkbox" value="hipertiroidismo" onchange="toggleModuleCard('hipertiroidismo')"> 🔴 Hipertiroidismo</label>
+        <label class="module-card" id="mc-nodulos"><input type="checkbox" value="nodulos" onchange="toggleModuleCard('nodulos')"> 🔬 Nódulos Tiroideos</label>
+        <label class="module-card" id="mc-ca_tiroides"><input type="checkbox" value="ca_tiroides" onchange="toggleModuleCard('ca_tiroides')"> 🏥 Cáncer de Tiroides</label>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="applySelectedModules()">✅ Aplicar módulos seleccionados</button>
+        <button class="btn btn-secondary btn-sm" onclick="clearModuleSelection()">🗑 Limpiar selección</button>
+        <span id="moduleCount" style="font-size:0.8rem;color:var(--primary);font-style:italic"></span>
       </div>
     </div>
     <!-- Selector de tipo -->
@@ -3664,78 +3684,184 @@ function toggleTemplatesPanel() {
   p.style.display = p.style.display === 'none' ? '' : 'none';
 }
 
-const NOTE_TEMPLATES = {
+function toggleModuleCard(key) {
+  const card = document.getElementById('mc-' + key);
+  if (!card) return;
+  const cb = card.querySelector('input[type=checkbox]');
+  card.classList.toggle('selected', cb.checked);
+  const count = document.querySelectorAll('#moduleCheckboxes input:checked').length;
+  const el = document.getElementById('moduleCount');
+  if (el) el.textContent = count > 0 ? count + ' módulo' + (count > 1 ? 's' : '') + ' seleccionado' + (count > 1 ? 's' : '') : '';
+}
+
+function clearModuleSelection() {
+  document.querySelectorAll('#moduleCheckboxes input[type=checkbox]').forEach(cb => {
+    cb.checked = false;
+    const card = document.getElementById('mc-' + cb.value);
+    if (card) card.classList.remove('selected');
+  });
+  const el = document.getElementById('moduleCount');
+  if (el) el.textContent = '';
+}
+
+// ── MÓDULOS DE ENDOCRINOLOGÍA ──────────────────────────────────────────
+const TEMPLATE_MODULES = {
+  scrm: {
+    label: 'S. Cardio-Renal-Metabólico',
+    diagnostico: 'Síndrome cardio-renal-metabólico (E88.89)',
+    sintomas: '── SÍNDROME CARDIO-RENAL-METABÓLICO ──\nDisnea: [ausente / esfuerzo grado II-III / reposo]. Ortopnea: [no / sí — # almohadas]. Edema MMII: [no / sí — fóvea grado __]. Nicturia: __ veces/noche. Tolerancia al ejercicio: [conservada/reducida]. Cambios en diuresis o espuma en orina: [no/sí]. Síntomas de ECV: angina, claudicación intermitente. Adherencia a IECA/ARA2/iSGLT2.',
+    exfisica: '── SCRM — Exploración Física ──\nTA: __/__ mmHg · FC: __ lpm · SaO2: __% · Peso: __ kg\nEdema maleolar: [no / sí grado __]. PVY: [no elevada / elevada __ cm]. R3/R4: [no / sí]. Crepitantes: [no / bibasales]. Soplos carotídeos: [no / sí]. Hepatomegalia: [no / sí — __ cm].',
+    estudios: '── SCRM — Laboratorio y Gabinete ──\nCr: __ mg/dL · TFGe (CKD-EPI): __ mL/min/1.73m² · Albuminuria/Cr: __ mg/g\nNa: __ · K: __ · Cl: __ (mEq/L) · BUN: __ mg/dL\nBNP: __ pg/mL / NT-proBNP: __ pg/mL\nECG: [ritmo sinusal / FA / HVI / BRIHH / sin cambios agudos]\nEcocardiograma: FEVI __% · Disfunción diastólica grado __ · HVI: [sí/no] · Valvulopatía: [no/sí — ___]',
+    impresion: '── SCRM — Evaluación ──\nSCRM estadio __/5. Fenotipo predominante: [cardíaco/renal/metabólico].\nRiesgo CV (ASCVD 10a): __% / SCORE2: __% → [muy alto / alto / moderado / bajo riesgo].\nTFGe estadio: [G1≥90 / G2 60-89 / G3a 45-59 / G3b 30-44 / G4 15-29 / G5<15].\nAlbuminuria: [A1<30 / A2 30-300 / A3>300 mg/g]. Control: [HAS __ / DM2 __ / dislipidemia __].',
+    tx_farmaco: '── SCRM — Tratamiento Farmacológico ──\niSGLT2: ___________ __ mg/día (renoprotector/cardioprotector — indicado independiente de DM2).\nARNs/iRAAS: ___________ __ mg/día · Diurético de asa: Furosemida __ mg/día si congestión.\nAntagonista mineralocorticoide no esteroideo: Finerenona __ mg/día si ERC + DM2.\nAntihipertensivo adicional: ___________ __ mg/día.',
+    tx_nofarmaco: '── SCRM — No Farmacológico ──\nMeta TA <130/80 mmHg. Restricción de Na <2.3 g/día. Restricción de líquidos si retención. Dieta mediterránea / DASH. Ejercicio aeróbico 150 min/sem según tolerancia.',
+    seguimiento: '── SCRM — Seguimiento ──\nMeta TFGe: estabilizar/mejorar. Meta albuminuria: reducir ≥30%.\nLaboratorio: Cr + electrolitos + albuminuria en __ semanas post-ajuste de iRAAS.\nK sérico en 1 semana si nuevo iRAAS o antagonista mineralocorticoide.\nPróxima cita: __ semanas / valoración ecocardiograma en __ meses.',
+  },
+  obesidad: {
+    label: 'Obesidad / Adiposidad',
+    diagnostico: 'Obesidad (E66.09)',
+    sintomas: '── OBESIDAD / ADIPOSIDAD ──\nGanancia ponderal: __ kg en __ meses/años. Intentos previos: [dieta / ejercicio / fármacos: __ / cirugía bariátrica — resultado: __]. Somnolencia diurna (Epworth: __/24). Ronquido/apneas referidas: [no/sí]. Dolor articular: [no / bilateral rodillas / cadera / lumbar]. Reflujo gastroesofágico: [no/sí]. Síntomas de causa secundaria: [descartados / hipotiroidismo / Cushing / SOP / hipogonadismo].\nMedicamentos obesogénicos: [ninguno / corticoides / antipsicóticos / insulina / AD tricíclicos / antiepilépticos].',
+    exfisica: '── OBESIDAD — Exploración Física ──\nPeso actual: __ kg · Peso máximo histórico: __ kg · Meta peso: __ kg\nTalla: __ cm · IMC: __ kg/m² ([Clase I ≥30 / Clase II ≥35 / Clase III ≥40])\nCircunferencia de cintura: __ cm (Meta M<80 / H<90 cm) · ICC: __\nAcantosis nigricans: [no / sí — cuello / axilas / ingles]. Estrías: [no / sí — localización].\nSignos de Cushing: [no / sí — giba de bisonte / cara de luna llena / estrías violáceas].',
+    estudios: '── OBESIDAD — Laboratorio ──\nGlucemia ayuno: __ mg/dL · Insulina: __ μU/mL · HOMA-IR: __ (IR si >2.5)\nHbA1c: __% · Perfil lipídico: CT__ LDL__ HDL__ TG__ mg/dL\nTSH: __ mIU/L (descartar hipotiroidismo como causa secundaria)\nALT/AST: __/__ (esteatosis hepática metabólica — MASLD)\nCortisol matutino: __ μg/dL (si sospecha Cushing > 18 μg/dL descarta)',
+    impresion: '── OBESIDAD — Evaluación ──\nObesidad clase __ (IMC __ kg/m²). EOSS estadio __/4.\nFenotipo: [metabólicamente no sano / visceral predominante / sarcopénica / ginoidea].\nCausa: [primaria / secundaria — especificar: __].\nComplicaciones presentes: [DM2 / HAS / dislipidemia / SAOS / MASLD / artrosis / SOP / HVD / colelitiasis].',
+    tx_farmaco: '── OBESIDAD — Tratamiento Farmacológico ──\n[Semaglutida (GLP-1/GIPra): __ mg SC/semana — iniciar 0.25 mg/sem, escalar c/4 semanas hasta __ mg]\n[Tirzepatida (GLP-1/GIPra dual): __ mg SC/semana — iniciar 2.5 mg/sem, escalar c/4 semanas]\n[Orlistat 120 mg VO c/8h con alimentos que contengan grasa]\n[Naltrexona/bupropión 8/90 mg — iniciar 1 tab/día, escalar a 2 tab c/12h]\nEfectos GI esperados (náusea, diarrea) — disminuyen con escalada lenta.',
+    tx_nofarmaco: '── OBESIDAD — No Farmacológico ──\nDéficit calórico: ~500 kcal/día sobre gasto energético estimado. Proteína ≥1.2–1.5 g/kg peso ideal/día. Reducción de CHO refinados y azúcares simples. Dieta mediterránea o baja en CHO. Ejercicio aeróbico ≥150 min/sem + 2-3 días/sem resistencia.\nEvaluación para cirugía bariátrica: [no indica / refiere — IMC≥40 ó ≥35 con comorbilidades].',
+    seguimiento: '── OBESIDAD — Seguimiento ──\nMeta: reducción ≥5–10% del peso en 6 meses (__ kg en __ meses).\nControl peso + cintura en cada visita. HbA1c, perfil lipídico, función hepática en __ semanas.\nEvaluación PSG si SAOS sospechado. USG hepático si MASLD sospechada.',
+  },
   dm2: {
-    tipo: 'evolucion',
-    motivo: 'Seguimiento de Diabetes mellitus tipo 2',
-    subjetivo: 'Paciente refiere adherencia al tratamiento. Niega hipoglucemias. Sin polidipsia, poliuria ni polifagia en el último mes.',
-    objetivo: 'FC: ___ lpm   TA: ___/___ mmHg   Peso: ___ kg   Glucemia capilar: ___ mg/dL\nExploración: Abdomen sin datos de alarma. Extremidades sin edema. Neurológico conservado.',
-    analisis: 'Diabetes mellitus tipo 2 (E11) — control glucémico [adecuado/inadecuado].',
-    plan: 'Continuar tratamiento farmacológico. Reforzar dieta y actividad física 150 min/semana. Solicitar HbA1c, función renal y perfil lipídico. Próxima cita en 3 meses.',
-    diagnostico: 'Diabetes mellitus tipo 2 (E11)',
+    label: 'Diabetes Mellitus tipo 2',
+    diagnostico: 'Diabetes mellitus tipo 2 (E11.9)',
+    sintomas: '── DIABETES MELLITUS TIPO 2 ──\nAños de diagnóstico: __. Adherencia a medicamentos: [buena / regular / mala]. Automonitoreo glucémico: [sí — __ veces/día, últimas lecturas: ayuno __ mg/dL, posprandial __ mg/dL / no]. Hipoglucemias: [ninguna / esporádicas / frecuentes — horario: __ / severidad: leve-moderada-severa]. Síntomas actuales: [asintomático / poliuria / polidipsia / visión borrosa / fatiga / pérdida de peso]. Neuropatía: [sin síntomas / parestesias / dolor quemante nocturno / pie insensible]. Última revisión oftalmológica: fecha __.',
+    exfisica: '── DM2 — Exploración Física ──\nPeso: __ kg · IMC: __ kg/m² · TA: __/__ mmHg\nExamen de pies (prevención pie diabético):\n  Pulsos: tibial posterior [+/−] · pedio [+/−] · Llenado capilar: __ seg\n  Monofilamento 10g: __/10 puntos (anormal si falla ≥1/10)\n  Diapasón 128Hz: [normal / disminuido]\n  Temperatura diferencial: [simétrica / asimétrica — pie frío/caliente]\n  Piel: [íntegra / úlcera Wagner __ — localización: __]',
+    estudios: '── DM2 — Laboratorio ──\nGlucemia ayuno: __ mg/dL · HbA1c: __% (meta: __%) · Fecha: __\nCr: __ mg/dL · TFGe: __ mL/min/1.73m² · Albuminuria/Cr: __ mg/g\nPerfil lipídico: CT__ LDL__ HDL__ TG__ no-HDL__ mg/dL\nALT/AST: __/__ U/L (monitoreo si pioglitazona o estatina)\nFondo de ojo (última revisión __): [sin retinopatía / RDNP leve/moderada/severa / RDP]',
+    impresion: '── DM2 — Evaluación ──\nDM2 [bien controlada / parcialmente controlada / mal controlada]. HbA1c actual __% vs meta __%.\nComplicaciones crónicas:\n  Retinopatía: [no / RDNP __ / RDP]\n  Nefropatía DM: TFGe __ + albuminuria __ → CKD-DM estadio __\n  Neuropatía: [no / periférica sensitiva / autonómica cardiovascular/GI/urogenital]\n  ECV aterosclerótica: [no establecida / IAM previo / EVC / EAP]\nHipoglucemia: [no / esporádica / frecuente — riesgo de hipoglucemia grave / hipoglucemia imperceptible].',
+    tx_farmaco: '── DM2 — Tratamiento Farmacológico ──\nMetformina: __ mg/día (ajustar si TFGe 30-45; suspender si TFGe<30).\niSGLT2: ___________ __ mg/día [prioritario si ERC / ICC / alto riesgo CV — ajustar por TFGe].\naGLP-1: ___________ __ [mg SC/sem o unidades SC/día] [prioritario si obesidad / alto riesgo CV / TG elevados].\niDPP4: ___________ __ mg/día [si hipoglucemia frecuente / tolerabilidad].\nInsulina basal: ___________ __ UI SC (titulación: +__ UI c/3 días si glucemia ayuno >__ mg/dL).\nInsulina prandial: ___________ __ UI con [desayuno/principales alimentos — ajuste por CHO].',
+    tx_nofarmaco: '── DM2 — No Farmacológico ──\nDieta: conteo de carbohidratos (<__ g/comida) / índice glucémico bajo. Evitar azúcares simples y bebidas azucaradas. Proteína ≥1.2 g/kg/día. Actividad física aeróbica ≥150 min/sem + resistencia 2-3 días/sem. Meta HbA1c: __% (individualizar: ≤7% general / ≤6.5% joven sin comorbilidades / ≤8% adulto mayor/hipoglucemia grave).',
+    seguimiento: '── DM2 — Seguimiento ──\nHbA1c en 3 meses si fuera de meta; c/6 meses si estable. Perfil renal + albuminuria en __ semanas.\nReferir: [oftalmología anual / podología / nutriología / cardiología si ECV]. Vacunación: influenza anual, neumococo, hepatitis B.',
   },
-  hta: {
-    tipo: 'evolucion',
-    motivo: 'Seguimiento de Hipertensión arterial sistémica',
-    subjetivo: 'Paciente refiere toma de medicación regularmente. Niega cefalea, visión borrosa o palpitaciones. Adherencia referida: buena.',
-    objetivo: 'TA: ___/___ mmHg (brazo derecho, en reposo)  FC: ___ lpm  Peso: ___ kg\nExploración: Sin datos de falla cardíaca. Sin soplos carotídeos.',
-    analisis: 'Hipertensión arterial sistémica (I10) — control tensional [adecuado/inadecuado].',
-    plan: 'Continuar antihipertensivos. Dieta hiposódica < 5 g/día. Actividad física aeróbica. Solicitar EGO, creatinina, electrolitos. Cita en 4 semanas.',
-    diagnostico: 'Hipertensión arterial sistémica (I10)',
+  dislipidemia: {
+    label: 'Dislipidemia',
+    diagnostico: 'Hiperlipidemia mixta (E78.2)',
+    sintomas: '── DISLIPIDEMIA ──\nAHF de ECV prematura (H<55a / M<65a): [no / sí — quién: __]. Dieta habitual: [occidental / mediterránea]. Alcohol: [no / __ g/semana]. Actividad física: __. Mialgias o debilidad muscular con estatinas: [no / sí — intensidad: __]. Abandono previo de estatinas por: __. Xantomas: [no/sí]. Pancreatitis previa: [no/sí — si TG>500].',
+    exfisica: '── DISLIPIDEMIA — Exploración Física ──\nXantomas tendinosos (tendón de Aquiles, extensores de manos): [no / sí].\nArco corneal: [no / sí — bilateral < 45 años: sospecha hipercolesterolemia familiar].\nXantelasmas palpebrales: [no / sí].\nSignos de pancreatitis (si TG muy elevados): [no / sí — dolor abdominal, Cullen, Turner].',
+    estudios: '── DISLIPIDEMIA — Laboratorio ──\nPerfil lipídico (ayuno ≥8h):\n  CT: __ mg/dL · LDL: __ mg/dL (meta: <__ mg/dL)\n  HDL: __ mg/dL (bajo si M<50 / H<40 mg/dL)\n  TG: __ mg/dL (muy alto si >500 — riesgo pancreatitis)\n  no-HDL: __ mg/dL (meta: <__ mg/dL) · Apo B: __ mg/dL\n  Lp(a): __ nmol/L (medir ≥1 vez en vida — riesgo residual)\nCK: __ U/L (si mialgias) · ALT/AST: __/__ U/L · TSH: __ (causa secundaria)',
+    impresion: '── DISLIPIDEMIA — Evaluación ──\nRiesgo CV (ASCVD 10a): __% / SCORE2: __% → [muy alto / alto / moderado / bajo riesgo].\nECV aterosclerótica establecida: [no / sí — IAM/EVC/EAP/revasc coronaria].\nMeta LDL: <__ mg/dL [<55 muy alto / <70 alto / <100 moderado / <130 bajo riesgo].\nLDL actual __ vs meta __ mg/dL — [en meta / fuera de meta por __ mg/dL (reducción requerida: __%)].\nPatrón: [hipercolesterolemia aislada / HTG aislada / hiperlipidemia mixta / hipoHDLemia].\nCausa secundaria: [descartada / hipotiroidismo / DM2 / síndrome nefrótico / hepatopatía / fármacos].',
+    tx_farmaco: '── DISLIPIDEMIA — Tratamiento Farmacológico ──\nEstatina: [Rosuvastatina __ mg / Atorvastatina __ mg] — alta intensidad si muy alto/alto riesgo (reducción LDL ≥50%).\nEzetimibe 10 mg/día: [agregar / continuar] — reduce LDL adicional ~20%.\niPCSK9: [Evolocumab 140 mg SC c/2 sem / Alirocumab 75-150 mg SC c/2 sem] — si LDL >70 con máx estatina + ezetimibe + muy alto riesgo CV.\nFibrato: Fenofibrato __ mg/día — si TG >500 mg/dL (riesgo pancreatitis).\nOmega-3 icosapento (Vascepa): __ g/día — si TG 150–499 mg/dL + alto riesgo CV.',
+    tx_nofarmaco: '── DISLIPIDEMIA — No Farmacológico ──\nDieta mediterránea / baja en grasas saturadas (<7% calorías totales) y trans. Aumentar fibra soluble (10-25 g/día). Restricción de alcohol si TG elevados (>150 mg/dL). Ejercicio aeróbico ≥150 min/sem. Reducción de peso si sobrepeso/obesidad.',
+    seguimiento: '── DISLIPIDEMIA — Seguimiento ──\nPerfil lipídico en 4-6 semanas post-inicio/ajuste. ALT + CK si mialgias o nueva estatina.\nLp(a) si LDL en meta pero alto riesgo residual. Cita en __ meses.',
   },
-  primera_vez: {
-    tipo: 'historia_clinica',
-    motivo: 'Consulta de primera vez',
-    subjetivo: 'Paciente acude por primera vez. Motivo principal: ___.\nAPP: ___. Antecedentes quirúrgicos: ___. Alergias: ___. Medicamentos actuales: ___.\nAHF: ___. ANSA: ___.',
-    objetivo: 'FC: ___ lpm  FR: ___/min  TA: ___/___ mmHg  Temp: ___ °C  Sat O2: ___%\nPeso: ___ kg  Talla: ___ cm  IMC: ___\nExploración física por aparatos y sistemas:\n- General: ___\n- Cabeza y cuello: ___\n- Tórax: ___\n- Abdomen: ___\n- Extremidades: ___\n- Neurológico: ___',
-    analisis: 'Impresión diagnóstica:\n1. ___',
-    plan: 'Estudios de laboratorio y gabinete solicitados:\n1. ___\nTratamiento:\n1. ___\nIndicaciones: ___\nPróxima cita: ___',
-    diagnostico: 'Historia clínica de primera vez',
+  hipotiroidismo: {
+    label: 'Hipotiroidismo',
+    diagnostico: 'Hipotiroidismo primario (E03.9)',
+    sintomas: '── HIPOTIROIDISMO ──\nSíntomas: [fatiga / somnolencia / intolerancia al frío / constipación / aumento de peso / piel seca / caída de cabello / voz ronca / lentitud cognitiva / ciclos irregulares / infertilidad]. Tiempo de evolución: __.\nMedicamento: Levotiroxina __ mcg/día — adherencia: [correcta — en ayuno ≥30 min antes desayuno / irregular — motivo: __]. Marca: __. Separación de Ca/Fe/IBP: [sí / no — separar ≥4h].\nAntecedente: [Tiroiditis de Hashimoto / post-RAI / post-tiroidectomía / yodo-inducido / amiodarona / litio / central].',
+    exfisica: '── HIPOTIROIDISMO — Exploración Física ──\nFC: __ lpm · PA: __/__ mmHg · Peso: __ kg\nTiroides: [no palpable / bocio grado __ — consistencia: dura/firme/blanda — nodular: sí/no].\nPiel: [seca/normal]. Mixedema: [no / pretibial / generalizado]. Reflejo aquíleo relajación lenta: [no / sí]. Bradilalia: [no / sí]. Edema no fóvea: [no / sí].',
+    estudios: '── HIPOTIROIDISMO — Laboratorio ──\nTSH: __ mIU/L\n  Meta: [0.5–2.5 si <60a / 1.0–4.0 si 60-80a / 1.0–6.0 si >80a / 0.1–2.5 si embarazada 1er trim]\nT4 libre: __ ng/dL (VN: 0.8–1.8) · T3 libre: __ pg/mL\nAnti-TPO: __ UI/mL · Anti-Tg: __ UI/mL\nPerfil lipídico (dislipidemia secundaria a hipotiroidismo): CT__ LDL__ HDL__ TG__ mg/dL\nHemograma: [normal / anemia macrocítica — B12/folato si Hashimoto]',
+    impresion: '── HIPOTIROIDISMO — Evaluación ──\nHipotiroidismo [primario / subclínico / central] — [compensado / infrareemplazado (TSH alta) / sobrereemplazado (TSH suprimida)].\nTSH actual __ mIU/L → [en meta / ajuste requerido].\nEtiología: [Tiroiditis autoinmune (Hashimoto) — anti-TPO positivos / post-RAI / post-tiroidectomía / medicamentoso].\nImpacto clínico: [sin repercusión / dislipidemia secundaria / anemia / ciclos irregulares / infertilidad / pericarditis].',
+    tx_farmaco: '── HIPOTIROIDISMO — Tratamiento Farmacológico ──\nLevotiroxina: __ mcg/día [mantener / ajustar a __ mcg (+ __ mcg / − __ mcg)].\n  Dosis habitual: 1.6–1.8 mcg/kg/día (reducir en adulto mayor: 1.0–1.2 mcg/kg/día).\n  En embarazo: aumentar dosis ~30% desde confirmación, meta TSH <2.5 (1er trim) / <3.0 (2do-3er trim).',
+    tx_nofarmaco: '── HIPOTIROIDISMO — No Farmacológico ──\nTomar Levotiroxina en ayuno estricto, 30–60 min antes del desayuno (o 4h después de última comida). No cambiar marca sin avisar al médico (diferente biodisponibilidad). Separar de: Ca (≥4h), Fe (≥4h), IBP (≥4h), antiácidos con Mg/Al, colestiramina, soya.',
+    seguimiento: '── HIPOTIROIDISMO — Seguimiento ──\nTSH + T4L en __ semanas (4–6 semanas post-ajuste de dosis).\nSi estable: control c/6–12 meses. Si embarazada: TSH mensual en 1er trimestre.\nRepetir perfil lipídico tras optimizar TSH (resolución de dislipidemia secundaria).',
   },
-  ira: {
-    tipo: 'evolucion',
-    motivo: 'Infección de vías respiratorias altas',
-    subjetivo: 'Paciente con ___ días de evolución con cuadro de: rinorrea [serosa/mucopurulenta], odinofagia, tos [productiva/seca], fiebre ___ °C. Niega dificultad respiratoria.',
-    objetivo: 'FC: ___ lpm  TA: ___/___ mmHg  Temp: ___ °C  SatO2: ___%\nFaringe: [eritematosa/con exudado]. Amígdalas: ___. OD: ___. OI: ___. Pulmones: campos limpios bilaterales.',
-    analisis: 'Infección de vías respiratorias altas (J06.9) — origen [viral/bacteriano probable].',
-    plan: 'Hidratación abundante. Paracetamol 500-1000 mg c/8h PRN fiebre o dolor. [Amoxicilina 500 mg c/8h × 7 días si sospecha bacteriana]. Reposo relativo. Regreso si fiebre > 3 días o dificultad respiratoria.',
-    diagnostico: 'Infección de vías respiratorias altas (J06.9)',
+  hipertiroidismo: {
+    label: 'Hipertiroidismo',
+    diagnostico: 'Tirotoxicosis (E05.90)',
+    sintomas: '── HIPERTIROIDISMO ──\nSíntomas: [palpitaciones / temblor fino / nerviosismo-irritabilidad / pérdida de peso con apetito conservado / intolerancia al calor / diaforesis / diarrea / oligomenorrea / debilidad muscular proximal]. Pérdida ponderal: __ kg en __ meses. Síntomas oculares (si Graves): [no / proptosis / diplopía / epifora / fotofobia / visión borrosa].\nMedicamento actual: [Metimazol __ mg/día / PTU __ mg c/8h] — adherencia: [buena / irregular]. Antecedentes: [RAI previo / tiroidectomía previa / episodio previo de Graves / amiodarona / contraste yodado].',
+    exfisica: '── HIPERTIROIDISMO — Exploración Física ──\nFC: __ lpm (ritmo: [sinusal / FA]) · PA: __/__ mmHg · Peso: __ kg\nTemblor fino distal: [no / sí]. Piel: [cálida y húmeda / normal]. Onicolisis: [no / sí].\nBocio: [no palpable / grado __ — consistencia: firme/blanda — soplo tiroideo: sí/no — nodularidad: sí/no].\nOftalmopatía de Graves (CAS): proptosis __ mm Hertel, inyección conjuntival [no/sí], quemosis [no/sí], limitación mov. oculares [no/sí — dirección: __], CAS __/7.',
+    estudios: '── HIPERTIROIDISMO — Laboratorio e Imagen ──\nTSH: __ mIU/L (suprimida <0.1) · T4 libre: __ ng/dL · T3 libre: __ pg/mL\nTRAb (receptor TSH): __ UI/L (>1.75 sugiere Graves) · Anti-TPO: __ UI/mL\nGammagrafía tiroidea: [captación difusa aumentada — Graves / focal — adenoma / suprimida — tiroiditis]\nUSG tiroideo: volumen __ mL · vascularidad: [normal / aumentada difusa / focal].\nHemograma, hepático basal: __ (agranulocitosis/hepatitis con metimazol/PTU — riesgo 0.2-0.5%)',
+    impresion: '── HIPERTIROIDISMO — Evaluación ──\nHipertiroidismo [clínico / subclínico] por [Enfermedad de Graves / Adenoma tóxico solitario / BMN tóxico / Tiroiditis de Quervain / Tiroiditis silente-posparto / Amiodarona / Exceso de yodo].\nSeveridad: [leve / moderada / severa]. Control actual: [no controlado / parcialmente controlado / eutiiroideo en tratamiento / en remisión].\nOftalmopatía Graves: [no / leve / moderada / severa — visión amenazada: sí/no].\nRiesgo FA: [bajo / alto — TSH suprimida + cardiopatía / edad >65a / síntomas cardíacos].',
+    tx_farmaco: '── HIPERTIROIDISMO — Tratamiento Farmacológico ──\nMetimazol: __ mg/día (dosis inicial según severidad: leve 10-15 / moderado 20-30 / severo 40-60 mg/día). Titular por T4L, no TSH en fase aguda.\n[PTU __ mg c/8h: preferir en embarazo 1er trimestre o crisis tiroidea]\nBetabloqueador (control sintomático hasta eutiroidismo): [Propranolol __ mg c/8h / Atenolol __ mg/día].\n[Yodo radioactivo 131I: candidato — dosis __ mCi; contraindicado en embarazo/lactancia/oftalmopatía activa moderada-severa]\n[Tiroidectomía total: indicación — bocio grande/sospecha maligna/recaída post-RAI/embarazo 2do trim/contraindicación antitiroideos].',
+    tx_nofarmaco: '── HIPERTIROIDISMO — No Farmacológico ──\nReducir ingesta de yodo (sal yodada, mariscos, algas). Evitar contraste yodado si programado. Reducir cafeína/estimulantes. Reposo si FC muy elevada.\nAlarma agranulocitosis: instruir — fiebre + odinofagia → suspender metimazol y acudir urgencias para BH urgente.',
+    seguimiento: '── HIPERTIROIDISMO — Seguimiento ──\nTSH + T4L en 4–6 semanas post-ajuste (usar T4L para guiar ajuste de metimazol en fase inicial). Hepático + BH en 2-4 semanas si nuevo tratamiento.\nSi Graves: duración mínima antitiroideos 18 meses. Medir TRAb al final para valorar remisión (neg = 50% remisión). Referir a oftalmología si oftalmopatía activa.',
   },
-  dolor_abdominal: {
-    tipo: 'evolucion',
-    motivo: 'Dolor abdominal',
-    subjetivo: 'Paciente refiere dolor abdominal [localización] de ___ horas/días de evolución. Tipo: [cólico/opresivo/quemante]. Intensidad: ___/10. Irradiación: ___. Se acompaña de: [náusea/vómito/diarrea/constipación]. Niega sangrado en heces.',
-    objetivo: 'FC: ___ lpm  TA: ___/___ mmHg  Temp: ___ °C\nAbdomen: [blando/rígido], [doloroso/no doloroso] a la palpación [superficial/profunda] en [región]. Murphy: ___. McBurney: ___. Blumberg: ___. Peristalsis: ___.',
-    analisis: 'Dolor abdominal de probable origen [gastroenterológico/vesicular/apendicular/inespecífico]. Descartar: ___.',
-    plan: 'Solicitar: BH, QS, PCR, EGO [±USG abdominal/TAC]. Manejo sintomático: Buscapina, omeprazol. Dieta blanda. Regreso urgente si fiebre o deterioro.',
-    diagnostico: 'Dolor abdominal (R10.9)',
+  nodulos: {
+    label: 'Nódulos Tiroideos',
+    diagnostico: 'Nódulo tiroideo (E04.1)',
+    sintomas: '── NÓDULOS TIROIDEOS ──\nForma de detección: [hallazgo incidental en imagen / palpación / síntomas compresivos: disfagia / disfonía / disnea / sensación de presión cervical]. Tiempo de detección: __. Cambio de tamaño percibido: [no / crecimiento rápido en __ semanas]. Disfunción tiroidea asociada: [asintomático / síntomas de hiper/hipotiroidismo].\nFactores de riesgo de malignidad: [irradiación cervical en infancia / AHF de Ca tiroides / NEM2 / S. de Cowden / S. de Gardner / >4 Gy exposición previa].',
+    exfisica: '── NÓDULOS TIROIDEOS — Exploración Física ──\nNódulo palpable: [sí / no] — localización: [lóbulo D / I / istmo] — tamaño estimado: __ cm\nConsistencia: [sólido / quístico / mixto]. Movilidad con deglución: [conservada / limitada].\nVoz: [normal / disfónica — evaluar parálisis de cuerda vocal]. Adenopatías cervicales: [no / sí — nivel __ tamaño __ cm].',
+    estudios: '── NÓDULOS TIROIDEOS — Imagen y Laboratorio ──\nUSG Tiroideo (TIRADS-ACR):\n  Nódulo: __ x __ x __ mm (volumen __ mL) — localización: lóbulo __\n  Composición: [sólido / mixto / espongiforme / puramente quístico]\n  Ecogenicidad: [isoecogénico / hipoecogénico / marcadamente hipoecogénico / hiperecogénico]\n  Márgenes: [regulares / irregulares / extensión extratiroidea]\n  Calcificaciones: [no / microcalcificaciones / macrolobulaciones / calcificación en cáscara de huevo]\n  Vascularidad: [periférica / central / mixta] — Puntaje TIRADS: __ → [TR1/TR2/TR3/TR4/TR5]\nTSH: __ mIU/L. Calcitonina: __ pg/mL (si sospecha Ca medular — VN: H<11.5 / M<4.6).\nBAF (si realizada — guiada por USG):\n  Bethesda __: [I: no diagnóstico / II: benigno ~3% malig / III: ASI ~14% / IV: neoplasia folicular ~25% / V: sospechoso ~70% / VI: maligno ~99%]',
+    impresion: '── NÓDULOS TIROIDEOS — Evaluación ──\nNódulo tiroideo [único / múltiple] TIRADS-ACR __ — riesgo de malignidad estimado: __%.\nBAF Bethesda __: [benigno — seguimiento USG / indeterminado — panel molecular o repetir / sospechoso-maligno — cirugía].\nFunción tiroidea: [eutiroidea / nódulo hiperfuncionante — TSH suprimida, gammagrafía indicada].\nAderopatías sospechosas: [no / sí — BAAF de ganglio indicada].',
+    tx_farmaco: '── NÓDULOS TIROIDEOS — Manejo ──\nConducta según TIRADS + Bethesda:\n  [TR1-2 ó Bethesda II: observación — NO se indica BAF / NO levotiroxina supresiva]\n  [TR3 ≥1.5cm / TR4 ≥1cm / TR5 ≥0.5cm: BAF guiada por USG — programar]\n  [Bethesda I: repetir BAF en 3 meses con vía trans-ístmica]\n  [Bethesda III-IV: panel molecular (Afirma GEC/Xpression Atlas o ThyroSeq v3) vs hemitiroidectomía diagnóstica]\n  [Bethesda V-VI: tiroidectomía total — referir a cirugía de cabeza y cuello]\nNódulo funcionante hipercaptante (TSH suprimida): gammagrafía → si caliente, valorar RAI/cirugía.',
+    tx_nofarmaco: '── NÓDULOS TIROIDEOS — No Farmacológico ──\nNo existe tratamiento médico eficaz para reducir nódulos tiroideos. Evitar suplementos con yodo o algas marinas en exceso. Educación: signos de alarma — crecimiento rápido, disfonía persistente, disfagia, adenopatías → consulta urgente.',
+    seguimiento: '── NÓDULOS TIROIDEOS — Seguimiento ──\nUSG de cuello en __ meses (según TIRADS: TR1-2: 1-2 años / TR3: 1 año / TR4-5: 6-12 meses si no BAF, post-BAF benigna 1-2 años).\nBAF programada: fecha __. Resultado BAF esperado en __ días.',
   },
-  egreso: {
-    tipo: 'egreso',
-    motivo: 'Nota de egreso hospitalario',
-    subjetivo: 'Paciente ___ [masculino/femenino] de ___ años. Diagnóstico de ingreso: ___. Fecha de ingreso: ___.',
-    objetivo: 'Días de estancia: ___. Procedimientos realizados: ___. Laboratorios al egreso: ___. Estado al egreso: [mejorado/estable/referido].',
-    analisis: 'Diagnóstico de egreso:\n1. ___\n2. ___',
-    plan: 'Tratamiento al egreso:\n1. ___\n2. ___\nIndicaciones: ___. Cita de seguimiento: ___. Criterios de regreso a urgencias: ___.',
-    diagnostico: 'Nota de egreso hospitalario',
+  ca_tiroides: {
+    label: 'Cáncer de Tiroides',
+    diagnostico: 'Carcinoma de tiroides (C73)',
+    sintomas: '── CÁNCER DE TIROIDES ──\nHistología: [papilar / folicular / medular / anaplásico / Hürthle cell / pobremente diferenciado].\nEstadio TNM (8a ed.): T__ N__ M__ — Estadio __. Riesgo ATA: [bajo / intermedio / alto].\nFecha de tiroidectomía: __. Tipo: [total / total + vaciamiento ganglionar central / + vaciamiento lateral].\nRAI: [sí — __ mCi, indicación: __, fecha __ / no indicado — bajo riesgo / pendiente].\nAdherencia a Levotiroxina: [buena / irregular]. Síntomas de TSH suprimida: [no / palpitaciones / insomnio / temblor / pérdida de masa ósea].\nSíntomas de recurrencia: [ninguno / adenopatía cervical / disfonía / disfagia / dolor óseo / disnea].\nHipoparatiroidismo post-Qx: [no / transitorio (resuelto) / permanente — Ca __ mg/día + Calcitriol __ mcg/día].',
+    exfisica: '── CA TIROIDES — Exploración Física ──\nFC: __ lpm · PA: __/__ mmHg · Peso: __ kg\nCuello: cicatriz quirúrgica sin cambios / con induración. Adenopatías palpables: [no / sí — nivel __ / tamaño __ cm]. Voz: [normal / disfónica — parálisis NLR: sí/no]. Tetania/Chvostek/Trousseau: [negativo / positivo — hipoparatiroidismo activo].',
+    estudios: '── CA TIROIDES — Laboratorio e Imagen ──\nTSH: __ mIU/L\n  Meta supresiva (alto riesgo / resp. incompleta): <0.1 mIU/L\n  Meta supresión parcial (riesgo intermedio): 0.1–0.5 mIU/L\n  Meta sustitutiva (bajo/muy bajo riesgo, resp. excelente ≥2 años): 0.5–2.0 mIU/L\nT4 libre: __ ng/dL\nTiroglobulina (Tg): __ ng/mL (indetectable: <0.2 estimulada / <1 basal en bajo riesgo = excelente respuesta)\nAnti-Tg: __ UI/mL (interferencia analítica: [sí — trend anti-Tg como sustituto / no])\nCalcitonina: __ pg/mL + CEA: __ ng/mL (si Ca medular — tiempo de doblaje: __ meses)\nCa sérico: __ mg/dL · PTH intacta: __ pg/mL · Fósforo: __ mg/dL · 25-OH-D: __ ng/mL\nUSG cuello (fecha __): [sin evidencia de recurrencia / hallazgo: nódulo __ mm, nivel __ — BAAF si >1cm zona central ó >1.5cm zona lateral]\nCentellografía cuerpo entero (fecha __): [negativa / captación en: __]\nTAC cuello-tórax/PET-FDG (fecha __): [__]',
+    impresion: '── CA TIROIDES — Evaluación ──\nCa tiroides [papilar / folicular / medular] estadio __ (ATA riesgo [bajo / intermedio / alto]).\nRespuesta al tratamiento (ATA 2015):\n  [✅ Excelente: Tg indetectable + imagen negativa — suspensión supresión si bajo riesgo]\n  [⚠️ Indeterminada: Tg baja + imagen equívoca — continuar seguimiento]\n  [🔶 Bioquímica incompleta: Tg __ detectable sin imagen positiva — trend: ↑/estable/↓]\n  [🔴 Estructural incompleta: enfermedad estructural persistente/recurrente — localización: __]\nControl TSH: [en meta / fuera de meta — ajustar LT4].\nHipoparatiroidismo: [ausente / transitorio resuelto / permanente — compensado / no compensado].',
+    tx_farmaco: '── CA TIROIDES — Tratamiento Farmacológico ──\nLevotiroxina: __ mcg/día [dosis supresiva / supresión parcial / sustitutiva] según riesgo ATA y respuesta.\n  Si respuesta excelente ≥2 años en bajo riesgo: escalar a dosis sustitutiva (TSH 0.5–2.0).\n  Si respuesta estructural incompleta/alto riesgo: mantener TSH <0.1 (monitorear hueso y corazón).\nHipoparatiroidismo permanente: Calcio elemental __ mg/día + Calcitriol __ mcg/día (meta Ca 8.0–8.5 mg/dL).\n[Inhibidor de tirosina quinasa: Lenvatinib / Sorafenib si Ca diferenciado refractario a RAI con progresión — oncología]\n[Cabozantinib / Vandetanib si Ca medular progresivo — oncología]',
+    tx_nofarmaco: '── CA TIROIDES — No Farmacológico ──\nRAI adicional: [no indicado / a valorar — rhTSH estimulación o suspensión LT4 por 4 semanas + dieta baja en yodo 2 semanas previas]. Referir a medicina nuclear. Osteoprotección si supresión TSH prolongada: Calcio 1200 mg/día + Vit D 1000-2000 UI/día + DEXA basal.',
+    seguimiento: '── CA TIROIDES — Seguimiento ──\nUSG de cuello en __ meses (c/6 meses alto riesgo / c/12 meses bajo riesgo en respuesta excelente).\nTg + anti-Tg en __ meses. [TSH estimulada con rhTSH si Tg detectable con imagen negativa — bioquímica incompleta].\nReferir a: [cirugía de cuello si recurrencia estructural resecable / oncología si anaplásico o metástasis sistémicas].',
   },
 };
 
+function applySelectedModules() {
+  const checkboxes = document.querySelectorAll('#moduleCheckboxes input[type=checkbox]:checked');
+  if (checkboxes.length === 0) {
+    alert('Selecciona al menos un módulo de plantilla antes de aplicar.');
+    return;
+  }
+  const keys = Array.from(checkboxes).map(cb => cb.value);
+  const modules = keys.map(k => TEMPLATE_MODULES[k]).filter(Boolean);
+
+  // Build merged fields
+  const join = (field) => modules.map(m => m[field] || '').filter(Boolean).join('\n\n');
+  const motivo = keys.length === 1
+    ? 'Seguimiento de ' + modules[0].label
+    : 'Seguimiento integral: ' + modules.map(m => m.label).join(' + ');
+  const diagnostico = modules.map(m => m.diagnostico).join('\n');
+
+  // Activate evolucion type
+  const tipoBtn = document.querySelector('[onclick="selectNoteType(\'evolucion\',this)"]');
+  if (tipoBtn) {
+    document.querySelectorAll('.note-type-btn').forEach(b => b.classList.remove('selected'));
+    tipoBtn.classList.add('selected');
+    selectNoteType('evolucion', tipoBtn);
+  }
+
+  // Fill form fields (after renderNoteForm runs)
+  setTimeout(() => {
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    set('n_motivo', motivo);
+    set('n_sintomas', join('sintomas'));
+    set('n_sint_asociados', '');
+    set('n_exfisica', join('exfisica'));
+    set('n_estudios', join('estudios'));
+    set('n_diagnostico', diagnostico);
+    set('n_impresion', join('impresion'));
+    set('n_tx_farmaco', join('tx_farmaco'));
+    set('n_tx_nofarmaco', join('tx_nofarmaco'));
+    set('n_seguimiento', join('seguimiento'));
+  }, 80);
+
+  // Hide panel + clear selection
+  document.getElementById('templatesPanel').style.display = 'none';
+  clearModuleSelection();
+}
+
 function applyTemplate(key) {
-  const tpl = NOTE_TEMPLATES[key];
-  if (!tpl) return;
-  // Set note type
-  const btn = document.querySelector(`[onclick="selectNoteType('${tpl.tipo}',this)"]`);
-  if (btn) { document.querySelectorAll('.note-type-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); selectNoteType(tpl.tipo, btn); }
-  // Fill fields
-  const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
-  set('n_motivo', tpl.motivo);
-  set('n_subjetivo', tpl.subjetivo);
-  set('n_objetivo', tpl.objetivo);
-  set('n_analisis', tpl.analisis);
-  set('n_plan', tpl.plan);
-  set('n_diagnostico', tpl.diagnostico);
-  // Hide templates panel
+  // Legacy fallback — delegates to modular system
+  const mod = TEMPLATE_MODULES[key];
+  if (!mod) return;
+  const tipoBtn = document.querySelector('[onclick="selectNoteType(\'evolucion\',this)"]');
+  if (tipoBtn) {
+    document.querySelectorAll('.note-type-btn').forEach(b => b.classList.remove('selected'));
+    tipoBtn.classList.add('selected');
+    selectNoteType('evolucion', tipoBtn);
+  }
+  setTimeout(() => {
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    set('n_motivo', 'Seguimiento de ' + mod.label);
+    set('n_sintomas', mod.sintomas || '');
+    set('n_exfisica', mod.exfisica || '');
+    set('n_estudios', mod.estudios || '');
+    set('n_diagnostico', mod.diagnostico || '');
+    set('n_impresion', mod.impresion || '');
+    set('n_tx_farmaco', mod.tx_farmaco || '');
+    set('n_tx_nofarmaco', mod.tx_nofarmaco || '');
+    set('n_seguimiento', mod.seguimiento || '');
+  }, 80);
   document.getElementById('templatesPanel').style.display = 'none';
 }
 
