@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ECE META CORE - Expediente Clinico Electronico</title>
+<meta name="theme-color" content="#1a6b3c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ECE META">
+<link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@simplewebauthn/browser@8/dist/bundle/index.umd.min.js"></script>
 <style>
     :root { --primary: #1a6b3c; --primary-light: #2d9e5a; --bg: #f5f7fa; --card: #fff; --text: #1a202c; --border: #e2e8f0; --danger: #e53e3e; --amber: #d69e2e; }
@@ -327,11 +333,52 @@
     <div class="sidebar" id="mainSidebar">
       <a href="#" class="active" onclick="showSection('dashboard');closeSidebar()">📊 Dashboard</a>
       <a href="#" onclick="showSection('patients');closeSidebar()">👥 Pacientes</a>
+      <a href="#" onclick="showSection('agenda');closeSidebar()">📅 Agenda</a>
       <a href="#" onclick="showSection('indicators');closeSidebar()">📈 Indicadores</a>
       <a href="#" onclick="showSection('research');closeSidebar()">🤖 Asistente IA</a>
       <a href="#" id="sidebarAdmin" style="display:none" onclick="showSection('admin');closeSidebar()">⚙️ Administrador</a>
     </div>
     <div class="content" id="mainContent"></div>
+  </div>
+</div>
+
+<!-- MODAL MEDICAMENTO -->
+<div class="modal-overlay" id="medModal">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <h2 class="modal-title" id="medModalTitle">💊 Agregar medicamento</h2>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('medModal')">✕</button>
+    </div>
+    <div class="form-group"><label>Medicamento / principio activo *</label><input id="med_nombre" placeholder="Metformina, Losartán, Omeprazol..."></div>
+    <div class="grid-2">
+      <div class="form-group"><label>Presentación</label><input id="med_presenta" placeholder="850 mg tabletas, 20 mg cápsulas..."></div>
+      <div class="form-group"><label>Dosis</label><input id="med_dosis" placeholder="1 tableta, 500 mg..."></div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group"><label>Frecuencia</label><input id="med_freq" placeholder="c/8h, c/12h, una vez al día..."></div>
+      <div class="form-group"><label>Vía</label>
+        <select id="med_via">
+          <option value="">-</option>
+          <option value="Oral (VO)">Oral (VO)</option>
+          <option value="Subcutánea (SC)">Subcutánea (SC)</option>
+          <option value="Intravenosa (IV)">Intravenosa (IV)</option>
+          <option value="Intramuscular (IM)">Intramuscular (IM)</option>
+          <option value="Inhalatoria">Inhalatoria</option>
+          <option value="Tópica">Tópica</option>
+          <option value="Sublingual">Sublingual</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group"><label>Fecha de inicio</label><input id="med_inicio" type="date"></div>
+      <div class="form-group"><label>Fecha de fin (opcional)</label><input id="med_fin" type="date"></div>
+    </div>
+    <div class="form-group"><label>Indicación / diagnóstico</label><input id="med_indica" placeholder="DM2, HTA, ERGE..."></div>
+    <p id="medError" class="error-msg"></p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-secondary" onclick="closeModal('medModal')">Cancelar</button>
+      <button class="btn btn-primary" style="width:auto" onclick="saveMed()">💾 Guardar</button>
+    </div>
   </div>
 </div>
 
@@ -389,9 +436,22 @@
   <div class="modal" style="width:780px">
     <div class="modal-header">
       <h2 class="modal-title" id="noteModalTitle">Nueva Nota Clínica · NOM-004-SSA3-2012</h2>
+      <button class="btn btn-secondary btn-sm" onclick="toggleTemplatesPanel()" style="background:#f0fff4;color:var(--primary);border-color:var(--primary)">📋 Plantillas</button>
       <button class="btn btn-secondary btn-sm" onclick="closeModal('noteModal')">✕</button>
     </div>
 
+    <!-- Panel de plantillas -->
+    <div id="templatesPanel" style="display:none;background:linear-gradient(135deg,#f0fff4,#e6fffa);border:1.5px solid #9ae6b4;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+      <div style="font-size:0.82rem;font-weight:700;color:var(--primary);margin-bottom:10px">Selecciona una plantilla para pre-llenar la nota:</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px">
+        <button class="note-type-btn" onclick="applyTemplate('dm2')">🩸 DM2 seguimiento<br><span class="nom-label">Diabetes tipo 2</span></button>
+        <button class="note-type-btn" onclick="applyTemplate('hta')">💊 HTA seguimiento<br><span class="nom-label">Hipertensión arterial</span></button>
+        <button class="note-type-btn" onclick="applyTemplate('primera_vez')">🏥 Primera consulta<br><span class="nom-label">Historia clínica</span></button>
+        <button class="note-type-btn" onclick="applyTemplate('ira')">🤧 IRA / Gripa<br><span class="nom-label">Inf. respiratoria</span></button>
+        <button class="note-type-btn" onclick="applyTemplate('dolor_abdominal')">🫃 Dolor abdominal<br><span class="nom-label">Gastroenterología</span></button>
+        <button class="note-type-btn" onclick="applyTemplate('egreso')">🏠 Nota de egreso<br><span class="nom-label">Alta hospitalaria</span></button>
+      </div>
+    </div>
     <!-- Selector de tipo -->
     <div class="form-group">
       <label>Tipo de nota</label>
@@ -911,10 +971,11 @@ function showApp() {
 // ── NAVEGACION ─────────────────────────────────────────────────────
 function showSection(s) {
   document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-  const idx = ['dashboard','patients','indicators','research','admin'].indexOf(s);
+  const idx = ['dashboard','patients','agenda','indicators','research','admin'].indexOf(s);
   if (idx >= 0) document.querySelectorAll('.sidebar a')[idx]?.classList.add('active');
   if (s === 'dashboard') renderDashboard();
   else if (s === 'patients') renderPatients();
+  else if (s === 'agenda') renderAgenda();
   else if (s === 'indicators') showIndicadores();
   else if (s === 'research') renderResearch();
   else if (s === 'admin') showAdminPanel();
@@ -1279,6 +1340,13 @@ async function viewPatient(id) {
       </div>
       <div class="card">
         <div class="card-header">
+          <span class="card-title">💊 Medicamentos activos</span>
+          ${isMedico() ? `<button class="btn btn-primary btn-sm no-print" style="width:auto" onclick="openMedModal()">+ Agregar medicamento</button>` : ''}
+        </div>
+        <div id="medsList"><p class="loading">Cargando...</p></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
           <span class="card-title">Notas clinicas · NOM-004-SSA3-2012</span>
           <div style="display:flex;gap:8px" class="no-print">
             ${isMedico() ? `
@@ -1292,6 +1360,8 @@ async function viewPatient(id) {
 
     // Render lab charts after DOM is ready
     setTimeout(() => renderLabCharts(labs), 0);
+    // Load medications asynchronously (non-blocking)
+    loadMedications(id);
   } catch (e) { if (navRequestId === myReqId) c.innerHTML = '<p class="error-msg">' + e.message + '</p>'; }
 }
 
@@ -3416,6 +3486,265 @@ document.addEventListener('keydown', e => {
 });
 
 if (token && currentUser) showApp();
+
+// ── AGENDA / CALENDARIO SEMANAL ────────────────────────────────────
+async function renderAgenda() {
+  const c = document.getElementById('mainContent');
+  c.innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap">
+      <div class="section-title" style="margin:0">📅 Agenda</div>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button onclick="agendaWeekOffset--;renderAgenda()" class="btn btn-secondary btn-sm">← Anterior</button>
+        <button onclick="agendaWeekOffset=0;renderAgenda()" class="btn btn-secondary btn-sm">Hoy</button>
+        <button onclick="agendaWeekOffset++;renderAgenda()" class="btn btn-secondary btn-sm">Siguiente →</button>
+      </div>
+    </div>
+    <p class="loading" id="agendaLoading">Cargando agenda...</p>`;
+  try {
+    const data = await api('/api/stats/agenda?days=60');
+    const allCitas = data || [];
+    document.getElementById('agendaLoading')?.remove();
+
+    // Week boundaries
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - today.getDay() + 1 + (agendaWeekOffset * 7)); // Mon
+    const weekEnd   = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
+
+    const weekLabel = `${weekStart.toLocaleDateString('es-MX',{day:'numeric',month:'short'})} — ${weekEnd.toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'})}`;
+    const days = Array.from({length:7}, (_,i) => { const d = new Date(weekStart); d.setDate(weekStart.getDate()+i); return d; });
+    const dayNames = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+    const estadoColor = {programada:'#2b6cb0',completada:'#276749',cancelada:'#e53e3e'};
+
+    const columnHtml = days.map((day, di) => {
+      const isToday = day.toDateString() === new Date().toDateString();
+      const dayCitas = allCitas.filter(a => {
+        const d = new Date(a.fecha_cita); d.setHours(0,0,0,0);
+        return d.getTime() === day.getTime();
+      }).sort((a,b) => new Date(a.fecha_cita)-new Date(b.fecha_cita));
+
+      const citaCards = dayCitas.map(c => {
+        const t = new Date(c.fecha_cita).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+        const col = estadoColor[c.estado] || '#718096';
+        return `<div style="border-left:3px solid ${col};background:${col}12;border-radius:4px;padding:5px 8px;margin-bottom:5px;cursor:pointer;font-size:0.78rem" onclick="viewPatient('${c.patient_id||''}')">
+          <div style="font-weight:700;color:${col}">${t}</div>
+          <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.paciente_ap}, ${c.paciente_nombre}</div>
+          <div style="color:#718096;font-size:0.72rem">${c.motivo||c.especialidad||'Consulta'}</div>
+        </div>`;
+      }).join('') || `<div style="text-align:center;color:#cbd5e0;font-size:0.78rem;padding:12px 0">Sin citas</div>`;
+
+      return `<div style="flex:1;min-width:100px;border:1px solid var(--border);border-radius:10px;overflow:hidden;${isToday?'border-color:var(--primary);box-shadow:0 0 0 2px rgba(26,107,60,0.2)':''}">
+        <div style="padding:8px;text-align:center;font-weight:700;font-size:0.82rem;background:${isToday?'var(--primary)':'#f7fafc'};color:${isToday?'#fff':'#4a5568'}">
+          ${dayNames[di]}<br><span style="font-size:1rem">${day.getDate()}</span>
+          ${dayCitas.length ? `<span style="display:block;font-size:0.7rem;font-weight:400">${dayCitas.length} cita${dayCitas.length>1?'s':''}</span>` : ''}
+        </div>
+        <div style="padding:8px;min-height:80px">${citaCards}</div>
+      </div>`;
+    }).join('');
+
+    c.insertAdjacentHTML('beforeend', `
+      <div style="display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+        <span style="font-size:0.9rem;font-weight:600;color:#4a5568">${weekLabel}</span>
+      </div>
+      <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:8px">${columnHtml}</div>
+      <div style="margin-top:18px;display:flex;gap:16px;flex-wrap:wrap;font-size:0.78rem;color:#718096">
+        <span><span style="display:inline-block;width:10px;height:10px;background:#2b6cb0;border-radius:2px;margin-right:4px"></span>Programada</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#276749;border-radius:2px;margin-right:4px"></span>Completada</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#e53e3e;border-radius:2px;margin-right:4px"></span>Cancelada</span>
+      </div>`);
+  } catch(e) { c.innerHTML += '<p class="error-msg">' + e.message + '</p>'; }
+}
+let agendaWeekOffset = 0;
+
+// ── MEDICAMENTOS ───────────────────────────────────────────────────
+let currentMedId = null;
+
+async function loadMedications(patientId) {
+  const el = document.getElementById('medsList');
+  if (!el) return;
+  try {
+    const meds = await api('/api/patients/' + patientId + '/medications');
+    if (!meds.length) {
+      el.innerHTML = '<p style="color:#a0aec0;font-size:0.88rem;padding:8px 0;font-style:italic">Sin medicamentos registrados.</p>';
+      return;
+    }
+    const activos   = meds.filter(m => m.activo);
+    const inactivos = meds.filter(m => !m.activo);
+    el.innerHTML = `
+      ${activos.map(m => medRow(m)).join('')}
+      ${inactivos.length ? `<details style="margin-top:8px"><summary style="font-size:0.8rem;color:#718096;cursor:pointer">📦 ${inactivos.length} medicamento${inactivos.length>1?'s':''} descontinuado${inactivos.length>1?'s':''}</summary>
+        <div style="opacity:0.65">${inactivos.map(m => medRow(m)).join('')}</div>
+      </details>` : ''}`;
+  } catch(e) { if (el) el.innerHTML = '<p class="error-msg">Error cargando medicamentos</p>'; }
+}
+
+function medRow(m) {
+  return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+    <span style="font-size:1.2rem;flex-shrink:0">${m.activo ? '💊' : '📦'}</span>
+    <div style="flex:1">
+      <div style="font-weight:700;font-size:0.9rem">${m.nombre} ${m.presentacion ? '<span style="font-weight:400;color:#718096">'+m.presentacion+'</span>' : ''}</div>
+      <div style="font-size:0.8rem;color:#4a5568">${[m.dosis,m.frecuencia,m.via].filter(Boolean).join(' · ')}</div>
+      ${m.indicacion ? `<div style="font-size:0.78rem;color:#718096">${m.indicacion}</div>` : ''}
+      <div style="font-size:0.72rem;color:#a0aec0">Desde: ${m.fecha_inicio ? m.fecha_inicio.split('T')[0] : 'N/D'}${m.fecha_fin ? ' → '+m.fecha_fin.split('T')[0] : ''}</div>
+    </div>
+    ${isMedico() ? `<div style="display:flex;gap:4px;flex-shrink:0" class="no-print">
+      <button class="btn btn-secondary btn-sm" onclick="editMed('${m.id}')" style="padding:3px 8px">✏️</button>
+      <button class="btn btn-secondary btn-sm" onclick="toggleMedActivo('${m.id}',${!m.activo})" style="padding:3px 8px" title="${m.activo?'Descontinuar':'Reactivar'}">${m.activo?'⏸':'▶'}</button>
+      <button class="btn btn-secondary btn-sm" onclick="deleteMed('${m.id}')" style="padding:3px 8px;color:#e53e3e">🗑</button>
+    </div>` : ''}
+  </div>`;
+}
+
+function openMedModal(med) {
+  currentMedId = med ? med.id : null;
+  document.getElementById('med_nombre').value    = med?.nombre || '';
+  document.getElementById('med_presenta').value  = med?.presentacion || '';
+  document.getElementById('med_dosis').value     = med?.dosis || '';
+  document.getElementById('med_freq').value      = med?.frecuencia || '';
+  document.getElementById('med_via').value       = med?.via || '';
+  document.getElementById('med_inicio').value    = med?.fecha_inicio?.split('T')[0] || '';
+  document.getElementById('med_fin').value       = med?.fecha_fin?.split('T')[0] || '';
+  document.getElementById('med_indica').value    = med?.indicacion || '';
+  document.getElementById('medModalTitle').textContent = med ? '✏️ Editar medicamento' : '💊 Agregar medicamento';
+  document.getElementById('medError').textContent = '';
+  document.getElementById('medModal').classList.add('open');
+}
+
+async function editMed(id) {
+  try {
+    const meds = await api('/api/patients/' + currentPatient.id + '/medications');
+    const med = meds.find(m => m.id === id);
+    if (med) openMedModal(med);
+  } catch(e) { alert(e.message); }
+}
+
+async function saveMed() {
+  const nombre = document.getElementById('med_nombre').value.trim();
+  if (!nombre) { document.getElementById('medError').textContent = 'El nombre del medicamento es requerido'; return; }
+  const body = {
+    nombre,
+    presentacion: document.getElementById('med_presenta').value.trim(),
+    dosis:        document.getElementById('med_dosis').value.trim(),
+    frecuencia:   document.getElementById('med_freq').value.trim(),
+    via:          document.getElementById('med_via').value.trim(),
+    fecha_inicio: document.getElementById('med_inicio').value || null,
+    fecha_fin:    document.getElementById('med_fin').value || null,
+    indicacion:   document.getElementById('med_indica').value.trim(),
+  };
+  try {
+    const method = currentMedId ? 'PUT' : 'POST';
+    const url = '/api/patients/' + currentPatient.id + '/medications' + (currentMedId ? '/' + currentMedId : '');
+    await api(url, { method, body: JSON.stringify(body) });
+    closeModal('medModal');
+    loadMedications(currentPatient.id);
+  } catch(e) { document.getElementById('medError').textContent = e.message; }
+}
+
+async function deleteMed(id) {
+  if (!confirm('¿Eliminar este medicamento del expediente?')) return;
+  try {
+    await api('/api/patients/' + currentPatient.id + '/medications/' + id, { method: 'DELETE' });
+    loadMedications(currentPatient.id);
+  } catch(e) { alert(e.message); }
+}
+
+async function toggleMedActivo(id, activo) {
+  try {
+    await api('/api/patients/' + currentPatient.id + '/medications/' + id, {
+      method: 'PUT', body: JSON.stringify({ activo })
+    });
+    loadMedications(currentPatient.id);
+  } catch(e) { alert(e.message); }
+}
+
+// ── PLANTILLAS DE NOTAS ────────────────────────────────────────────
+function toggleTemplatesPanel() {
+  const p = document.getElementById('templatesPanel');
+  p.style.display = p.style.display === 'none' ? '' : 'none';
+}
+
+const NOTE_TEMPLATES = {
+  dm2: {
+    tipo: 'evolucion',
+    motivo: 'Seguimiento de Diabetes mellitus tipo 2',
+    subjetivo: 'Paciente refiere adherencia al tratamiento. Niega hipoglucemias. Sin polidipsia, poliuria ni polifagia en el último mes.',
+    objetivo: 'FC: ___ lpm   TA: ___/___ mmHg   Peso: ___ kg   Glucemia capilar: ___ mg/dL\nExploración: Abdomen sin datos de alarma. Extremidades sin edema. Neurológico conservado.',
+    analisis: 'Diabetes mellitus tipo 2 (E11) — control glucémico [adecuado/inadecuado].',
+    plan: 'Continuar tratamiento farmacológico. Reforzar dieta y actividad física 150 min/semana. Solicitar HbA1c, función renal y perfil lipídico. Próxima cita en 3 meses.',
+    diagnostico: 'Diabetes mellitus tipo 2 (E11)',
+  },
+  hta: {
+    tipo: 'evolucion',
+    motivo: 'Seguimiento de Hipertensión arterial sistémica',
+    subjetivo: 'Paciente refiere toma de medicación regularmente. Niega cefalea, visión borrosa o palpitaciones. Adherencia referida: buena.',
+    objetivo: 'TA: ___/___ mmHg (brazo derecho, en reposo)  FC: ___ lpm  Peso: ___ kg\nExploración: Sin datos de falla cardíaca. Sin soplos carotídeos.',
+    analisis: 'Hipertensión arterial sistémica (I10) — control tensional [adecuado/inadecuado].',
+    plan: 'Continuar antihipertensivos. Dieta hiposódica < 5 g/día. Actividad física aeróbica. Solicitar EGO, creatinina, electrolitos. Cita en 4 semanas.',
+    diagnostico: 'Hipertensión arterial sistémica (I10)',
+  },
+  primera_vez: {
+    tipo: 'historia_clinica',
+    motivo: 'Consulta de primera vez',
+    subjetivo: 'Paciente acude por primera vez. Motivo principal: ___.\nAPP: ___. Antecedentes quirúrgicos: ___. Alergias: ___. Medicamentos actuales: ___.\nAHF: ___. ANSA: ___.',
+    objetivo: 'FC: ___ lpm  FR: ___/min  TA: ___/___ mmHg  Temp: ___ °C  Sat O2: ___%\nPeso: ___ kg  Talla: ___ cm  IMC: ___\nExploración física por aparatos y sistemas:\n- General: ___\n- Cabeza y cuello: ___\n- Tórax: ___\n- Abdomen: ___\n- Extremidades: ___\n- Neurológico: ___',
+    analisis: 'Impresión diagnóstica:\n1. ___',
+    plan: 'Estudios de laboratorio y gabinete solicitados:\n1. ___\nTratamiento:\n1. ___\nIndicaciones: ___\nPróxima cita: ___',
+    diagnostico: 'Historia clínica de primera vez',
+  },
+  ira: {
+    tipo: 'evolucion',
+    motivo: 'Infección de vías respiratorias altas',
+    subjetivo: 'Paciente con ___ días de evolución con cuadro de: rinorrea [serosa/mucopurulenta], odinofagia, tos [productiva/seca], fiebre ___ °C. Niega dificultad respiratoria.',
+    objetivo: 'FC: ___ lpm  TA: ___/___ mmHg  Temp: ___ °C  SatO2: ___%\nFaringe: [eritematosa/con exudado]. Amígdalas: ___. OD: ___. OI: ___. Pulmones: campos limpios bilaterales.',
+    analisis: 'Infección de vías respiratorias altas (J06.9) — origen [viral/bacteriano probable].',
+    plan: 'Hidratación abundante. Paracetamol 500-1000 mg c/8h PRN fiebre o dolor. [Amoxicilina 500 mg c/8h × 7 días si sospecha bacteriana]. Reposo relativo. Regreso si fiebre > 3 días o dificultad respiratoria.',
+    diagnostico: 'Infección de vías respiratorias altas (J06.9)',
+  },
+  dolor_abdominal: {
+    tipo: 'evolucion',
+    motivo: 'Dolor abdominal',
+    subjetivo: 'Paciente refiere dolor abdominal [localización] de ___ horas/días de evolución. Tipo: [cólico/opresivo/quemante]. Intensidad: ___/10. Irradiación: ___. Se acompaña de: [náusea/vómito/diarrea/constipación]. Niega sangrado en heces.',
+    objetivo: 'FC: ___ lpm  TA: ___/___ mmHg  Temp: ___ °C\nAbdomen: [blando/rígido], [doloroso/no doloroso] a la palpación [superficial/profunda] en [región]. Murphy: ___. McBurney: ___. Blumberg: ___. Peristalsis: ___.',
+    analisis: 'Dolor abdominal de probable origen [gastroenterológico/vesicular/apendicular/inespecífico]. Descartar: ___.',
+    plan: 'Solicitar: BH, QS, PCR, EGO [±USG abdominal/TAC]. Manejo sintomático: Buscapina, omeprazol. Dieta blanda. Regreso urgente si fiebre o deterioro.',
+    diagnostico: 'Dolor abdominal (R10.9)',
+  },
+  egreso: {
+    tipo: 'egreso',
+    motivo: 'Nota de egreso hospitalario',
+    subjetivo: 'Paciente ___ [masculino/femenino] de ___ años. Diagnóstico de ingreso: ___. Fecha de ingreso: ___.',
+    objetivo: 'Días de estancia: ___. Procedimientos realizados: ___. Laboratorios al egreso: ___. Estado al egreso: [mejorado/estable/referido].',
+    analisis: 'Diagnóstico de egreso:\n1. ___\n2. ___',
+    plan: 'Tratamiento al egreso:\n1. ___\n2. ___\nIndicaciones: ___. Cita de seguimiento: ___. Criterios de regreso a urgencias: ___.',
+    diagnostico: 'Nota de egreso hospitalario',
+  },
+};
+
+function applyTemplate(key) {
+  const tpl = NOTE_TEMPLATES[key];
+  if (!tpl) return;
+  // Set note type
+  const btn = document.querySelector(`[onclick="selectNoteType('${tpl.tipo}',this)"]`);
+  if (btn) { document.querySelectorAll('.note-type-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); selectNoteType(tpl.tipo, btn); }
+  // Fill fields
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
+  set('n_motivo', tpl.motivo);
+  set('n_subjetivo', tpl.subjetivo);
+  set('n_objetivo', tpl.objetivo);
+  set('n_analisis', tpl.analisis);
+  set('n_plan', tpl.plan);
+  set('n_diagnostico', tpl.diagnostico);
+  // Hide templates panel
+  document.getElementById('templatesPanel').style.display = 'none';
+}
+
+// ── PWA SERVICE WORKER ─────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {/* ignore in dev */});
+  });
+}
 </script>
 </body>
 </html>
