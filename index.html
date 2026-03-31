@@ -277,6 +277,19 @@
     .module-card:hover { border-color: var(--primary); background: #f0fff4; }
     .module-card.selected { border-color: var(--primary); background: #c6f6d5; color: #276749; font-weight: 700; }
     .module-card input[type=checkbox] { accent-color: var(--primary); width: 15px; height: 15px; flex-shrink: 0; }
+    /* ── Wizard ── */
+    .wizard-section { margin-bottom: 18px; }
+    .wizard-section-title { font-size: 0.92rem; font-weight: 700; color: var(--primary); padding: 6px 0 8px; border-bottom: 2px solid #c6f6d5; margin-bottom: 10px; }
+    .wizard-group { background: #f9fafb; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; }
+    .wizard-group-title { font-size: 0.72rem; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+    .wizard-field { display: flex; align-items: center; gap: 8px; padding: 3px 0; min-height: 26px; }
+    .wizard-field label { font-size: 0.82rem; color: #2d3748; cursor: pointer; flex: 1; }
+    .wizard-field input[type=checkbox] { accent-color: var(--primary); width: 15px; height: 15px; flex-shrink: 0; }
+    .wizard-field select { font-size: 0.78rem; padding: 3px 6px; border: 1px solid #cbd5e0; border-radius: 5px; max-width: 220px; }
+    .wizard-field input[type=number] { font-size: 0.78rem; padding: 3px 6px; border: 1px solid #cbd5e0; border-radius: 5px; width: 90px; }
+    .wizard-preview-section { margin-bottom: 12px; }
+    .wizard-preview-section b { font-size: 0.76rem; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 4px; }
+    .wizard-preview-section pre { white-space: pre-wrap; word-break: break-word; font-size: 0.72rem; color: #4a5568; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; margin: 0; font-family: inherit; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -3808,6 +3821,485 @@ const TEMPLATE_MODULES = {
   },
 };
 
+// ── WIZARD SCHEMA ──────────────────────────────────────────────────
+const WIZARD_SCHEMA = {
+  scrm: {
+    title: '🫀 S. Cardio-Renal-Metabólico',
+    sections: [
+      { title: 'Síntomas cardiológicos', fields: [
+        { id:'disnea', type:'checkbox', label:'Disnea' },
+        { id:'disnea_grado', type:'select', label:'Grado NYHA', options:['I','II','III','IV'], dependsOn:'disnea' },
+        { id:'ortopnea', type:'checkbox', label:'Ortopnea' },
+        { id:'ortopnea_almohadas', type:'number', label:'Almohadas', min:1, max:5, dependsOn:'ortopnea' },
+        { id:'edema', type:'checkbox', label:'Edema periférico' },
+        { id:'edema_grado', type:'select', label:'Grado', options:['+','++','+++','++++'], dependsOn:'edema' },
+        { id:'nicturia', type:'checkbox', label:'Nicturia' },
+        { id:'nicturia_n', type:'number', label:'Veces/noche', min:1, max:10, dependsOn:'nicturia' },
+        { id:'claudicacion', type:'checkbox', label:'Claudicación intermitente' },
+        { id:'angina', type:'checkbox', label:'Angina / dolor torácico' },
+      ]},
+      { title: 'Exploración física', fields: [
+        { id:'ta_sist', type:'number', label:'TA sistólica (mmHg)', min:60, max:250 },
+        { id:'ta_diast', type:'number', label:'TA diastólica (mmHg)', min:40, max:150 },
+        { id:'fc', type:'number', label:'FC (lpm)', min:30, max:200 },
+        { id:'crepitantes', type:'checkbox', label:'Crepitantes pulmonares' },
+        { id:'r3r4', type:'checkbox', label:'R3 / R4' },
+        { id:'pvy', type:'checkbox', label:'PVY elevada' },
+      ]},
+      { title: 'Laboratorio', fields: [
+        { id:'tfge', type:'number', label:'TFGe (mL/min)', min:0, max:200 },
+        { id:'albuminuria', type:'select', label:'Albuminuria', options:['< 30 mg/g (A1)','30–300 mg/g (A2)','>300 mg/g (A3)'] },
+        { id:'bnp', type:'number', label:'BNP / NT-proBNP', min:0, max:30000 },
+        { id:'potasio', type:'number', label:'Potasio (mEq/L)', min:2, max:7, step:0.1 },
+      ]},
+      { title: 'Evaluación clínica', fields: [
+        { id:'estadio_scrm', type:'select', label:'Estadio SCRM', options:['1 — Riesgo sin daño orgánico','2 — Indicadores subclínicos','3 — Daño orgánico establecido','4 — Complicaciones graves'] },
+        { id:'riesgo_cv', type:'select', label:'Riesgo CV', options:['Bajo','Moderado','Alto','Muy alto'] },
+      ]},
+    ]
+  },
+  obesidad: {
+    title: '⚖️ Obesidad / Adiposidad',
+    sections: [
+      { title: 'Antropometría', fields: [
+        { id:'peso', type:'number', label:'Peso (kg)', min:20, max:300, step:0.1 },
+        { id:'talla', type:'number', label:'Talla (m)', min:1.0, max:2.5, step:0.01 },
+        { id:'cintura', type:'number', label:'Cintura (cm)', min:40, max:200 },
+      ]},
+      { title: 'Síntomas asociados', fields: [
+        { id:'somnolencia', type:'checkbox', label:'Somnolencia diurna excesiva' },
+        { id:'ronquido', type:'checkbox', label:'Ronquido / apnea del sueño' },
+        { id:'dolor_articular', type:'checkbox', label:'Dolor articular' },
+        { id:'reflujo', type:'checkbox', label:'Reflujo gastroesofágico' },
+        { id:'acantosis', type:'checkbox', label:'Acantosis nigricans' },
+        { id:'estrias', type:'checkbox', label:'Estrías cutáneas' },
+      ]},
+      { title: 'Historia de tratamiento', fields: [
+        { id:'dieta_previa', type:'checkbox', label:'Dietas previas' },
+        { id:'ejercicio_previo', type:'checkbox', label:'Ejercicio estructurado previo' },
+        { id:'farmacos_previos', type:'checkbox', label:'Fármacos para obesidad previos' },
+        { id:'cirugia_bariatrica', type:'checkbox', label:'Cirugía bariátrica previa' },
+      ]},
+      { title: 'Complicaciones', fields: [
+        { id:'comp_dm2', type:'checkbox', label:'Diabetes mellitus tipo 2' },
+        { id:'comp_hta', type:'checkbox', label:'Hipertensión arterial' },
+        { id:'comp_sas', type:'checkbox', label:'Síndrome apnea-sueño' },
+        { id:'comp_nfh', type:'checkbox', label:'Hígado graso (NAFLD/NASH)' },
+        { id:'comp_artro', type:'checkbox', label:'Osteoartritis' },
+      ]},
+      { title: 'Estadificación', fields: [
+        { id:'eoss', type:'select', label:'Estadio EOSS', options:['0 — Sin complicaciones','1 — Factores de riesgo subclínicos','2 — Complicaciones leves–moderadas','3 — Complicaciones graves','4 — Complicaciones extremas'] },
+      ]},
+    ]
+  },
+  dm2: {
+    title: '🩸 Diabetes Mellitus tipo 2',
+    sections: [
+      { title: 'Historia y síntomas', fields: [
+        { id:'anos_dx', type:'number', label:'Años desde diagnóstico', min:0, max:50 },
+        { id:'adherencia', type:'select', label:'Adherencia al tratamiento', options:['Buena (>80%)','Parcial (50–80%)','Mala (<50%)'] },
+        { id:'automonitoreo', type:'checkbox', label:'Realiza automonitoreo de glucemia' },
+        { id:'hipoglucemias', type:'select', label:'Hipoglucemias', options:['Ninguna','Leves (resuelve solo)','Moderadas (requiere ayuda)','Severas (pérdida de conciencia)'] },
+        { id:'poliuria', type:'checkbox', label:'Poliuria' },
+        { id:'polidipsia', type:'checkbox', label:'Polidipsia' },
+        { id:'polifagia', type:'checkbox', label:'Polifagia' },
+        { id:'astenia_dm2', type:'checkbox', label:'Astenia / fatiga' },
+      ]},
+      { title: 'Laboratorio', fields: [
+        { id:'glucemia', type:'number', label:'Glucemia en ayuno (mg/dL)', min:50, max:600 },
+        { id:'hba1c', type:'number', label:'HbA1c (%)', min:4, max:20, step:0.1 },
+        { id:'meta_hba1c', type:'select', label:'Meta HbA1c', options:['< 6.5%','< 7.0%','< 7.5%','< 8.0%','< 8.5%'] },
+        { id:'tfge', type:'number', label:'TFGe (mL/min)', min:0, max:200 },
+        { id:'albuminuria', type:'select', label:'Albuminuria', options:['Sin albuminuria','Microalbuminuria (30–300 mg/g)','Macroalbuminuria (>300 mg/g)'] },
+      ]},
+      { title: 'Exploración diabetológica', fields: [
+        { id:'pulsos', type:'select', label:'Pulsos periféricos', options:['Presentes y simétricos','Disminuidos','Ausentes'] },
+        { id:'monofilamento', type:'select', label:'Monofilamento 10g', options:['Normal','Disminuido','Ausente'] },
+        { id:'diapason', type:'select', label:'Diapasón 128 Hz', options:['Normal','Disminuido','Ausente'] },
+        { id:'ulcera', type:'checkbox', label:'Úlcera activa en pie' },
+      ]},
+      { title: 'Complicaciones crónicas', fields: [
+        { id:'retinopatia', type:'select', label:'Retinopatía', options:['Sin retinopatía','No proliferativa leve','No proliferativa moderada/severa','Proliferativa','EMD'] },
+        { id:'nefropatia', type:'checkbox', label:'Nefropatía diabética' },
+        { id:'neuropatia_per', type:'checkbox', label:'Neuropatía periférica' },
+        { id:'neuropatia_aut', type:'checkbox', label:'Neuropatía autonómica' },
+        { id:'ecv_dm2', type:'checkbox', label:'ECV establecida' },
+      ]},
+    ]
+  },
+  dislipidemia: {
+    title: '🧈 Dislipidemia',
+    sections: [
+      { title: 'Perfil lipídico', fields: [
+        { id:'ldl', type:'number', label:'LDL-C (mg/dL)', min:0, max:500 },
+        { id:'hdl', type:'number', label:'HDL-C (mg/dL)', min:0, max:200 },
+        { id:'tg', type:'number', label:'Triglicéridos (mg/dL)', min:0, max:5000 },
+        { id:'ct', type:'number', label:'Colesterol total (mg/dL)', min:0, max:600 },
+        { id:'no_hdl', type:'number', label:'no-HDL (mg/dL)', min:0, max:500 },
+      ]},
+      { title: 'Riesgo cardiovascular', fields: [
+        { id:'ecv_establecida', type:'checkbox', label:'ECV establecida' },
+        { id:'ahf', type:'checkbox', label:'Antecedente familiar de ECV prematura' },
+        { id:'riesgo_cv', type:'select', label:'Riesgo CV global', options:['Bajo','Moderado','Alto','Muy alto'] },
+        { id:'meta_ldl', type:'select', label:'Meta LDL', options:['< 190 mg/dL','< 130 mg/dL','< 100 mg/dL','< 70 mg/dL','< 55 mg/dL'] },
+      ]},
+      { title: 'Síntomas y signos', fields: [
+        { id:'mialgias', type:'checkbox', label:'Mialgias (posible efecto adverso de estatina)' },
+        { id:'xantomas', type:'checkbox', label:'Xantomas / xantelasmas' },
+        { id:'arco_corneal', type:'checkbox', label:'Arco corneal' },
+      ]},
+    ]
+  },
+  hipotiroidismo: {
+    title: '🟡 Hipotiroidismo',
+    sections: [
+      { title: 'Síntomas', fields: [
+        { id:'astenia', type:'checkbox', label:'Astenia / fatiga' },
+        { id:'frio', type:'checkbox', label:'Intolerancia al frío' },
+        { id:'constipacion', type:'checkbox', label:'Constipación' },
+        { id:'aumento_peso', type:'checkbox', label:'Aumento de peso' },
+        { id:'mixedema', type:'checkbox', label:'Mixedema / edema facial' },
+        { id:'bradicardia', type:'checkbox', label:'Bradicardia' },
+        { id:'depresion', type:'checkbox', label:'Depresión / lentitud mental' },
+        { id:'cabello_unas', type:'checkbox', label:'Pérdida de cabello / uñas quebradizas' },
+        { id:'menstrual', type:'checkbox', label:'Irregularidad menstrual' },
+      ]},
+      { title: 'Tratamiento actual', fields: [
+        { id:'dosis_lt4', type:'number', label:'Dosis levotiroxina (mcg/día)', min:0, max:500 },
+        { id:'adherencia', type:'select', label:'Adherencia', options:['Buena (toma diaria)','Parcial (olvidos ocasionales)','Mala (irregular)'] },
+        { id:'ayuno', type:'checkbox', label:'Toma en ayuno (30–60 min antes de desayuno)' },
+        { id:'separacion_ca_fe', type:'checkbox', label:'Separa de calcio, hierro, omeprazol ≥4h' },
+      ]},
+      { title: 'Laboratorio', fields: [
+        { id:'tsh', type:'number', label:'TSH (mUI/L)', min:0, max:150, step:0.01 },
+        { id:'t4l', type:'number', label:'T4 libre (ng/dL)', min:0, max:5, step:0.01 },
+        { id:'anti_tpo', type:'select', label:'Anti-TPO', options:['Positivo','Negativo','No solicitado'] },
+        { id:'control', type:'select', label:'Estado de control', options:['En meta (TSH 0.5–4.5 mUI/L)','Hipotiroideo (TSH elevada)','Hipertiroideo iatrogénico (TSH suprimida)'] },
+      ]},
+    ]
+  },
+  hipertiroidismo: {
+    title: '🔴 Hipertiroidismo',
+    sections: [
+      { title: 'Síntomas adrenérgicos', fields: [
+        { id:'palpitaciones', type:'checkbox', label:'Palpitaciones / taquicardia' },
+        { id:'temblor', type:'checkbox', label:'Temblor fino distal' },
+        { id:'sudoracion', type:'checkbox', label:'Sudoración excesiva' },
+        { id:'calor', type:'checkbox', label:'Intolerancia al calor' },
+        { id:'perdida_peso', type:'checkbox', label:'Pérdida de peso' },
+        { id:'kg_perdidos', type:'number', label:'Kg perdidos (aprox.)', min:0, max:50, step:0.5, dependsOn:'perdida_peso' },
+        { id:'diarrea', type:'checkbox', label:'Diarrea / evacuaciones aumentadas' },
+        { id:'insomnio', type:'checkbox', label:'Insomnio / nerviosismo / irritabilidad' },
+      ]},
+      { title: 'Oftalmopatía', fields: [
+        { id:'oftalmopatia', type:'checkbox', label:'Oftalmopatía de Graves' },
+        { id:'oftalmopatia_grado', type:'select', label:'Clasificación CAS', options:['CAS 0–1 (inactiva)','CAS 2–3 (activa leve)','CAS 4–7 (activa moderada-severa)'], dependsOn:'oftalmopatia' },
+      ]},
+      { title: 'Laboratorio', fields: [
+        { id:'tsh', type:'number', label:'TSH (mUI/L)', min:0, max:10, step:0.001 },
+        { id:'t4l', type:'number', label:'T4 libre (ng/dL)', min:0, max:10, step:0.01 },
+        { id:'t3l', type:'number', label:'T3 libre (pg/mL)', min:0, max:30, step:0.01 },
+        { id:'trab', type:'select', label:'TRAb', options:['Positivo','Negativo','No solicitado'] },
+      ]},
+      { title: 'Estado clínico', fields: [
+        { id:'control', type:'select', label:'Control tiroideo', options:['Eutiroideo en tratamiento','Hipertiroideo activo','Hipotiroideo iatrogénico'] },
+        { id:'fa', type:'checkbox', label:'Fibrilación auricular' },
+      ]},
+    ]
+  },
+  nodulos: {
+    title: '🔬 Nódulos Tiroideos',
+    sections: [
+      { title: 'Historia clínica', fields: [
+        { id:'deteccion', type:'select', label:'Forma de detección', options:['Hallazgo incidental (USG)','Palpado por el paciente','Palpado en exploración'] },
+        { id:'disfagia', type:'checkbox', label:'Disfagia' },
+        { id:'disfonia', type:'checkbox', label:'Disfonía' },
+        { id:'compresion', type:'checkbox', label:'Sensación de compresión cervical' },
+        { id:'palpable', type:'checkbox', label:'Nódulo palpable' },
+        { id:'adenopatias', type:'checkbox', label:'Adenopatías cervicales' },
+      ]},
+      { title: 'Ecografía y laboratorio', fields: [
+        { id:'tirads', type:'select', label:'Categoría TIRADS', options:['TIRADS 1 (benigno)','TIRADS 2 (no sospechoso)','TIRADS 3 (levem. sospechoso)','TIRADS 4 (modera. sospechoso)','TIRADS 5 (altamente sospechoso)'] },
+        { id:'tamano_mm', type:'number', label:'Tamaño mayor (mm)', min:1, max:200 },
+        { id:'tsh', type:'number', label:'TSH (mUI/L)', min:0, max:150, step:0.01 },
+      ]},
+      { title: 'Biopsia', fields: [
+        { id:'baf', type:'checkbox', label:'BAF (biopsia por aspiración con aguja fina) realizada' },
+        { id:'bethesda', type:'select', label:'Bethesda', options:['I — No diagnóstico / insatisfactorio','II — Benigno','III — AUS / FLUS','IV — Neoplasia folicular','V — Sospechoso de malignidad','VI — Maligno'], dependsOn:'baf' },
+      ]},
+    ]
+  },
+  ca_tiroides: {
+    title: '🏥 Cáncer de Tiroides',
+    sections: [
+      { title: 'Diagnóstico y estadificación', fields: [
+        { id:'histologia', type:'select', label:'Histología', options:['Papilar','Folicular','Medular','Anaplásico','Hurthle','Otro'] },
+        { id:'estadio_t', type:'select', label:'T', options:['T1a','T1b','T2','T3a','T3b','T4a','T4b'] },
+        { id:'estadio_n', type:'select', label:'N', options:['N0','N1a','N1b','Nx'] },
+        { id:'estadio_m', type:'select', label:'M', options:['M0','M1','Mx'] },
+        { id:'rai', type:'checkbox', label:'Recibió I¹³¹ (RAI)' },
+        { id:'hipoparatiroidismo', type:'checkbox', label:'Hipoparatiroidismo post-quirúrgico' },
+      ]},
+      { title: 'Síntomas de vigilancia', fields: [
+        { id:'masa_cervical', type:'checkbox', label:'Masa cervical nueva' },
+        { id:'disfagia_rec', type:'checkbox', label:'Disfagia' },
+        { id:'disfonia_rec', type:'checkbox', label:'Disfonía' },
+      ]},
+      { title: 'Laboratorio y metas', fields: [
+        { id:'tsh', type:'number', label:'TSH (mUI/L)', min:0, max:100, step:0.001 },
+        { id:'tg', type:'number', label:'Tiroglobulina (ng/mL)', min:0, max:5000, step:0.1 },
+        { id:'anti_tg', type:'number', label:'Anti-Tg (IU/mL)', min:0, max:10000 },
+        { id:'meta_tsh', type:'select', label:'Meta TSH', options:['<0.1 (supresión completa)','0.1–0.5 (supresión moderada)','0.5–2.0 (rango normal bajo)'] },
+        { id:'respuesta_ata', type:'select', label:'Respuesta ATA', options:['Excelente','Bioquímica indeterminada','Estructural indeterminada','Incompleta bioquímica','Incompleta estructural'] },
+      ]},
+    ]
+  }
+};
+
+// ── WIZARD FUNCTIONS ──────────────────────────────────────────────
+let _wizardKeys = [];
+
+function wv(mk, fid) {
+  const el = document.getElementById('wf_' + mk + '_' + fid);
+  if (!el) return '';
+  if (el.type === 'checkbox') return el.checked;
+  return el.value || '';
+}
+function wn(mk, fid, unit) {
+  const v = wv(mk, fid);
+  if (v === '' || v === null || v === undefined || v === false) return '';
+  return v + (unit ? ' ' + unit : '');
+}
+
+function buildSCRMNote(mk) {
+  const v = (f) => wv(mk, f), n = (f, u='') => wn(mk, f, u);
+  const syms = [];
+  if (v('disnea')) syms.push('disnea NYHA ' + (v('disnea_grado') || '?'));
+  if (v('ortopnea')) syms.push('ortopnea (' + (v('ortopnea_almohadas') || '?') + ' almohadas)');
+  if (v('edema')) syms.push('edema periférico ' + (v('edema_grado') || '?'));
+  if (v('nicturia')) syms.push('nicturia ' + (v('nicturia_n') || '?') + 'x/noche');
+  if (v('claudicacion')) syms.push('claudicación intermitente');
+  if (v('angina')) syms.push('angina / dolor torácico');
+  const ta = (v('ta_sist') && v('ta_diast')) ? n('ta_sist') + '/' + n('ta_diast', 'mmHg') : '';
+  const hallazgos = [];
+  if (v('crepitantes')) hallazgos.push('crepitantes');
+  if (v('r3r4')) hallazgos.push('R3/R4');
+  if (v('pvy')) hallazgos.push('PVY elevada');
+  return {
+    sintomas: '── S. Cardio-Renal-Metabólico ──\n' + (syms.length ? syms.join('; ') : 'Sin síntomas cardiológicos referidos'),
+    exfisica: [(ta ? 'TA: ' + ta : ''), (v('fc') ? 'FC: ' + n('fc', 'lpm') : ''), (hallazgos.length ? 'Hallazgos: ' + hallazgos.join(', ') : '')].filter(Boolean).join('   '),
+    estudios: [n('tfge') ? 'TFGe: ' + n('tfge', 'mL/min') : '', v('albuminuria') ? 'Albuminuria: ' + v('albuminuria') : '', n('bnp') ? 'BNP/NT-proBNP: ' + n('bnp') : '', n('potasio') ? 'K: ' + n('potasio', 'mEq/L') : ''].filter(Boolean).join('   '),
+    impresion: 'SCRM — ' + (v('estadio_scrm') || 'estadio no definido') + '\nRiesgo CV: ' + (v('riesgo_cv') || 'no clasificado'),
+  };
+}
+
+function buildObesidadNote(mk) {
+  const v = (f) => wv(mk, f), n = (f, u='') => wn(mk, f, u);
+  const peso = parseFloat(v('peso') || 0), talla = parseFloat(v('talla') || 0);
+  const imc = (peso > 0 && talla > 0) ? (peso / (talla * talla)).toFixed(1) : null;
+  const syms = [];
+  if (v('somnolencia')) syms.push('somnolencia diurna'); if (v('ronquido')) syms.push('ronquido/apnea');
+  if (v('dolor_articular')) syms.push('dolor articular'); if (v('reflujo')) syms.push('ERGE');
+  if (v('acantosis')) syms.push('acantosis nigricans'); if (v('estrias')) syms.push('estrías');
+  const tx = [];
+  if (v('dieta_previa')) tx.push('dietas previas'); if (v('ejercicio_previo')) tx.push('ejercicio estructurado');
+  if (v('farmacos_previos')) tx.push('fármacos previos'); if (v('cirugia_bariatrica')) tx.push('cirugía bariátrica');
+  const comps = [];
+  if (v('comp_dm2')) comps.push('DM2'); if (v('comp_hta')) comps.push('HTA');
+  if (v('comp_sas')) comps.push('apnea del sueño'); if (v('comp_nfh')) comps.push('NAFLD/NASH');
+  if (v('comp_artro')) comps.push('osteoartritis');
+  return {
+    sintomas: '── Obesidad ──\n' + (syms.length ? syms.join(', ') : 'Sin síntomas específicos referidos') + (tx.length ? '\nTratamientos previos: ' + tx.join(', ') : ''),
+    exfisica: [n('peso') ? 'Peso: ' + n('peso', 'kg') : '', n('talla') ? 'Talla: ' + n('talla', 'm') : '', imc ? 'IMC: ' + imc + ' kg/m²' : '', n('cintura') ? 'Cintura: ' + n('cintura', 'cm') : ''].filter(Boolean).join('   '),
+    impresion: 'Obesidad — ' + (v('eoss') || 'EOSS no definido') + (comps.length ? '\nComplicaciones: ' + comps.join(', ') : ''),
+  };
+}
+
+function buildDM2Note(mk) {
+  const v = (f) => wv(mk, f), n = (f, u='') => wn(mk, f, u);
+  const syms = [];
+  if (v('poliuria')) syms.push('poliuria'); if (v('polidipsia')) syms.push('polidipsia');
+  if (v('polifagia')) syms.push('polifagia'); if (v('astenia_dm2')) syms.push('astenia');
+  const comps = [];
+  if (v('retinopatia') && v('retinopatia') !== 'Sin retinopatía') comps.push('Retinopatía: ' + v('retinopatia'));
+  if (v('nefropatia')) comps.push('Nefropatía'); if (v('neuropatia_per')) comps.push('Neuropatía periférica');
+  if (v('neuropatia_aut')) comps.push('Neuropatía autonómica'); if (v('ecv_dm2')) comps.push('ECV establecida');
+  const hba1c = parseFloat(v('hba1c') || 0);
+  const metaStr = v('meta_hba1c') || '';
+  const metaNum = parseFloat(metaStr.replace('<','').replace('%','').trim() || 9999);
+  const ctrl = (hba1c > 0 && metaNum < 9999) ? (hba1c <= metaNum ? 'bien controlada' : 'fuera de meta') : '';
+  return {
+    sintomas: '── DM2 ──\n' + (n('anos_dx') ? 'Años dx: ' + n('anos_dx') + '   ' : '') + 'Adherencia: ' + (v('adherencia') || 'no evaluada') + (v('automonitoreo') ? '   Automonitoreo: sí' : '') + '\n' + (syms.length ? 'Síntomas: ' + syms.join(', ') : 'Asintomático') + '\nHipoglucemias: ' + (v('hipoglucemias') || 'no evaluadas'),
+    exfisica: ['Pulsos: ' + (v('pulsos') || 'no evaluados'), 'Monofilamento: ' + (v('monofilamento') || 'no evaluado'), 'Diapasón: ' + (v('diapason') || 'no evaluado'), v('ulcera') ? '⚠️ Úlcera activa en pie' : ''].filter(Boolean).join('   '),
+    estudios: [n('glucemia') ? 'Glucemia ayuno: ' + n('glucemia', 'mg/dL') : '', n('hba1c') ? 'HbA1c: ' + n('hba1c', '%') : '', metaStr ? 'Meta: ' + metaStr : '', n('tfge') ? 'TFGe: ' + n('tfge', 'mL/min') : '', v('albuminuria') ? 'Albuminuria: ' + v('albuminuria') : ''].filter(Boolean).join('   '),
+    impresion: 'DM2' + (ctrl ? ' — ' + ctrl : '') + (comps.length ? '\nComplicaciones: ' + comps.join(', ') : '\nSin complicaciones crónicas documentadas'),
+  };
+}
+
+function buildDislipidemiaNote(mk) {
+  const v = (f) => wv(mk, f), n = (f, u='') => wn(mk, f, u);
+  const perfil = [n('ldl') ? 'LDL: ' + n('ldl', 'mg/dL') : '', n('hdl') ? 'HDL: ' + n('hdl', 'mg/dL') : '', n('tg') ? 'TG: ' + n('tg', 'mg/dL') : '', n('ct') ? 'CT: ' + n('ct', 'mg/dL') : '', n('no_hdl') ? 'no-HDL: ' + n('no_hdl', 'mg/dL') : ''].filter(Boolean).join('   ');
+  const ldlVal = parseFloat(v('ldl') || 0), meta = v('meta_ldl') || '';
+  const metaNum = parseFloat(meta.replace('<','').replace('mg/dL','').trim() || 9999);
+  const enMeta = (ldlVal > 0 && metaNum < 9999) ? (ldlVal <= metaNum ? ' (en meta)' : ' (fuera de meta)') : '';
+  return {
+    estudios: '── Dislipidemia ──\n' + (perfil || 'Perfil lipídico pendiente'),
+    impresion: 'Dislipidemia — Riesgo CV: ' + (v('riesgo_cv') || 'no clasificado') + '   Meta LDL: ' + (meta || 'no definida') + enMeta + (v('ecv_establecida') ? '\nECV establecida' : '') + (v('mialgias') ? '\nMialgias — evaluar toxicidad de estatina' : '') + (v('xantomas') ? '   Xantomas / xantelasmas presentes' : ''),
+  };
+}
+
+function buildHipotiroidismoNote(mk) {
+  const v = (f) => wv(mk, f), n = (f, u='') => wn(mk, f, u);
+  const map = {astenia:'astenia', frio:'intolerancia al frío', constipacion:'constipación', aumento_peso:'aumento de peso', mixedema:'mixedema', bradicardia:'bradicardia', depresion:'depresión/lentitud mental', cabello_unas:'pérdida de cabello/uñas frágiles', menstrual:'irregularidad menstrual'};
+  const syms = Object.keys(map).filter(f => v(f)).map(f => map[f]);
+  return {
+    sintomas: '── Hipotiroidismo ──\n' + (syms.length ? syms.join(', ') : 'Sin síntomas hipotiroideos activos'),
+    exfisica: [n('dosis_lt4') ? 'LT4: ' + n('dosis_lt4', 'mcg/día') : '', 'Adherencia: ' + (v('adherencia') || 'no evaluada'), v('ayuno') ? 'Ayuno: sí' : 'Ayuno: no confirmado', v('separacion_ca_fe') ? 'Separación Ca/Fe: correcta' : 'Separación Ca/Fe: no confirmada'].filter(Boolean).join('   '),
+    estudios: [n('tsh') ? 'TSH: ' + n('tsh', 'mUI/L') : '', n('t4l') ? 'T4L: ' + n('t4l', 'ng/dL') : '', (v('anti_tpo') && v('anti_tpo') !== 'No solicitado') ? 'Anti-TPO: ' + v('anti_tpo') : ''].filter(Boolean).join('   '),
+    impresion: 'Hipotiroidismo — ' + (v('control') || 'control no evaluado'),
+  };
+}
+
+function buildHipertiroidismoNote(mk) {
+  const v = (f) => wv(mk, f), n = (f, u='') => wn(mk, f, u);
+  const map = {palpitaciones:'palpitaciones/taquicardia', temblor:'temblor fino', sudoracion:'sudoración', calor:'intolerancia al calor', diarrea:'diarrea', insomnio:'insomnio/nerviosismo'};
+  const syms = Object.keys(map).filter(f => v(f)).map(f => map[f]);
+  if (v('perdida_peso')) syms.push('pérdida de peso' + (v('kg_perdidos') ? ' (' + v('kg_perdidos') + ' kg)' : ''));
+  return {
+    sintomas: '── Hipertiroidismo ──\n' + (syms.length ? syms.join(', ') : 'Sin síntomas adrenérgicos activos') + (v('oftalmopatia') ? '\nOftalmopatía: ' + (v('oftalmopatia_grado') || 'presente') : ''),
+    estudios: [n('tsh') ? 'TSH: ' + n('tsh', 'mUI/L') : '', n('t4l') ? 'T4L: ' + n('t4l', 'ng/dL') : '', n('t3l') ? 'T3L: ' + n('t3l', 'pg/mL') : '', (v('trab') && v('trab') !== 'No solicitado') ? 'TRAb: ' + v('trab') : ''].filter(Boolean).join('   '),
+    impresion: 'Hipertiroidismo — ' + (v('control') || 'control no evaluado') + (v('fa') ? '\n⚠️ Fibrilación auricular presente' : ''),
+  };
+}
+
+function buildNodulosNote(mk) {
+  const v = (f) => wv(mk, f), n = (f, u='') => wn(mk, f, u);
+  const compSyms = [];
+  if (v('disfagia')) compSyms.push('disfagia'); if (v('disfonia')) compSyms.push('disfonía');
+  if (v('compresion')) compSyms.push('compresión cervical');
+  return {
+    sintomas: '── Nódulos tiroideos ──\nDetección: ' + (v('deteccion') || 'no especificada') + '\n' + (compSyms.length ? 'Síntomas compresivos: ' + compSyms.join(', ') : 'Sin síntomas compresivos') + (v('palpable') ? '   Palpable: sí' : '') + (v('adenopatias') ? '   ⚠️ Adenopatías cervicales' : ''),
+    estudios: [v('tirads') ? 'TIRADS: ' + v('tirads') : '', n('tamano_mm') ? 'Tamaño: ' + n('tamano_mm', 'mm') : '', n('tsh') ? 'TSH: ' + n('tsh', 'mUI/L') : '', v('baf') ? 'BAF — Bethesda: ' + (v('bethesda') || 'resultado pendiente') : 'BAF: no realizada'].filter(Boolean).join('   '),
+    impresion: (v('tirads') ? v('tirads') : 'Nódulo tiroideo') + (v('baf') && v('bethesda') ? '   ' + v('bethesda') : ''),
+  };
+}
+
+function buildCaTiroidesNote(mk) {
+  const v = (f) => wv(mk, f), n = (f, u='') => wn(mk, f, u);
+  const estadio = [v('estadio_t'), v('estadio_n'), v('estadio_m')].filter(Boolean).join(' ');
+  const recSyms = [];
+  if (v('masa_cervical')) recSyms.push('masa cervical'); if (v('disfagia_rec')) recSyms.push('disfagia'); if (v('disfonia_rec')) recSyms.push('disfonía');
+  return {
+    sintomas: '── Cáncer de tiroides ──\n' + (v('histologia') ? 'Histología: ' + v('histologia') + (estadio ? '   Estadio: ' + estadio : '') : '') + '\n' + (recSyms.length ? '⚠️ Síntomas de recurrencia: ' + recSyms.join(', ') : 'Sin síntomas de recurrencia') + (v('hipoparatiroidismo') ? '\nHipoparatiroidismo post-qx: sí' : ''),
+    estudios: [n('tsh') ? 'TSH: ' + n('tsh', 'mUI/L') : '', n('tg') ? 'Tg: ' + n('tg', 'ng/mL') : '', n('anti_tg') ? 'Anti-Tg: ' + n('anti_tg', 'IU/mL') : '', v('meta_tsh') ? 'Meta TSH: ' + v('meta_tsh') : '', v('rai') ? 'RAI previo: sí' : ''].filter(Boolean).join('   '),
+    impresion: 'Ca. tiroides (' + (v('histologia') || '?') + ') — ' + (v('respuesta_ata') || 'respuesta ATA no evaluada') + '   Meta TSH: ' + (v('meta_tsh') || 'no definida'),
+  };
+}
+
+const WIZARD_BUILDERS = {
+  scrm: buildSCRMNote, obesidad: buildObesidadNote, dm2: buildDM2Note,
+  dislipidemia: buildDislipidemiaNote, hipotiroidismo: buildHipotiroidismoNote,
+  hipertiroidismo: buildHipertiroidismoNote, nodulos: buildNodulosNote, ca_tiroides: buildCaTiroidesNote,
+};
+
+function openWizard(keys) {
+  _wizardKeys = keys;
+  renderWizardForm();
+  document.getElementById('wizardModal').style.display = 'flex';
+  onWizardChange();
+}
+
+function closeWizard() {
+  document.getElementById('wizardModal').style.display = 'none';
+}
+
+function renderWizardForm() {
+  const container = document.getElementById('wizardFormContainer');
+  if (!container) return;
+  let html = '';
+  for (const mk of _wizardKeys) {
+    const schema = WIZARD_SCHEMA[mk];
+    if (!schema) continue;
+    html += `<div class="wizard-section"><div class="wizard-section-title">${schema.title}</div>`;
+    for (const sec of schema.sections) {
+      html += `<div class="wizard-group"><div class="wizard-group-title">${sec.title}</div>`;
+      for (const f of sec.fields) { html += renderWizardField(mk, f); }
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function renderWizardField(mk, f) {
+  const id = `wf_${mk}_${f.id}`;
+  const depStyle = f.dependsOn ? ' style="margin-left:18px"' : '';
+  const depAttr = f.dependsOn ? ` data-depends-on="wf_${mk}_${f.dependsOn}"` : '';
+  if (f.type === 'checkbox') {
+    return `<div class="wizard-field" id="wfrow_${id}"${depAttr}${depStyle}><input type="checkbox" id="${id}" onchange="onWizardChange()"><label for="${id}">${f.label}</label></div>`;
+  } else if (f.type === 'select') {
+    const opts = f.options.map(o => `<option value="${o}">${o}</option>`).join('');
+    return `<div class="wizard-field" id="wfrow_${id}"${depAttr}${depStyle}><label for="${id}">${f.label}:</label><select id="${id}" onchange="onWizardChange()"><option value="">—</option>${opts}</select></div>`;
+  } else if (f.type === 'number') {
+    const attrs = ['type="number"', f.min !== undefined ? `min="${f.min}"` : '', f.max !== undefined ? `max="${f.max}"` : '', f.step ? `step="${f.step}"` : ''].filter(Boolean).join(' ');
+    return `<div class="wizard-field" id="wfrow_${id}"${depAttr}${depStyle}><label for="${id}">${f.label}:</label><input ${attrs} id="${id}" oninput="onWizardChange()"></div>`;
+  }
+  return '';
+}
+
+function onWizardChange() {
+  document.querySelectorAll('#wizardFormContainer [data-depends-on]').forEach(row => {
+    const parentId = row.getAttribute('data-depends-on');
+    const parent = document.getElementById(parentId);
+    if (parent) {
+      const active = parent.type === 'checkbox' ? parent.checked : parent.value !== '';
+      row.style.opacity = active ? '1' : '0.4';
+      row.style.pointerEvents = active ? '' : 'none';
+    }
+  });
+  updateWizardPreview();
+}
+
+function updateWizardPreview() {
+  const preview = document.getElementById('wizardPreviewContent');
+  if (!preview) return;
+  const results = _wizardKeys.map(mk => { const b = WIZARD_BUILDERS[mk]; return b ? b(mk) : {}; });
+  const merge = (f) => results.map(r => r[f] || '').filter(Boolean).join('\n\n');
+  const s = merge('sintomas'), oEf = merge('exfisica'), oEst = merge('estudios'), a = results.map(r => r.impresion || '').filter(Boolean).join('\n');
+  const esc = (t) => t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  preview.innerHTML =
+    `<div class="wizard-preview-section"><b>S — Subjetivo</b><pre>${esc(s || '(sin datos)')}</pre></div>` +
+    `<div class="wizard-preview-section"><b>O — Objetivo</b><pre>${esc(oEf || oEst ? (oEf ? oEf + (oEst ? '\n' + oEst : '') : oEst) : '(sin datos)')}</pre></div>` +
+    `<div class="wizard-preview-section"><b>A — Evaluación</b><pre>${esc(a || '(sin datos)')}</pre></div>`;
+}
+
+function applyWizardToNote() {
+  const results = _wizardKeys.map(mk => {
+    const b = WIZARD_BUILDERS[mk], tmpl = TEMPLATE_MODULES[mk] || {}, r = b ? b(mk) : {};
+    return { sintomas: r.sintomas || tmpl.sintomas || '', exfisica: r.exfisica || tmpl.exfisica || '', estudios: r.estudios || tmpl.estudios || '', impresion: r.impresion || tmpl.impresion || '', diagnostico: tmpl.diagnostico || '', tx_farmaco: tmpl.tx_farmaco || '', tx_nofarmaco: tmpl.tx_nofarmaco || '', seguimiento: tmpl.seguimiento || '', label: tmpl.label || mk };
+  });
+  const join = (f) => results.map(r => r[f] || '').filter(Boolean).join('\n\n');
+  const motivo = _wizardKeys.length === 1 ? 'Seguimiento de ' + results[0].label : 'Seguimiento integral: ' + results.map(r => r.label).join(' + ');
+  const tipoBtn = document.querySelector('[onclick="selectNoteType(\'evolucion\',this)"]');
+  if (tipoBtn) { document.querySelectorAll('.note-type-btn').forEach(b => b.classList.remove('selected')); tipoBtn.classList.add('selected'); selectNoteType('evolucion', tipoBtn); }
+  setTimeout(() => {
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    set('n_motivo', motivo);
+    set('n_sintomas', join('sintomas'));
+    set('n_sint_asociados', '');
+    set('n_exfisica', join('exfisica'));
+    set('n_estudios', join('estudios'));
+    set('n_diagnostico', results.map(r => r.diagnostico).filter(Boolean).join('\n'));
+    set('n_impresion', join('impresion'));
+    set('n_tx_farmaco', join('tx_farmaco'));
+    set('n_tx_nofarmaco', join('tx_nofarmaco'));
+    set('n_seguimiento', join('seguimiento'));
+  }, 80);
+  closeWizard();
+  document.getElementById('templatesPanel').style.display = 'none';
+  clearModuleSelection();
+}
+
 function applySelectedModules() {
   const checkboxes = document.querySelectorAll('#moduleCheckboxes input[type=checkbox]:checked');
   if (checkboxes.length === 0) {
@@ -3815,24 +4307,22 @@ function applySelectedModules() {
     return;
   }
   const keys = Array.from(checkboxes).map(cb => cb.value);
+  // Open interactive wizard instead of directly filling textareas
+  openWizard(keys);
+  // Legacy fallback kept below (unreachable now but preserved for safety)
+  if (false) {
   const modules = keys.map(k => TEMPLATE_MODULES[k]).filter(Boolean);
-
-  // Build merged fields
   const join = (field) => modules.map(m => m[field] || '').filter(Boolean).join('\n\n');
   const motivo = keys.length === 1
     ? 'Seguimiento de ' + modules[0].label
     : 'Seguimiento integral: ' + modules.map(m => m.label).join(' + ');
   const diagnostico = modules.map(m => m.diagnostico).join('\n');
-
-  // Activate evolucion type
   const tipoBtn = document.querySelector('[onclick="selectNoteType(\'evolucion\',this)"]');
   if (tipoBtn) {
     document.querySelectorAll('.note-type-btn').forEach(b => b.classList.remove('selected'));
     tipoBtn.classList.add('selected');
     selectNoteType('evolucion', tipoBtn);
   }
-
-  // Fill form fields (after renderNoteForm runs)
   setTimeout(() => {
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
     set('n_motivo', motivo);
@@ -3846,10 +4336,9 @@ function applySelectedModules() {
     set('n_tx_nofarmaco', join('tx_nofarmaco'));
     set('n_seguimiento', join('seguimiento'));
   }, 80);
-
-  // Hide panel + clear selection
   document.getElementById('templatesPanel').style.display = 'none';
   clearModuleSelection();
+  } // end if(false)
 }
 
 function applyTemplate(key) {
@@ -3876,6 +4365,32 @@ function applyTemplate(key) {
   }, 80);
   document.getElementById('templatesPanel').style.display = 'none';
 }
+
+// ── WIZARD MODAL HTML (injected on load) ───────────────────────────
+(function() {
+  const modal = document.createElement('div');
+  modal.id = 'wizardModal';
+  modal.style.cssText = 'display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.52);align-items:center;justify-content:center;';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:14px;width:95vw;max-width:1020px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.35);">
+      <div style="padding:14px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:var(--primary);border-radius:14px 14px 0 0;">
+        <div style="font-weight:700;font-size:1rem;color:#fff;">🧩 Asistente de nota clínica estructurada</div>
+        <button onclick="closeWizard()" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:0 6px;line-height:1;">✕</button>
+      </div>
+      <div style="display:flex;flex:1;overflow:hidden;">
+        <div style="flex:1.4;overflow-y:auto;padding:16px 18px;border-right:1px solid #e2e8f0;" id="wizardFormContainer"></div>
+        <div style="width:310px;overflow-y:auto;padding:16px 14px;background:#f8fafc;flex-shrink:0;">
+          <div style="font-size:0.76rem;font-weight:700;color:var(--primary);text-transform:uppercase;margin-bottom:10px;letter-spacing:0.04em;">Vista previa SOAP</div>
+          <div id="wizardPreviewContent" style="font-size:0.75rem;color:#2d3748;"></div>
+        </div>
+      </div>
+      <div style="padding:12px 20px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:10px;background:#fff;">
+        <button onclick="closeWizard()" style="padding:8px 18px;border-radius:8px;border:1.5px solid #cbd5e0;background:#fff;cursor:pointer;font-size:0.85rem;">Cancelar</button>
+        <button onclick="applyWizardToNote()" style="padding:8px 22px;border-radius:8px;border:none;background:var(--primary);color:#fff;font-weight:700;cursor:pointer;font-size:0.85rem;">✅ Generar nota SOAP</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+})();
 
 // ── PWA SERVICE WORKER ─────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
