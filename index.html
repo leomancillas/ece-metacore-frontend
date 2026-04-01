@@ -9190,6 +9190,1124 @@ Object.assign(WIZARD_BUILDERS, {
 
 ['cefalea', 'epilepsia', 'ictus_evc'].forEach(m => IMPLEMENTED_MODULES.add(m));
 
+
+// ============================================================
+// TIER 4: Infectología · Cirugía · Medicina Interna
+// ============================================================
+// ============================================================================
+// ECE META CORE - Módulos de Infectología (VIH/SIDA, TB, Sepsis)
+// ============================================================================
+
+Object.assign(TEMPLATE_MODULES, {
+  vih_sida: {
+    label: 'VIH / SIDA',
+    diagnostico: 'Infección por VIH (B20) / SIDA (B24)',
+    sintomas: 'Tiempo de diagnóstico: años. Vía de transmisión: HSH/heterosexual/UDIV/transfusión/vertical/desconocida. Síntomas actuales: asintomático, síntomas constitucionales (fiebre/diaforesis nocturna/pérdida de peso kg/fatiga) o infección oportunista activa. Adherencia TAR: excelente >95% / buena 85-95% / regular 75-85% / mala <75%. Efectos adversos: ninguno, náusea, diarrea, lipodistrofia, dislipidemia, nefrotoxicidad, neurotoxicidad. PrEP/PEP: no aplica, en PrEP con adherencia, o exposición reciente. Infecciones oportunistas previas: ninguna, PCP, toxoplasmosis, CMV, MAC, criptococosis, TB, histoplasmosis. Vacunación: influenza, neumococo, VHB, VHA al día: sí/no.',
+    exfisica: 'Peso kg, IMC kg/m², TA mmHg, T °C. Ganglios: no linfadenopatía o generalizada. Orofaringe: candidiasis oral, leucoplasia vellosa, aftas, gingivitis necrotizante. Fondo de ojo si CD4 <50: normal o retinitis CMV. Piel: dermatitis seborreica, sarcoma de Kaposi, molluscum contagioso, herpes zóster. SNC: alerta sin focalidad, con rigidez nucal o focalidad.',
+    estudios: 'CD4 células/mm³ (SIDA si <200, riesgo IO si <100, muy alto si <50). CD4 nadir histórico células/mm³. Carga viral copias/mL (indetectable <50). Cociente CD4/CD8. Resistencias TAR. Hemograma: Hb, leucocitos (linfopenia), plaquetas. TFGe mL/min, proteinuria. Función hepática: ALT, AST. Co-infección VHB (HBsAg) o VHC (anti-VHC). Toxoplasma IgG. PPD/IGRA. Lipidograma: colesterol total, LDL, HDL, triglicéridos. Glucosa/HbA1c.',
+    impresion: 'VIH estadio OMS (1/2/3/4) ó CDC (A/B/C): asintomático o sintomático. CD4 células/mm³: sin inmunosupresión ≥500, leve 350-499, moderada 200-349, severa <200. Carga viral: indetectable <50 o detectable copias (fallo virológico si CV >50 en 2 mediciones). TAR esquema: respuesta suprimida o fallo. Infección oportunista activa: ninguna o presente con tratamiento. Profilaxis IO: cotrimoxazol 800/160 mg/día si CD4 <200. Co-infección: VHB o VHC en tratamiento sí/no. Resistencias: ninguna o documentadas.',
+    tx_farmaco: 'TAR primera línea: Biktarvy (bictegravir/TAF/FTC), Dovato (dolutegravir+3TC), Triumeq (dolutegravir/ABC/3TC), Cabotegravir+Rilpivirina IM cada 2 meses. Profilaxis IOs: Cotrimoxazol 800/160 mg/día si CD4 <200, Azitromicina 1200 mg/semana si CD4 <50. Tratamiento IO activa: TMP/SMX 15-20 mg/kg/día IV para PCP, Pirimetamina+Sulfadiazina para toxoplasma, Fluconazol 200-400 mg/día para criptococosis, Ganciclovir 5 mg/kg IV cada 12h para CMV. PrEP: TAF/FTC 1 comp/día. PEP: TAR dual por 28 días.',
+    tx_nofarmaco: 'Consejería de reducción de riesgo y notificación de parejas. Uso consistente de condón. Apoyo psicosocial y adherencia. Nutrición adecuada (IMC meta >18.5). No compartir jeringas. Vacunación completa (sin vivas si CD4 <200): influenza anual, neumococo, VHB/VHA, VPH hasta 26 años, meningococo, Tdap. Cribado cáncer: Pap anual en mujeres, colonoscopía, cribado anal si HSH.',
+    seguimiento: 'CD4 + carga viral cada 3-6 meses estable, cada 1 mes en cambios. Meta CV indetectable en 6 meses post-inicio. Si fallo virológico: genotipo de resistencias → rescate. Función renal, lípidos, glucosa cada 6 meses. Cribado TB anual si negativo. Derivar urgente si: IO activa, CD4 <50, fiebre de origen desconocido.'
+  },
+
+  tuberculosis: {
+    label: 'Tuberculosis',
+    diagnostico: 'Tuberculosis pulmonar (A15.0) / extrapulmonar (A18.x) / TB latente (Z86.15)',
+    sintomas: 'Tipo: TB activa pulmonar, extrapulmonar (sitio), TB latente o resistente (MDR/XDR). Síntomas TB activa: tos productiva >2 semanas (esputo mucoso/hemoptoico), fiebre vespertina, diaforesis nocturna, pérdida de peso kg en semanas, astenia/anorexia, hemoptisis (escasa/moderada/masiva), disnea. Contacto TB: domiciliario, laboral o comunitario (tratamiento del contacto completo/incompleto). Tratamiento previo: ninguno (caso nuevo), recaída, fallo, abandono. VIH: negativo o positivo con CD4, en TAR sí/no.',
+    exfisica: 'T °C, FC lpm, FR ×min, SaO2 %. Peso kg, IMC (desnutrición frecuente). Auscultación: normal, crepitantes apicales, broncofonía/soplo tubárico, hipofonesis en derrame. Adenopatías: no, cervicales o mediastinales. Abdomen: sin masas/ascitis o hepatoesplenomegalia (TB miliar). SNC: alerta, meningismo en TB meníngea. Piel: eritema nudoso o lupus vulgaris.',
+    estudios: 'Baciloscopia (BAAR) 3 muestras: negativa, positiva ++, positiva +++. GeneXpert MTB/RIF: positivo MTB (rifampicina resistente/sensible/indeterminada) o negativo. Cultivo MGIT/Löwenstein-Jensen: positivo (semanas) o negativo. Antibiograma: sensible, MDR (R+H), XDR. Rx tórax: infiltrado apical, cavernas, patrón miliar, consolidación+derrame, normal. TAC tórax: cavernas, nódulos, adenopatías, derrame. PPD/IGRA mm (positivo/negativo). Hemograma: Hb (anemia), leucocitos, VSG, PCR. Función hepática basal: ALT, AST, bilirrubina total.',
+    impresion: 'TB activa pulmonar (bacilífera sí/no), extrapulmonar (sitio) o latente (indicación TPI sí/no). Resistencia: sensible, MDR (R+H), XDR, pre-XDR. Caso: nuevo, recaída, fallo, abandono. Co-infección VIH: no o sí con CD4, TAR sí/no. Notificación salud pública: realizada o pendiente. Aislamiento respiratorio: indicado en TB activa pulmonar (duración semanas hasta 3 BAAR negativas).',
+    tx_farmaco: 'TB sensible fase intensiva (2 meses): Rifampicina 10 mg/kg/día (máx 600 mg) + Isoniazida 5 mg/kg/día (máx 300 mg) + Pirazinamida 25 mg/kg/día + Etambutol 15-25 mg/kg/día. Fase continuación (4 meses): Rifampicina + Isoniazida. TB MDR: régimen BPaL — Bedaquilina 400 mg/día ×2 sem → 200 mg 3×/sem ×22 sem + Pretomanid 200 mg/día + Linezolid 1200 mg/día ×26 sem. Corticoide adyuvante (TB meníngea/pericárdica): Dexametasona 0.3-0.4 mg/kg/día ×4 sem → tapering. TB latente (TPI): Isoniazida 300 mg/día ×6-9 meses, Rifampicina 600 mg/día ×4 meses, o 3HP (Isoniazida+Rifapentina semanal ×3 meses) + Piridoxina 25-50 mg/día.',
+    tx_nofarmaco: 'Aislamiento respiratorio (cuarto individual con presión negativa o mascarilla N95 ≥2 semanas o hasta 3 BAAR negativas). Notificación obligatoria a salud pública (estudio contactos). Soporte nutricional (proteína + vitaminas). Piridoxina 25-50 mg/día si isoniazida (previene neuropatía). Hepatoprotección: monitorear enzimas cada 2 semanas en fase intensiva (suspender si ALT >5× límite normal). Adherencia: TAES (tratamiento acortado estrictamente supervisado).',
+    seguimiento: 'Baciloscopia mensual hasta negativización. Cultivo cada 2 meses. Rx tórax al mes y fin de tratamiento. Función hepática cada 2 semanas en fase intensiva. Agudeza visual si etambutol (riesgo neuritis óptica). ECG si bedaquilina (QTc). Alta al completar tratamiento: caso curable. Estudio contactos: PPD/IGRA + Rx tórax, tratar TBLT si positivo.'
+  },
+
+  sepsis: {
+    label: 'Sepsis / Infección Grave',
+    diagnostico: 'Sepsis (A41.9) / Choque séptico (R65.21) / Infección bacteriana grave',
+    sintomas: 'Foco probable: pulmonar, urinario, abdominal, cutáneo, dispositivo vascular, SNC, desconocido. Síntomas: fiebre °C o hipotermia <36°C, escalofríos, alteración mental, disnea, oliguria (diuresis mL/h), hipotensión (TA /__). Evolución: horas. Puerta entrada: dispositivo IV, catéter, sonda urinaria, herida, procedimiento reciente. Comorbilidades: inmunosupresión, DM2, cirrosis, ERC, neoplasia, asplenia, edad >65. Antibiótico previo: no o sí (cuál, duración horas/días).',
+    exfisica: 'TA /__ mmHg (hipotensión si PAS <90 o PAM <65), FC lpm (taquicardia >90), FR ×min (taquipnea >22), T °C, SaO2 %, Glasgow /15. Foco: crepitantes basales (neumonía), dolor FID (peritonitis), puño-percusión lumbar (PNA), eritema/fluctuación (cutáneo), rigidez nucal (meningitis). Choque: extremidades frías, moteado cutáneo, pulso filiforme, llene capilar >3 seg, oliguria. Disfunción: confusión, ictericia, petequias/púrpura.',
+    estudios: 'qSOFA (fuera UCI): FR >22 + Glasgow alterado + PAS ≤100 → puntos. SOFA (UCI) puntos: sepsis si ≥2 sobre basal; choque si vasopresores + lactato >2. Lactato mmol/L (normal <2, hipoperfusión 2-4, choque >4). BH: leucocitosis o leucopenia, bandas %, plaquetas (CID si <100). PCR mg/L, PCT ng/mL (<0.5 baja prob, >2 alta, >10 choque). Creatinina (AKI si aumento >0.3 mg/dL en 48h o >1.5× basal), TFGe. Gasometría: pH, PaO2, PaCO2, HCO3, lactato (acidosis metabólica + lactato = choque). BUN, Na, K. Hemocultivos ×2 (antes ATB): pendientes, resultado agente, sensibilidad. Urocultivo: pendiente o resultado. TAC abdomen/tórax si foco no claro.',
+    impresion: 'Infección bacteriana localizada, Sepsis (disfunción orgánica aguda — SOFA ≥2) o Choque séptico (vasopresores + lactato >2 mmol/L). Foco probable: (confirmado/presunto). Agente: pendiente, identificado (sensible/resistente a). Disfunción: respiratoria (PaO2/FiO2), renal (AKI), hepática (bilirrubina), hematológica (plaquetas), coagulación (INR), neurológica (GCS). Lactato mmol/L. Riesgo mortalidad (SOFA): bajo <5%, moderado, alto >40%.',
+    tx_farmaco: 'HORA 1 Bungle SEP-1: (1) Hemocultivos antes ATB → (2) ATB amplio espectro en <1h → (3) Cristaloides 30 mL/kg IV si lactato ≥4 o hipotensión → (4) Vasopresores si PAM <65 → (5) Lactato control. ATB empírica según foco: Neumonía: Ceftriaxona 2g c/24h + Azitromicina 500 mg/día o Piperacilina/tazobactam. Urinario/abdominal: Piperacilina/tazobactam 4.5g c/6h o Meropenem 1-2g c/8h. Neutropénico: Cefepime 2g c/8h o Meropenem+Vancomicina. Meningitis: Ceftriaxona 2g c/12h + Dexametasona 0.15 mg/kg c/6h ×4 días. Vasopresores: Norepinefrina 0.1-1 μg/kg/min (1ª línea) → + Vasopresina 0.03 UI/min → + Hidrocortisona 200 mg/día IV si refractario. Transfusión GR si Hb <7 g/dL.',
+    tx_nofarmaco: 'Monitoreo hemodinámico continuo (PAM, diuresis horaria, lactato cada 2-4h). Control foco: drenaje absceso, retirada catéter infectado, cirugía urgencia si peritonitis. Soporte ventilatorio: OAF/VNI si PaO2/FiO2 <300 → IOT + ARM protectora (VT 6 mL/kg PIB, PEEP, meseta <30 cmH2O). Nutrición enteral precoz (24-48h). Control glucémico (meta 140-180 mg/dL). Tromboprofilaxis: HBPM si plaquetas >30,000. Cabecera 30-45°. Protocolo destete sedación y ventilación.',
+    seguimiento: 'Lactato cada 2h hasta normalización. Hemocultivos control si bacteremia. De-escalada antibiótica según cultivos (meta 5-7 días NAC/ITU, 7-10 días bacteremia). PCT guía suspensión ATB (si reducción >80% o <0.5 ng/mL → suspender). Alta UCI: estable hemodinámicamente, sin vasopresores, FiO2 <40%, mejora clínica. Seguimiento secuelas: síndrome post-UCI (fatiga, deterioro cognitivo, TEPT).'
+  }
+});
+
+Object.assign(WIZARD_SCHEMA, {
+  vih_sida: {
+    title: '🦠 VIH / SIDA',
+    sections: [
+      {
+        name: 'Estado inmunológico',
+        fields: [
+          { id: 'cd4', label: 'CD4 (células/mm³)', type: 'number', min: 0, max: 1500, placeholder: '500' },
+          { id: 'cd4_nadir', label: 'CD4 nadir histórico (células/mm³)', type: 'number', min: 0, max: 1500 },
+          { id: 'carga_viral', label: 'Carga viral (copias/mL)', type: 'number', min: 0, max: 10000000, placeholder: '100000' },
+          { id: 'estadio_vih', label: 'Estadio VIH', type: 'select', options: [
+            'OMS Estadio 1 — asintomático',
+            'OMS Estadio 2 — leve',
+            'OMS Estadio 3 — avanzado',
+            'OMS Estadio 4 — SIDA',
+            'CDC A',
+            'CDC B',
+            'CDC C — SIDA'
+          ]},
+          { id: 'indetectable', label: 'Carga viral indetectable <50 copias', type: 'checkbox' }
+        ]
+      },
+      {
+        name: 'TAR y adherencia',
+        fields: [
+          { id: 'esquema_tar', label: 'Esquema TAR actual', type: 'select', options: [
+            'Sin TAR',
+            'Biktarvy (BIC/TAF/FTC)',
+            'Dovato (DTG+3TC)',
+            'Triumeq (DTG/ABC/3TC)',
+            'Cabotegravir+Rilpivirina IM',
+            'Otro INTI+INSTI',
+            'Otro INTI+INNTI'
+          ]},
+          { id: 'adherencia_tar', label: 'Adherencia al TAR', type: 'select', options: [
+            'Excelente >95%',
+            'Buena 85-95%',
+            'Regular 75-85%',
+            'Mala <75%',
+            'Sin TAR'
+          ]},
+          { id: 'fallo_virologico', label: 'Fallo virológico — CV >50 en 2 mediciones', type: 'checkbox' },
+          { id: 'resistencias_documentadas', label: 'Resistencias a TAR documentadas', type: 'checkbox' },
+          { id: 'tiempo_tar', label: 'Tiempo en TAR', type: 'select', options: [
+            'Sin TAR',
+            '<6 meses',
+            '6-12 meses',
+            '1-5 años',
+            '>5 años suprimido'
+          ]}
+        ]
+      },
+      {
+        name: 'Infecciones oportunistas y profilaxis',
+        fields: [
+          { id: 'profilaxis_cotrimoxazol', label: 'Profilaxis con cotrimoxazol activa', type: 'checkbox' },
+          { id: 'infeccion_oportunista_activa', label: 'Infección oportunista activa', type: 'checkbox' },
+          { id: 'io_tipo', label: 'Tipo de IO', type: 'select', options: [
+            'Sin IO',
+            'PCP',
+            'Toxoplasmosis',
+            'CMV',
+            'MAC',
+            'Criptococosis',
+            'TB',
+            'Histoplasmosis',
+            'Otra'
+          ]},
+          { id: 'coinfeccion_vhb', label: 'Co-infección VHB activa', type: 'checkbox' },
+          { id: 'coinfeccion_vhc', label: 'Co-infección VHC activa', type: 'checkbox' },
+          { id: 'igra_positivo', label: 'IGRA/PPD positivo — TB latente', type: 'checkbox' }
+        ]
+      },
+      {
+        name: 'Comorbilidades y laboratorio',
+        fields: [
+          { id: 'tfge_vih', label: 'TFGe (mL/min)', type: 'number', min: 0, max: 200, placeholder: '90' },
+          { id: 'ldl_vih', label: 'LDL (mg/dL)', type: 'number', min: 0, max: 300, placeholder: '130' },
+          { id: 'hb_vih', label: 'Hemoglobina (g/dL)', type: 'number', min: 4, max: 18, step: 0.1, placeholder: '12' },
+          { id: 'nefropatia_vih', label: 'Nefropatía VIH', type: 'select', options: [
+            'Sin nefropatía',
+            'Proteinuria leve',
+            'HIVAN — nefropatía VIH'
+          ]},
+          { id: 'lipodistrofia_tar', label: 'Lipodistrofia asociada a TAR', type: 'checkbox' },
+          { id: 'diabetes_tar', label: 'DM2 asociada a TAR', type: 'checkbox' }
+        ]
+      }
+    ]
+  },
+
+  tuberculosis: {
+    title: '🫁 Tuberculosis',
+    sections: [
+      {
+        name: 'Tipo y presentación',
+        fields: [
+          { id: 'tipo_tb', label: 'Tipo de TB', type: 'select', options: [
+            'TB Activa Pulmonar',
+            'TB Activa Extrapulmonar',
+            'TB Latente (IGRA+/PPD+)',
+            'TB MDR',
+            'TB XDR'
+          ]},
+          { id: 'caso_tb', label: 'Clasificación del caso', type: 'select', options: [
+            'Caso nuevo',
+            'Recaída',
+            'Fallo de tratamiento',
+            'Abandono — retratamiento'
+          ]},
+          { id: 'localizacion_tb', label: 'Localización (si extrapulmonar)', type: 'select', options: [
+            'Pulmonar',
+            'Pleural',
+            'Ganglionar',
+            'Meníngea',
+            'Ósea',
+            'Genitourinaria',
+            'Miliar',
+            'Múltiple'
+          ]},
+          { id: 'bacilifera', label: 'Bacilífera — Xpert/BAAR positivo', type: 'checkbox' },
+          { id: 'vih_tb_coinfeccion', label: 'Co-infección VIH', type: 'checkbox' }
+        ]
+      },
+      {
+        name: 'Diagnóstico microbiológico',
+        fields: [
+          { id: 'xpert_resultado', label: 'GeneXpert MTB/RIF resultado', type: 'select', options: [
+            'No realizado',
+            'MTB detectado — Rifampicina sensible',
+            'MTB detectado — Rifampicina resistente',
+            'MTB negativo'
+          ]},
+          { id: 'cultivo_resultado', label: 'Cultivo resultado', type: 'select', options: [
+            'No realizado',
+            'En proceso',
+            'Positivo sensible',
+            'Positivo resistente',
+            'Negativo'
+          ]},
+          { id: 'antibiograma_tb', label: 'Antibiograma', type: 'select', options: [
+            'No disponible',
+            'Sensible a 1ª línea',
+            'MDR — R+H resistente',
+            'Pre-XDR',
+            'XDR'
+          ]},
+          { id: 'igra_ppd_positivo', label: 'IGRA/PPD positivo', type: 'checkbox' }
+        ]
+      },
+      {
+        name: 'Laboratorio e imagen',
+        fields: [
+          { id: 'alt_tb', label: 'ALT basal (U/L)', type: 'number', min: 0, max: 500, placeholder: '40' },
+          { id: 'hb_tb', label: 'Hemoglobina (g/dL)', type: 'number', min: 4, max: 18, step: 0.1, placeholder: '12' },
+          { id: 'vsg_tb', label: 'VSG (mm/h)', type: 'number', min: 0, max: 150, placeholder: '30' },
+          { id: 'rx_torax_tb', label: 'Radiografía de tórax', type: 'select', options: [
+            'Normal',
+            'Infiltrado apical',
+            'Caverna(s) apical(es)',
+            'Patrón miliar',
+            'Consolidación + derrame',
+            'Adenopatías mediastinales'
+          ]},
+          { id: 'notificacion_salud_publica', label: 'Notificación a salud pública realizada', type: 'checkbox' },
+          { id: 'aislamiento_respiratorio', label: 'Aislamiento respiratorio activo', type: 'checkbox' }
+        ]
+      },
+      {
+        name: 'Tratamiento y fase',
+        fields: [
+          { id: 'fase_tratamiento_tb', label: 'Fase de tratamiento', type: 'select', options: [
+            'No iniciado',
+            'Fase intensiva RIPE — 1er-2do mes',
+            'Fase de continuación — 3-6to mes',
+            'TB latente — TPI',
+            'MDR-TB esquema',
+            'Tratamiento completado'
+          ]},
+          { id: 'semanas_tratamiento', label: 'Semanas en tratamiento', type: 'number', min: 0, max: 120, placeholder: '8' },
+          { id: 'piridoxina_activa', label: 'Piridoxina suplementada', type: 'checkbox' },
+          { id: 'adherencia_taes', label: 'Adherencia TAES supervisada', type: 'checkbox' },
+          { id: 'respuesta_tb', label: 'Respuesta al tratamiento', type: 'select', options: [
+            'En tratamiento',
+            'Baciloscopia negativizada',
+            'Curación documentada',
+            'Fallo — cambio esquema'
+          ]}
+        ]
+      }
+    ]
+  },
+
+  sepsis: {
+    title: '🚨 Sepsis / Infección Grave',
+    sections: [
+      {
+        name: 'Clasificación y foco',
+        fields: [
+          { id: 'clasificacion_sepsis', label: 'Clasificación', type: 'select', options: [
+            'Infección localizada',
+            'Sepsis — SOFA ≥2',
+            'Choque séptico — vasopresores + lactato >2'
+          ]},
+          { id: 'foco_infeccioso', label: 'Foco infeccioso probable', type: 'select', options: [
+            'Pulmonar — neumonía',
+            'Urinario — ITU-PNA',
+            'Abdominal — peritonitis/colangitis',
+            'Dispositivo vascular',
+            'Piel-tejidos blandos',
+            'SNC — meningitis',
+            'Desconocido'
+          ]},
+          { id: 'agente_probable', label: 'Agente probable (pendiente cultivo)', type: 'select', options: [
+            'Desconocido',
+            'Gram-positivo probable',
+            'Gram-negativo probable',
+            'Polimicrobiano',
+            'Fúngico',
+            'Anaerobio'
+          ]},
+          { id: 'horas_evolucion', label: 'Horas de evolución síntomas', type: 'number', min: 0, max: 720, placeholder: '12' }
+        ]
+      },
+      {
+        name: 'Escalas y signos vitales',
+        fields: [
+          { id: 'sofa', label: 'SOFA score', type: 'number', min: 0, max: 24, placeholder: '2' },
+          { id: 'qsofa', label: 'qSOFA score', type: 'number', min: 0, max: 3, placeholder: '1' },
+          { id: 'lactato', label: 'Lactato (mmol/L)', type: 'number', min: 0, max: 20, step: 0.1, placeholder: '2' },
+          { id: 'ta_media', label: 'PAM (mmHg)', type: 'number', min: 30, max: 150, placeholder: '65' },
+          { id: 'fc_sepsis', label: 'Frecuencia cardíaca (lpm)', type: 'number', min: 30, max: 200, placeholder: '110' },
+          { id: 'glasgow_sepsis', label: 'Glasgow (/15)', type: 'number', min: 3, max: 15, placeholder: '15' },
+          { id: 'vasopresores_activos', label: 'Vasopresores activos', type: 'checkbox' },
+          { id: 'ventilacion_mecanica', label: 'Ventilación mecánica invasiva', type: 'checkbox' }
+        ]
+      },
+      {
+        name: 'Laboratorio',
+        fields: [
+          { id: 'pct', label: 'PCT — Procalcitonina (ng/mL)', type: 'number', min: 0, max: 50, step: 0.1, placeholder: '1.5' },
+          { id: 'pcr_sepsis', label: 'PCR (mg/L)', type: 'number', min: 0, max: 400, step: 0.1, placeholder: '150' },
+          { id: 'creatinina_sepsis', label: 'Creatinina (mg/dL)', type: 'number', min: 0, max: 10, step: 0.1, placeholder: '1.0' },
+          { id: 'plaquetas_sepsis', label: 'Plaquetas (×10³/μL)', type: 'number', min: 0, max: 500, placeholder: '200' },
+          { id: 'hb_sepsis', label: 'Hemoglobina (g/dL)', type: 'number', min: 4, max: 18, step: 0.1, placeholder: '10' },
+          { id: 'hemocultivo_resultado', label: 'Hemocultivo resultado', type: 'select', options: [
+            'Pendiente',
+            'Gram-positivo — especificar especie',
+            'Gram-negativo',
+            'Negativo × 2',
+            'Polimicrobiano'
+          ]},
+          { id: 'aki_presente', label: 'AKI — aumento Cr >0.3 mg/dL', type: 'checkbox' }
+        ]
+      },
+      {
+        name: 'Tratamiento',
+        fields: [
+          { id: 'atb_iniciado', label: 'Antibiótico empírico iniciado en <1h', type: 'checkbox' },
+          { id: 'cristaloides_30mlkg', label: 'Cristaloides 30 mL/kg administrados', type: 'checkbox' },
+          { id: 'foco_controlado', label: 'Foco infeccioso controlado (drenaje/cirugía)', type: 'checkbox' },
+          { id: 'atb_empirico', label: 'Antibiótico empírico seleccionado', type: 'select', options: [
+            'Sin ATB',
+            'Ceftriaxona + Azitromicina',
+            'Piperacilina-Tazobactam',
+            'Meropenem',
+            'Cefepime',
+            'Vancomicina + Piperacilina-Tazobactam',
+            'Otro'
+          ]},
+          { id: 'horas_atb', label: 'Horas desde inicio de ATB', type: 'number', min: 0, max: 168, placeholder: '0' },
+          { id: 'respuesta_sepsis', label: 'Respuesta al tratamiento', type: 'select', options: [
+            'En tratamiento agudo',
+            'Mejora hemodinámica',
+            'De-escalada antibiótica',
+            'Resolución — alta de UCI'
+          ]}
+        ]
+      }
+    ]
+  }
+});
+
+function buildVihSidaNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const estadio = v('estadio_vih') || 'no especificado';
+  const cd4 = n('cd4');
+  const cv = n('carga_viral');
+  const indetectable = v('indetectable') ? 'sí' : 'no';
+  const esquema = v('esquema_tar') || 'sin especificar';
+  const adherencia = v('adherencia_tar') || 'no especificada';
+  const fallo = v('fallo_virologico') ? 'sí' : 'no';
+  const io = v('io_tipo') || 'ninguna';
+  const profilaxis = v('profilaxis_cotrimoxazol') ? 'sí' : 'no';
+  const vhb = v('coinfeccion_vhb') ? 'presente' : 'no';
+  const vhc = v('coinfeccion_vhc') ? 'presente' : 'no';
+
+  const sintomas = `Paciente con infección por VIH estadio ${estadio}. CD4 actual: ${cd4} células/mm³. Carga viral: ${cv} copias/mL (indetectable: ${indetectable}). Esquema TAR: ${esquema}. Adherencia: ${adherencia}. Fallo virológico: ${fallo}. Infección oportunista: ${io}. Profilaxis con cotrimoxazol: ${profilaxis}. Co-infección VHB: ${vhb}. Co-infección VHC: ${vhc}.`;
+
+  const imunidad = cd4 < 50 ? 'severa (<50)' : cd4 < 200 ? 'severa (<200)' : cd4 < 350 ? 'moderada (200-349)' : cd4 < 500 ? 'leve (350-499)' : 'sin inmunosupresión (≥500)';
+  const flagFallo = fallo === 'sí' ? ' [FALLO VIROLÓGICO — requiere genotipo y cambio de esquema]' : '';
+  const flagIO = io !== 'ninguna' ? ' [IO ACTIVA — requiere tratamiento específico]' : '';
+  const flagProfilaxis = cd4 < 200 && profilaxis !== 'sí' ? ' [REQUIERE PROFILAXIS COTRIMOXAZOL]' : '';
+
+  const impresion = `Grado de inmunosupresión: ${imunidad}.${flagFallo}${flagIO}${flagProfilaxis}`;
+
+  return {
+    sintomas,
+    impresion
+  };
+}
+
+function buildTuberculosisNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const tipo = v('tipo_tb') || 'no especificado';
+  const caso = v('caso_tb') || 'no clasificado';
+  const bacilifera = v('bacilifera') ? 'sí' : 'no';
+  const xpert = v('xpert_resultado') || 'no realizado';
+  const antibiograma = v('antibiograma_tb') || 'no disponible';
+  const vih = v('vih_tb_coinfeccion') ? 'sí' : 'no';
+  const faseTrattamento = v('fase_tratamiento_tb') || 'no iniciado';
+  const semanas = n('semanas_tratamiento');
+  const respuesta = v('respuesta_tb') || 'en evaluación';
+
+  const sintomas = `Diagnóstico de TB: ${tipo}. Clasificación: ${caso}. Bacilífera: ${bacilifera}. Resultado GeneXpert: ${xpert}. Antibiograma: ${antibiograma}. Co-infección VIH: ${vih}. Fase de tratamiento: ${faseTrattamento}. Semanas en tratamiento: ${semanas}. Respuesta: ${respuesta}.`;
+
+  const flagMdr = antibiograma.includes('MDR') ? ' [MDR — requiere esquema especializado BPaL]' : '';
+  const flagXdr = antibiograma.includes('XDR') ? ' [XDR — requiere esquema especializado y experto]' : '';
+  const flagVih = vih === 'sí' ? ' [TB-VIH: aumenta riesgo, ajustar TAR si necesario]' : '';
+
+  const impresion = `TB ${tipo} — ${caso}.${flagMdr}${flagXdr}${flagVih}`;
+
+  return {
+    sintomas,
+    impresion
+  };
+}
+
+function buildSepsisNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const clasificacion = v('clasificacion_sepsis') || 'no clasificada';
+  const foco = v('foco_infeccioso') || 'desconocido';
+  const sofa = n('sofa');
+  const qsofa = n('qsofa');
+  const lactato = n('lactato');
+  const pam = n('ta_media');
+  const glc = n('glasgow_sepsis');
+  const vasopresores = v('vasopresores_activos') ? 'sí' : 'no';
+  const vm = v('ventilacion_mecanica') ? 'sí' : 'no';
+  const atbIniciado = v('atb_iniciado') ? 'sí' : 'no';
+  const horasAtb = n('horas_atb');
+  const cristaloides = v('cristaloides_30mlkg') ? 'sí' : 'no';
+  const focoBien = v('foco_controlado') ? 'sí' : 'no';
+  const respuesta = v('respuesta_sepsis') || 'en evaluación';
+
+  const sintomas = `Presentación: ${clasificacion}. Foco probable: ${foco}. SOFA: ${sofa}. qSOFA: ${qsofa}. Lactato: ${lactato} mmol/L. PAM: ${pam} mmHg. Glasgow: ${glc}/15. Vasopresores: ${vasopresores}. Ventilación mecánica: ${vm}. Antibiótico iniciado en <1h: ${atbIniciado}. Cristaloides 30 mL/kg: ${cristaloides}. Foco controlado: ${focoBien}.`;
+
+  const flagChoque = clasificacion.includes('Choque séptico') ? ' [⚠️ CHOQUE SÉPTICO: requiere vasopresores + resucitación urgente]' : '';
+  const flagAtbTardo = atbIniciado === 'no' || horasAtb > 1 ? ' [⚠️ ANTIBIÓTICO RETRASADO: iniciar inmediatamente <1h]' : '';
+  const flagLactato = lactato > 2 ? ' [⚠️ LACTATO ELEVADO: hipoperfusión/choque — requiere resucitación]' : '';
+  const flagFoco = focoBien === 'no' && clasificacion !== 'Infección localizada' ? ' [⚠️ CONTROL DEL FOCO: requerido para sepsis/choque]' : '';
+
+  const impresion = `${clasificacion} — Foco: ${foco}. SOFA: ${sofa}, Lactato: ${lactato} mmol/L.${flagChoque}${flagAtbTardo}${flagLactato}${flagFoco}`;
+
+  return {
+    sintomas,
+    impresion
+  };
+}
+
+Object.assign(WIZARD_BUILDERS, {
+  vih_sida: buildVihSidaNote,
+  tuberculosis: buildTuberculosisNote,
+  sepsis: buildSepsisNote
+});
+
+['vih_sida', 'tuberculosis', 'sepsis'].forEach(m => IMPLEMENTED_MODULES.add(m));
+
+// ====================================================================
+// MÓDULOS ESPECIALIDAD CIRUGÍA GENERAL - ECE META CORE
+// Autor: Sistema de IA
+// Fecha: 2026-04-01
+// Módulos: pre_operatorio, colecistitis, hernia
+// ====================================================================
+
+Object.assign(TEMPLATE_MODULES, {
+  pre_operatorio: {
+    label: 'Valoración Preoperatoria',
+    diagnostico: 'Examen preoperatorio (Z01.818) / Valoración de riesgo quirúrgico',
+    sintomas: 'Procedimiento planificado: [__] — tipo: [electivo/urgencia/ambulatorio]. Cirujano: __. Fecha programada: __. Antecedentes relevantes para cirugía: [cardiopatía isquémica / ICC / HAS / DM2 / EPOC / asma / ERC / hepatopatía / obesidad mórbida / coagulopatía / trombosis previa / uso de anticoagulantes/antiagregantes]. Síntomas cardiovasculares activos (factores de riesgo perioperatorio RCRI): [IAM en últimas 6 semanas / angina inestable / ICC descompensada / arritmia severa / valvulopatía severa / EVC/AIT en últimas 2 semanas]. Medicamentos actuales: [lista completa — especificar: anticoagulantes/antiagregantes/insulina/corticoides/IMAO]. Alergias medicamentosas: [ninguna/sí — agente + reacción: __]. Cirugías previas y anestesias: [ninguna / complicaciones anestésicas previas: __]. Tabaquismo: [no / sí — paquetes-año: __ / cesación preoperatoria ≥8 semanas: sí/no]. Ayuno: [no aplica aún / indicado: __ horas — sólidos 6h / líquidos claros 2h].',
+    exfisica: 'TA: __/__ mmHg · FC: __ lpm · FR: __ × min · SaO2: __% · T: __ °C · Peso: __ kg · Talla: __ cm · IMC: __ kg/m². Apertura oral: [>3 cm / Mallampati I/II/III/IV]. Distancia tiro-mentoniana: __ cm (difícil si <6 cm). Cuello: [movilidad normal/limitada — escoliosis/artritis/cirugía previa]. Auscultación cardíaca: [ruidos cardíacos normales / soplo: aórtico/mitral — grado __ / arritmia]. Auscultación pulmonar: [normal/sibilancias/crepitantes]. Abdomen: [blando/sin organomegalias/sin peritonismo — para cirugía abdominal: hernia/cicatrices previas: __]. Extremidades: [sin edema / edema MMII fóvea __ / varices].',
+    estudios: 'Laboratorio: BH (Hb __ · leucocitos __ · plaquetas __) · glucosa __ · HbA1c __ (si DM2) · Cr __ · TFGe __ · Na __ · K __ · TP __ seg · INR __ · TTPa __. ECG (indicado si ≥50a ó cardiopatía/DM2/HAS): [ritmo sinusal / HVI / BCRIHH / FA / cambios ST / Q patológicas / QTc __ ms]. Rx tórax (indicado si ≥60a ó cardiopatía/pulmonar): [normal / cardiomegalia __ IA / infiltrado / hiperinsuflación]. Ecocardiograma (indicado si soplo no explicado / CC / FEVI reducida): FEVI __% / valvulopatía: __. PFP (espirometría) si cirugía mayor torácica/abdominal alta + EPOC/tabaquismo: FEV1 __% / FVC __%.',
+    impresion: 'Clasificación ASA: [ASA I — paciente sano / ASA II — enfermedad sistémica leve / ASA III — enfermedad sistémica severa / ASA IV — amenaza constante a la vida / ASA V — moribundo]. RCRI (Revised Cardiac Risk Index): __ puntos [0=<1% / 1=1.0% / 2=2.4% / ≥3=5.4% riesgo de MACE perioperatorio]. Riesgo pulmonar: [bajo/moderado/alto — factores: EPOC/obesidad/cirugía abdominal alta/tabaquismo activo]. Manejo de anticoagulación: [continuar / suspender __ días antes / terapia puente HBPM: sí/no]. Optimización preoperatoria necesaria: [ninguna / control glucémico / optimización cardíaca / cese tabáquico / rehabilitación preoperatoria]. Apto para cirugía: [sí / condicionado a: __ / no — contraindicación: __].',
+    tx_farmaco: 'Medicamentos a suspender perioperatorio: [anticoagulantes orales: suspender __ días antes / AAS: continuar en cirugía CV-mayor/suspender 7 días en cirugía electiva / clopidogrel: suspender 5-7 días / AINE: suspender 3 días / metformina: suspender 24-48h ante nefropatía]. Profilaxis antibiótica (30-60 min antes incisión): [Cefazolina 2g IV — cirugía limpia/limpia-contaminada / Cefoxitina 2g IV — cirugía colorrectal / Ciprofloxacino 400 mg IV — urinaria]. Tromboprofilaxis (si cirugía mayor/ortopédica): HBPM — Enoxaparina 40 mg SC 12h antes ó inmediatamente después. Profilaxis de NVPO (náusea/vómito postoperatorios): Ondansetrón 4 mg + Dexametasona 8 mg IV. Manejo de insulina perioperatoria (DM2): reducir insulina basal 20-50% noche anterior, suspender rápida en ayuno, meta glucemia 140-180 mg/dL.',
+    tx_nofarmaco: 'Cese tabáquico ≥8 semanas prequirúrgico (reduce complicaciones respiratorias). Rehabilitación preoperatoria (prehabilitación) si IMC>40/FEVI<35%/EPOC severo. Ejercicio respiratorio y fisioterapia prequirúrgica en cirugía torácica/abdominal mayor. Ayuno: sólidos ≥6h / líquidos claros ≥2h. Marcación de sitio quirúrgico (prevención de error). Lista de verificación quirúrgica (WHO Surgical Safety Checklist).',
+    seguimiento: 'Resultados de laboratorio/imagen al cirujano/anestesiólogo. Interconsulta a cardiología si RCRI≥3 ó FEVI<30% ó valvulopatía severa. Resolución de optimizaciones antes de fecha quirúrgica. Valoración anestésica preoperatoria por anestesiólogo.'
+  },
+
+  colecistitis: {
+    label: 'Colecistitis / Colelitiasis',
+    diagnostico: 'Colelitiasis (K80.20) / Colecistitis aguda (K81.0) / Coledocolitiasis (K80.50)',
+    sintomas: 'Tipo de presentación: [cólico biliar aislado / colecistitis aguda / coledocolitiasis / colangitis aguda (triada de Charcot: fiebre+ictericia+dolor / pentada de Reynolds: +hipotensión+confusión) / colecistitis crónica / vesícula en porcelana / pólipo vesicular]. Síntomas: dolor en hipocondrio D [EVA __/10] — inicio: [brusco/progresivo], irradiación: [hombro D/escápula D/epigastrio], duración: __ horas, relación con comidas (cólico postprandial 30-60 min típico): [sí/no]. Náusea/vómito: [no/sí]. Fiebre: [no/sí — __ °C]. Ictericia: [no/sí — escleróticas: __]. Acolia/coluria: [no/sí]. Episodios previos: __ (primer episodio / recurrente). Factores de riesgo (las 5F): [Femenino/Fat (sobrepeso)/Forty (>40a)/Fertile (multípara)/Family (AHF)].',
+    exfisica: 'TA: __/__ mmHg · FC: __ lpm · T: __ °C (fiebre = colecistitis/colangitis). Ictericia escleral: [no/sí]. Abdomen: Murphy (+/−): [dolor agudo en inspiración profunda al palpar HD — signo clásico de colecistitis / signo de Courvoisier-Terrier: masa vesicular palpable indolora — sospecha neoplasia obstructiva]. Defensa abdominal: [no / defensa voluntaria / defensa involuntaria — peritonismo: sospecha perforación/gangrena]. Ruidos intestinales: [presentes/disminuidos/ausentes]. Masa palpable en HD: [no/sí — tamaño estimado: __ cm].',
+    estudios: 'Laboratorio: Biometría (leucocitosis __ — colecistitis / linfopenia — colangitis severa). BT: __ mg/dL / BD: __ mg/dL (ictericia obstructiva si BD >2 ó BT >3). FA: __ U/L (↑ obstrucción biliar) · GGT: __ · ALT: __ · AST: __. Amilasa: __ U/L (pancreatitis biliar asociada si >3× VN). PCR: __ / PCT: __. USG abdominal (primera línea): cálculos [sí — tamaño __ mm, número __ / no] · pared vesicular [normal <3 mm / engrosada __ mm — colecistitis] · líquido perivesicular [no/sí] · vía biliar [no dilatada / dilatada __ mm — coledocolitiasis si VBP>7 mm] · hallazgo incidental: __. TAC abdomen (si complicación): [complicación: gangrena/perforación/absceso/íleo biliar]. CPRE (si coledocolitiasis confirmada o colangitis): [no realizada / realizada — papilotomía + extracción de cálculos: éxito/fracaso].',
+    impresion: '[Colelitiasis asintomática hallazgo incidental / Cólico biliar / Colecistitis aguda — Tokyo Guidelines grado: I leve / II moderada / III severa / Coledocolitiasis — con/sin colangitis / Colangitis aguda — Charcot / Reynolds / Pólipo vesicular __ mm (>10 mm = resección)]. Complicaciones: [perforación / gangrena / íleo biliar / fístula bilio-entérica / pancreatitis biliar]. Indicación quirúrgica: [colecistectomía laparoscópica electiva ó urgente (dentro de 72h si colecistitis aguda Tokyo I-II)].',
+    tx_farmaco: 'Cólico biliar/colecistitis leve (ambulatorio): Diclofenaco 75 mg IM ó Ketorolaco 30 mg IM + Butilhioscina 20 mg IV/IM. Antiespasmódico: Butilhioscina 10 mg VO c/8h. Antibiótico (colecistitis moderada-grave u/o colangitis): [Ampicilina-sulbactam 3g c/6h IV ó Piperacilina-tazobactam 4.5g c/8h IV / Ceftriaxona 2g c/24h + Metronidazol 500 mg c/8h IV]. Analgesia: Tramadol 50-100 mg IV/IM ó Morfina 0.1 mg/kg IV con antieméticos. Hidratación IV: SSN 0.9% ó Ringer a 125-150 mL/h (ayuno mientras tanto). Ayuno: hasta resolución de crisis / cirugía.',
+    tx_nofarmaco: 'Colecistectomía laparoscópica: gold standard — indicada en: cólico recurrente, primer episodio joven (<40a), cálculos >2 cm (riesgo malignidad), vesícula en porcelana, pólipos >10 mm. Colecistitis aguda: colecistectomía en primeras 72h (reduce complicaciones vs diferida). Colecistitis grave/Tokyo III: estabilización → colecistostomía percutánea si no tolera cirugía → colecistectomía diferida. CPRE + papilotomía antes de colecistectomía si coledocolitiasis confirmada. Dieta baja en grasas hasta cirugía.',
+    seguimiento: 'Colecistitis operada: alta 24-48h postoperatorio laparoscópico. Seguimiento en 2 semanas post-alta. Colelitiasis asintomática: seguimiento USG anual si cálculos ≤1 cm ó >60 años ó asintomático. Control laboratorio si ictericia. Derivar urgencia si: fiebre + ictericia + dolor (colangitis = emergencia médica).'
+  },
+
+  hernia: {
+    label: 'Hernia Abdominal',
+    diagnostico: 'Hernia inguinal (K40.90) / umbilical (K42.9) / incisional (K43.9) / epigástrica (K43.6)',
+    sintomas: 'Tipo de hernia: [inguinal D/I — directa/indirecta / crural/femoral / umbilical / incisional/ventral — cicatriz de __ / epigástrica / de Spiegel / lumbar / obturatriz]. Síntomas: masa palpable [no/sí — localización: __], dolor/molestia [EVA __/10 — intermitente/constante], aumento con esfuerzo/tos/bipedestación [sí/no], reductible [sí/no], síntomas de complicación: [irreductible/incarcerada — dolor intenso constante / estrangulada — dolor intenso + signos isquemia + obstrucción: náusea/vómito/distensión/ausencia de heces]. Tiempo de evolución: __ meses/años. Factores de riesgo: [obesidad / tos crónica / esfuerzo físico intenso / estreñimiento / embarazo / ascitis / cirugía abdominal previa / tabaquismo / desnutrición — colágeno deficiente]. Cirugías previas de la hernia: [ninguna / reparación previa — técnica: __ / recidiva: número: __].',
+    exfisica: 'Bipedestación y con maniobra de Valsalva: masa [no palpable / palpable — reducible: sí/no]. Localización exacta: [triángulo inguinal / anillo umbilical / cicatriz previa — cuál: __]. Tamaño: __ × __ cm. Contenido aparente: [asas intestinales / epiplón / no palpable]. Pulso inguinal conservado: [sí/no — alterado si estrangulación vascular]. Signos de estrangulación: [calor/eritema local / dolor agudo irreductible / ruidos intestinales ausentes / peritonismo — URGENCIA QUIRÚRGICA]. Anillo herniario (si palpable): __ cm de diámetro. Estado de piel suprayacente: [normal / adelgazada / ulcerada — hernia crónica grande].',
+    estudios: 'USG pared abdominal (si duda diagnóstica): [hernia confirmada — contenido: intestino/epiplón / ausente — diagnóstico diferencial: adenopatía/quiste/lipoma]. TAC abdomen (si hernia complicada/grande): [defecto parietal __ × __ cm / contenido: __ / pérdida de dominio: sí/no — >30% contenido extra-abdominal = riesgo síndrome compartimental]. Laboratorio: hemograma, función renal (prequirúrgico). ECG + Rx tórax si >50a o cardiopatía. ASA: __ (valoración de riesgo quirúrgico).',
+    impresion: 'Hernia [tipo: __] — [reductible / irreductible / incarcerada — urgencia / estrangulada — URGENCIA QUIRÚRGICA]. Tamaño defecto: __ cm (grande si >10 cm — requiere malla, posible pérdida de dominio). Riesgo quirúrgico ASA: __. Técnica quirúrgica indicada: [Lichtenstein (inguinal abierta con malla) / TEP/TAPP laparoscópica (inguinal) / Reparación laparoscópica TAPP/eTEP (incisional/umbilical) / Reparación abierta con malla (Chevrel/Rives-Stoppa) / Hernioplastia umbilical]. Urgencia: [electiva — programar / urgente — incarceración / inmediata — estrangulación].',
+    tx_farmaco: 'Prequirúrgico: profilaxis antibiótica (cefazolina 2g IV 30-60 min antes). Analgesia postoperatoria: AINE (ketorolaco/naproxeno) + paracetamol 1g c/8h ± tramadol c/8h si insuficiente. Hematoma/edema escrotal: compresas frías + suspensorio primeras 48h. Laxante (lactuosa 20 mL c/12h) post-plastia inguinal para evitar esfuerzo. Tromboprofilaxis: HBPM si >45 min de cirugía o factores de riesgo.',
+    tx_nofarmaco: 'Hernioplastia electiva (gold standard — no existe tratamiento médico): indicada en hernia sintomática, joven, activo, irreductible, riesgo de incarceración. Observación vigilante ("watchful waiting") solo en hernia inguinal asintomática en adulto mayor con alto riesgo quirúrgico. Reducción manual (taxis) en incarceración reciente (<6h): sedación/analgesia IV + posición Trendelenburg + presión suave y mantenida → si éxito: cirugía diferida en 24-48h. Hernia umbilical en niños <3 años: vigilar cierre espontáneo. Reducción de factores de riesgo preoperatorio: bajar de peso, tratar tos crónica/estreñimiento, dejar tabaco.',
+    seguimiento: 'Postoperatorio ambulatorio: alta en 24h (laparoscópica) ó 48h (abierta grande). Revisión a las 2 semanas: herida/hematoma/seroma. Restricción de levantamiento de objetos >5 kg × 6 semanas. Actividad sexual y conducción vehículo después de 2 semanas. Retorno laboral: trabajo sedentario 1 semana / trabajo físico 4-6 semanas. Recidiva: USG si masa inguinal recurrente.'
+  }
+});
+
+Object.assign(WIZARD_SCHEMA, {
+  pre_operatorio: {
+    title: '📋 Valoración Preoperatoria',
+    sections: [
+      {
+        name: 'Procedimiento y ASA',
+        fields: [
+          { id: 'asa_clase', type: 'select', label: 'Clasificación ASA', options: ['ASA I — Paciente sano', 'ASA II — Enfermedad sistémica leve', 'ASA III — Enfermedad sistémica severa', 'ASA IV — Riesgo vital constante', 'ASA V — Paciente moribundo'] },
+          { id: 'tipo_cirugia', type: 'select', label: 'Tipo de cirugía', options: ['Cirugía electiva ambulatoria', 'Cirugía electiva hospitalaria', 'Cirugía urgente', 'Cirugía de urgencia inmediata'] },
+          { id: 'riesgo_cirugia', type: 'select', label: 'Riesgo quirúrgico (MACE %)', options: ['Bajo <1% MACE', 'Intermedio 1-5%', 'Alto >5%'] },
+          { id: 'procedimiento_planificado', type: 'text', label: 'Procedimiento planificado' }
+        ]
+      },
+      {
+        name: 'RCRI (Revised Cardiac Risk Index)',
+        fields: [
+          { id: 'rcri', type: 'number', label: 'RCRI score', min: 0, max: 6 },
+          { id: 'rcri_factores', type: 'checkbox-group', label: 'Factores RCRI presentes', options: [
+            { id: 'rcri_iam', label: 'IAM previo' },
+            { id: 'rcri_icc', label: 'ICC' },
+            { id: 'rcri_evc', label: 'EVC/AIT previo' },
+            { id: 'rcri_dm_insulina', label: 'DM con insulina' },
+            { id: 'rcri_cr_elevada', label: 'Cr >2 mg/dL' },
+            { id: 'rcri_cx_alto_riesgo', label: 'Cirugía de alto riesgo' }
+          ] },
+          { id: 'cardiopatia_activa', type: 'checkbox', label: 'Cardiopatía activa — evaluar cardiólogo urgente' }
+        ]
+      },
+      {
+        name: 'Laboratorio y función respiratoria',
+        fields: [
+          { id: 'hb_preop', type: 'number', label: 'Hemoglobina (g/dL)', step: 0.1, min: 4, max: 20 },
+          { id: 'inr_preop', type: 'number', label: 'INR', step: 0.01, min: 0.5, max: 10 },
+          { id: 'k_preop', type: 'number', label: 'Potasio (mEq/L)', step: 0.1, min: 2, max: 7 },
+          { id: 'cr_preop', type: 'number', label: 'Creatinina (mg/dL)', step: 0.1 },
+          { id: 'glucosa_preop', type: 'number', label: 'Glucosa (mg/dL)' },
+          { id: 'hba1c_preop', type: 'number', label: 'HbA1c (%)', step: 0.1, min: 4, max: 20 },
+          { id: 'mallampati', type: 'select', label: 'Mallampati', options: ['Mallampati I', 'Mallampati II', 'Mallampati III', 'Mallampati IV — vía aérea difícil'] },
+          { id: 'via_aerea_dificil', type: 'checkbox', label: 'Vía aérea difícil prevista' }
+        ]
+      },
+      {
+        name: 'Manejo perioperatorio',
+        fields: [
+          { id: 'anticoagulante_activo', type: 'checkbox', label: 'Anticoagulante oral activo' },
+          { id: 'antiagregante_activo', type: 'checkbox', label: 'Antiagregante activo' },
+          { id: 'dm2_preop', type: 'checkbox', label: 'DM2 — control perioperatorio' },
+          { id: 'optimizacion_pendiente', type: 'checkbox', label: 'Optimización preoperatoria pendiente' },
+          { id: 'apto_cirugia', type: 'select', label: 'Aptitud quirúrgica', options: ['Apto sin restricciones', 'Apto condicionado', 'No apto — contraindicación activa', 'Pendiente de evaluación'] },
+          { id: 'profilaxis_atb_indicada', type: 'checkbox', label: 'Profilaxis antibiótica indicada' },
+          { id: 'tromboprofilaxis_indicada', type: 'checkbox', label: 'Tromboprofilaxis perioperatoria indicada' }
+        ]
+      }
+    ]
+  },
+
+  colecistitis: {
+    title: '💛 Colecistitis / Colelitiasis',
+    sections: [
+      {
+        name: 'Diagnóstico clínico',
+        fields: [
+          { id: 'tipo_patologia_biliar', type: 'select', label: 'Tipo de patología biliar', options: ['Colelitiasis asintomática', 'Cólico biliar', 'Colecistitis aguda', 'Coledocolitiasis', 'Colangitis aguda', 'Pólipo vesicular', 'Crónica recurrente'] },
+          { id: 'tokyo_grado', type: 'select', label: 'Tokyo Guidelines (si colecistitis)', options: ['No aplica — no colecistitis', 'Tokyo I — leve', 'Tokyo II — moderada', 'Tokyo III — grave'] },
+          { id: 'murphyposit', type: 'checkbox', label: 'Signo de Murphy (+)' },
+          { id: 'fiebre_biliar', type: 'checkbox', label: 'Fiebre >38°C' },
+          { id: 'ictericia_biliar', type: 'checkbox', label: 'Ictericia escleral' }
+        ]
+      },
+      {
+        name: 'Imagen y laboratorio',
+        fields: [
+          { id: 'usg_resultado', type: 'select', label: 'Resultado USG abdominal', options: ['No realizado', 'Litiasis vesicular sola', 'Litiasis + pared engrosada', 'VBP dilatada >7 mm', 'Colelitiasis + coledocolitiasis', 'Sin litiasis'] },
+          { id: 'bt_biliar', type: 'number', label: 'Bilirrubina total (mg/dL)', step: 0.1, min: 0, max: 30 },
+          { id: 'fa_biliar', type: 'number', label: 'Fosfatasa alcalina (U/L)' },
+          { id: 'leucocitos_biliar', type: 'number', label: 'Leucocitos (×10³/μL)', step: 0.1 },
+          { id: 'amilasa_biliar', type: 'number', label: 'Amilasa (U/L)', min: 0, max: 5000 },
+          { id: 'pancreatitis_asociada', type: 'checkbox', label: 'Pancreatitis biliar asociada — amilasa >3×' },
+          { id: 'vbp_dilatada', type: 'checkbox', label: 'VBP dilatada >7 mm — coledocolitiasis probable' }
+        ]
+      },
+      {
+        name: 'Manejo',
+        fields: [
+          { id: 'manejo_biliar', type: 'select', label: 'Plan de manejo', options: ['Manejo ambulatorio — electivo', 'Hospitalización + cirugía <72h', 'CPRE urgente — colangitis', 'Estabilización + cirugía diferida'] },
+          { id: 'cirugia_laparoscopica_realizada', type: 'checkbox', label: 'Colecistectomía laparoscópica realizada' },
+          { id: 'cpre_realizada', type: 'checkbox', label: 'CPRE realizada' },
+          { id: 'ayuno_activo', type: 'checkbox', label: 'Ayuno activo — hospitalizado' },
+          { id: 'estado_postoperatorio', type: 'select', label: 'Estado postoperatorio', options: ['No operado', 'Postoperatorio inmediato', 'Postoperatorio sin complicaciones', 'Complicación postoperatoria'] }
+        ]
+      },
+      {
+        name: 'Riesgo quirúrgico y plan',
+        fields: [
+          { id: 'riesgo_anestesico_cx', type: 'select', label: 'Riesgo anestésico/quirúrgico', options: ['ASA I-II — bajo', 'ASA III — moderado', 'ASA IV — alto', 'Colecistostomía percutánea — inoperable'] },
+          { id: 'anticoagulacion_presente', type: 'checkbox', label: 'Anticoagulación activa — ajuste perioperatorio' },
+          { id: 'colecistitis_gangrena', type: 'checkbox', label: 'Sospecha gangrena/perforación — urgencia máxima' },
+          { id: 'plan_quirurgico', type: 'select', label: 'Plan quirúrgico', options: ['Colecistectomía laparoscópica electiva', 'Colecistectomía urgente <72h', 'Colecistostomía percutánea', 'Postoperatorio — alta próxima'] }
+        ]
+      }
+    ]
+  },
+
+  hernia: {
+    title: '🔩 Hernia Abdominal',
+    sections: [
+      {
+        name: 'Tipo y presentación clínica',
+        fields: [
+          { id: 'tipo_hernia', type: 'select', label: 'Tipo de hernia', options: ['Inguinal derecha — indirecta', 'Inguinal derecha — directa', 'Inguinal izquierda', 'Inguinal bilateral', 'Umbilical', 'Incisional/Ventral', 'Epigástrica', 'Crural/Femoral', 'Hernia de Spiegel'] },
+          { id: 'estado_hernia', type: 'select', label: 'Estado clínico de la hernia', options: ['Reductible — asintomática', 'Reductible — sintomática', 'Irreductible', 'Incarcerada — urgencia', 'Estrangulada — URGENCIA INMEDIATA'] },
+          { id: 'tamano_defecto', type: 'number', label: 'Tamaño del defecto (cm)', step: 0.5, min: 0, max: 30 },
+          { id: 'recidiva', type: 'checkbox', label: 'Hernia recidivada — cirugía previa' }
+        ]
+      },
+      {
+        name: 'Síntomas y signos',
+        fields: [
+          { id: 'eva_hernia', type: 'number', label: 'Dolor EVA (0-10)', min: 0, max: 10 },
+          { id: 'aumento_con_esfuerzo', type: 'checkbox', label: 'Aumento con esfuerzo/tos/bipedestación' },
+          { id: 'dolor_constante_hernia', type: 'checkbox', label: 'Dolor constante' },
+          { id: 'signos_isquemia_hernia', type: 'checkbox', label: 'Signos de isquemia — calor/eritema/dolor agudo' },
+          { id: 'ruidos_ausentes', type: 'checkbox', label: 'Ausencia de ruidos intestinales — obstrucción/estrangulación' },
+          { id: 'peritonismo_hernia', type: 'checkbox', label: 'Peritonismo — perforación' },
+          { id: 'urgencia_cx_hernia', type: 'select', label: 'Urgencia quirúrgica', options: ['Electiva — programar', 'Urgente — incarceración', 'Inmediata — estrangulación'] }
+        ]
+      },
+      {
+        name: 'Imagen y riesgo quirúrgico',
+        fields: [
+          { id: 'usg_hernia', type: 'select', label: 'USG de pared abdominal', options: ['No realizado', 'Hernia confirmada — contenido intestino', 'Hernia confirmada — contenido epiplón', 'Diagnóstico diferencial — no hernia'] },
+          { id: 'perdida_dominio', type: 'checkbox', label: 'Pérdida de dominio >30% — TAC' },
+          { id: 'tac_realizado_hernia', type: 'checkbox', label: 'TAC abdomen realizado' },
+          { id: 'asa_hernia', type: 'select', label: 'Clasificación ASA', options: ['ASA I', 'ASA II', 'ASA III', 'ASA IV'] }
+        ]
+      },
+      {
+        name: 'Plan quirúrgico y resultado',
+        fields: [
+          { id: 'tecnica_indicada', type: 'select', label: 'Técnica quirúrgica indicada', options: ['Lichtenstein abierta con malla', 'TEP laparoscópica', 'TAPP laparoscópica', 'eTEP laparoscópica', 'Reparación abierta Rives-Stoppa', 'Hernioplastia umbilical', 'Watchful waiting — asintomática alto riesgo'] },
+          { id: 'cirugia_realizada', type: 'checkbox', label: 'Cirugía realizada' },
+          { id: 'malla_utilizada', type: 'checkbox', label: 'Malla protésica utilizada' },
+          { id: 'profilaxis_atb_hernia', type: 'checkbox', label: 'Profilaxis antibiótica administrada' },
+          { id: 'estado_hernia_cx', type: 'select', label: 'Estado postoperatorio', options: ['No operada — electiva', 'Postoperatorio inmediato', 'Sin complicaciones postoperatorio', 'Complicación — seroma/hematoma/recidiva'] }
+        ]
+      }
+    ]
+  }
+});
+
+function buildPreOperatorioNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  let sintomas = '';
+  if (v('asa_clase')) sintomas += 'ASA: ' + v('asa_clase') + '\n';
+  if (v('tipo_cirugia')) sintomas += 'Tipo de cirugía: ' + v('tipo_cirugia') + '\n';
+  if (v('procedimiento_planificado')) sintomas += 'Procedimiento: ' + v('procedimiento_planificado') + '\n';
+  if (v('rcri')) sintomas += 'RCRI: ' + v('rcri') + ' puntos\n';
+  if (v('rcri_factores') && v('rcri_factores').length > 0) sintomas += 'Factores RCRI: ' + v('rcri_factores').join(', ') + '\n';
+  if (v('cardiopatia_activa')) sintomas += 'ALERTA: Cardiopatía activa — evaluar con cardiología urgente\n';
+
+  let exfisica = '';
+  if (n('hb_preop')) exfisica += 'Hemoglobina: ' + n('hb_preop', 'g/dL') + '\n';
+  if (n('cr_preop')) exfisica += 'Creatinina: ' + n('cr_preop', 'mg/dL') + '\n';
+  if (v('mallampati')) exfisica += 'Mallampati: ' + v('mallampati') + '\n';
+  if (v('via_aerea_dificil')) exfisica += 'ALERTA: Vía aérea difícil prevista — anestesiología\n';
+
+  let impresion = 'RESUMEN PREOPERATORIO:\n';
+  if (v('asa_clase')) impresion += '• ASA: ' + v('asa_clase') + '\n';
+  if (v('riesgo_cirugia')) impresion += '• Riesgo MACE: ' + v('riesgo_cirugia') + '\n';
+  if (parseInt(v('rcri') || 0) >= 3) impresion += '• ALTO RIESGO CARDÍACO (RCRI ≥3) — interconsulta cardiology recomendada\n';
+  if (v('anticoagulante_activo')) impresion += '• Anticoagulación activa — manejo perioperatorio\n';
+  if (v('antiagregante_activo')) impresion += '• Antiagregación activa — continuación en cirugía mayor CV\n';
+  if (v('dm2_preop')) impresion += '• DM2 — control glucémico perioperatorio (meta 140-180 mg/dL)\n';
+  if (v('apto_cirugia')) impresion += '• Aptitud: ' + v('apto_cirugia') + '\n';
+
+  return {
+    sintomas: sintomas || 'Evaluación preoperatoria en proceso.',
+    exfisica: exfisica || 'Exploración por completar.',
+    estudios: 'Laboratorio y estudios complementarios documentados en sección correspondiente.',
+    impresion: impresion,
+    tx_farmaco: 'Profilaxis antibiótica indicada. Manejo de anticoagulación perioperatoria según tipo cirugía.',
+    tx_nofarmaco: 'Optimización preoperatoria. Ayuno preoperatorio. Marcación sitio quirúrgico.'
+  };
+}
+
+function buildColecistitisNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  let sintomas = '';
+  if (v('tipo_patologia_biliar')) sintomas += 'Patología biliar: ' + v('tipo_patologia_biliar') + '\n';
+  if (v('tokyo_grado') && v('tokyo_grado') !== 'No aplica — no colecistitis') sintomas += 'Severidad: ' + v('tokyo_grado') + '\n';
+  if (v('murphyposit')) sintomas += 'Signo de Murphy: POSITIVO\n';
+  if (v('fiebre_biliar')) sintomas += 'Fiebre presente: sí\n';
+  if (v('ictericia_biliar')) sintomas += 'Ictericia escleral: sí\n';
+
+  let estudios = '';
+  if (v('usg_resultado') && v('usg_resultado') !== 'No realizado') estudios += 'USG: ' + v('usg_resultado') + '\n';
+  if (n('bt_biliar')) estudios += 'Bilirrubina total: ' + n('bt_biliar', 'mg/dL') + '\n';
+  if (n('fa_biliar')) estudios += 'FA: ' + n('fa_biliar', 'U/L') + '\n';
+  if (n('amilasa_biliar')) estudios += 'Amilasa: ' + n('amilasa_biliar', 'U/L');
+  if (v('pancreatitis_asociada')) estudios += ' — PANCREATITIS BILIAR\n';
+  else if (n('amilasa_biliar')) estudios += '\n';
+  if (v('vbp_dilatada')) estudios += 'VBP dilatada >7 mm: probable COLEDOCOLITIASIS\n';
+
+  let impresion = 'DIAGNÓSTICO:\n';
+  if (v('tipo_patologia_biliar')) impresion += '• ' + v('tipo_patologia_biliar') + '\n';
+  if (v('tokyo_grado') !== 'No aplica — no colecistitis') impresion += '• Tokyo Guidelines: ' + v('tokyo_grado') + '\n';
+  if (v('murphyposit') || v('fiebre_biliar') || v('ictericia_biliar')) impresion += '• Signos de alarma: colecistitis aguda probable\n';
+  if (v('pancreatitis_asociada')) impresion += '• PANCREATITIS BILIAR ASOCIADA — riesgo alto\n';
+  if (v('vbp_dilatada')) impresion += '• Probable COLEDOCOLITIASIS — considerar CPRE urgente\n';
+  impresion += '\nMANEJO:\n';
+  if (v('manejo_biliar')) impresion += '• Plan: ' + v('manejo_biliar') + '\n';
+  if (v('cirugia_laparoscopica_realizada')) impresion += '• Colecistectomía laparoscópica: REALIZADA\n';
+  else if (v('manejo_biliar') && (v('manejo_biliar').includes('Cirugía') || v('manejo_biliar').includes('urgente'))) {
+    impresion += '• Indicación: COLECISTECTOMÍA (colecistitis Tokyo I-II <72h)\n';
+  }
+
+  return {
+    sintomas: sintomas || 'Datos clínicos por evaluar.',
+    exfisica: 'Exploración y hallazgos registrados.',
+    estudios: estudios || 'Estudios por realizarse.',
+    impresion: impresion,
+    tx_farmaco: 'Analgesia, antieméticos, antibióticos según severidad. Hidratación IV.',
+    tx_nofarmaco: 'Colecistectomía laparoscópica gold standard. Dieta baja en grasas.'
+  };
+}
+
+function buildHerniaNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  let sintomas = '';
+  if (v('tipo_hernia')) sintomas += 'Tipo: ' + v('tipo_hernia') + '\n';
+  if (v('estado_hernia')) sintomas += 'Estado: ' + v('estado_hernia') + '\n';
+  if (n('tamano_defecto')) sintomas += 'Tamaño defecto: ' + n('tamano_defecto', 'cm') + '\n';
+  if (n('eva_hernia')) sintomas += 'Dolor (EVA): ' + n('eva_hernia', '/10') + '\n';
+  if (v('recidiva')) sintomas += 'Hernia RECIDIVADA: cirugía previa\n';
+
+  let exfisica = '';
+  if (v('aumento_con_esfuerzo')) exfisica += 'Aumento con esfuerzo/tos: sí\n';
+  if (v('dolor_constante_hernia')) exfisica += 'Dolor: constante\n';
+  if (v('signos_isquemia_hernia')) exfisica += 'ALERTA: Signos de isquemia (calor/eritema) — complicación aguda\n';
+  if (v('ruidos_ausentes')) exfisica += 'ALERTA: Ausencia de ruidos intestinales — obstrucción/estrangulación\n';
+  if (v('peritonismo_hernia')) exfisica += 'ALERTA: Peritonismo — complicación grave\n';
+
+  let impresion = 'DIAGNÓSTICO:\n';
+  if (v('tipo_hernia')) impresion += '• Tipo: ' + v('tipo_hernia') + '\n';
+  if (v('estado_hernia')) impresion += '• Estado clínico: ' + v('estado_hernia') + '\n';
+  if (n('tamano_defecto')) {
+    impresion += '• Tamaño: ' + n('tamano_defecto', 'cm');
+    if (parseFloat(n('tamano_defecto')) > 10) impresion += ' (GRANDE — requiere malla, riesgo pérdida dominio)\n';
+    else impresion += '\n';
+  }
+  if (v('recidiva')) impresion += '• RECIDIVA — posible defecto técnico previo\n';
+  if (v('perdida_dominio')) impresion += '• Pérdida de dominio >30% — TAC realizado\n';
+
+  impresion += '\nURGENCIA QUIRÚRGICA:\n';
+  if (v('urgencia_cx_hernia')) impresion += '• ' + v('urgencia_cx_hernia') + '\n';
+  if (v('estado_hernia') === 'Estrangulada — URGENCIA INMEDIATA') {
+    impresion += '• URGENCIA INMEDIATA — riesgo necrosis/sepsis\n';
+  }
+
+  impresion += '\nTÉCNICA QUIRÚRGICA:\n';
+  if (v('tecnica_indicada')) impresion += '• ' + v('tecnica_indicada') + '\n';
+  else impresion += '• Por definir según valoración preoperatoria\n';
+
+  if (v('cirugia_realizada')) {
+    impresion += '\nPOSTOPERATORIO:\n';
+    impresion += '• Cirugía realizada: sí\n';
+    if (v('malla_utilizada')) impresion += '• Malla protésica: utilizada\n';
+    impresion += '• Estado: ' + (v('estado_hernia_cx') || 'por evaluar') + '\n';
+  }
+
+  return {
+    sintomas: sintomas || 'Presentación clínica por documentar.',
+    exfisica: exfisica || 'Exploración física completa.',
+    estudios: 'Imagen (USG/TAC) por realizarse si indicada.',
+    impresion: impresion,
+    tx_farmaco: 'Profilaxis antibiótica. Analgesia postoperatoria. Laxantes post-plastia inguinal.',
+    tx_nofarmaco: 'Hernioplastia: gold standard. Watchful waiting solo en asintomática + alto riesgo. Reducción manual en incarceración reciente.'
+  };
+}
+
+Object.assign(WIZARD_BUILDERS, {
+  pre_operatorio: buildPreOperatorioNote,
+  colecistitis: buildColecistitisNote,
+  hernia: buildHerniaNote
+});
+
+['pre_operatorio', 'colecistitis', 'hernia'].forEach(m => IMPLEMENTED_MODULES.add(m));
+
+// ECE META CORE - Módulos de Medicina Interna y Electrolitos
+// Implementación: Medicina Interna (nota de hospitalización) + Equilibrio Electrolítico/Ácido-Base
+
+Object.assign(TEMPLATE_MODULES, {
+  medicina_interna: {
+    label: 'Medicina Interna',
+    diagnostico: 'Evaluación médica hospitalaria / Pluripatología (Z00.00)',
+    sintomas: 'Motivo de ingreso: [__]. Enfermedad actual: descripción cronológica del episodio actual — inicio: __ días/semanas — síntomas principales: [fiebre/disnea/dolor/alteración del estado mental/náuseas-vómitos/debilidad/síncope/otros: __]. Evolución: [progresiva/estacionaria/intermitente]. Atención previa: [urgencias — __ / médico externo / sin atención previa]. Lista de problemas activos: [1. __ / 2. __ / 3. __ / 4. __ / 5. __]. Comorbilidades relevantes al ingreso: [HAS/DM2/ICC/EPOC/ERC/cirrosis/neoplasia/inmunosupresión/demencia/otros: __]. Medicamentos habituales en domicilio (lista completa): [__]. Alergias: [ninguna/sí — agente+reacción: __]. Situación funcional basal: [Barthel __ /100 / Katz __ / independiente / dependiente parcial / dependiente total]. Situación social: [vive solo/acompañado/institución/buen soporte social: sí/no].',
+    exfisica: 'Constantes al ingreso: TA: __/__ mmHg · FC: __ lpm · FR: __ × min · SaO2: __% · T: __ °C · Glasgow: __/15 · Peso: __ kg · IMC: __. Estado general: [bueno/regular/malo — aspecto: __]. Bien/mal perfundido. Piel/mucosas: [ictericia: no/sí / cianosis: no/sí / palidez: no/sí / deshidratación: turgor: normal/reducido]. Cabeza y cuello: [adenopatías: no/sí / PVY: normal/elevada __ cm / carótidas sin soplos]. Tórax: auscultación cardíaca: [RCR sin soplos / soplo __ grado / arritmia]. Auscultación pulmonar: [MV conservado / crepitantes / sibilancias / hipofonesis — lado: __]. Abdomen: [blando/distendido / dolor: localización __ / hepatomegalia/esplenomegalia / ascitis: no/sí]. Extremidades: [edema: no/sí grado __ / pulsos: conservados/disminuidos / Homans: +/−]. Neurológico: [alerta/somnolento / focalidad: no/sí — descripción: __].',
+    estudios: 'Laboratorio de ingreso: Hemograma: Hb __ · Leucocitos __ · Plaquetas __ · BH diferencial: PMN __% · Linfocitos __%. Química: Glucosa __ · Cr __ · TFGe __ · BUN __ · Na __ · K __ · Cl __ · CO3H __. Hepático: BT __ · AST __ · ALT __ · FA __ · Albumina __. Coagulación: TP __ · INR __ · TTPa __. Biomarcadores: PCR __ · PCT __ · Lactato __ · BNP/NT-proBNP __ (si sospecha ICC). Urinalisis: [normal/albuminuria/piuria/hematuria]. ECG: [RS/FA/cambios: __]. Rx tórax: [normal/cardiomegalia/infiltrado/derrame: __]. Estudios adicionales por sospecha diagnóstica: [USG/TAC/RM/CPRE/endoscopía/PL — resultados: __].',
+    impresion: 'Diagnóstico principal de ingreso: __. Diagnósticos secundarios/comorbilidades activas: [1. __ / 2. __ / 3. __ / 4. __]. Gravedad: [estable / moderadamente grave / grave / crítico]. Escala de gravedad aplicable: [APACHE II: __ / CURB-65: __ (NAC) / SOFA: __ (sepsis) / Child-Pugh: __ (hepatopatía) / MELD-Na: __ / PSI: __ (neumonía)]. Plan diagnóstico en evolución: [pendiente: __]. Plan de alta: [previsto en __ días / condicionado a: __].',
+    tx_farmaco: 'Tratamiento del diagnóstico principal (personalizar): [__]. Manejo de comorbilidades en hospitalización: ajuste de medicamentos habituales — [suspender: __ / reducir dosis: __ / monitorear: __]. Tromboprofilaxis: [HBPM — Enoxaparina 40 mg SC/día / Heparina no fraccionada 5000 UI c/8h sc]. Control glucémico si DM2: insulina correccional + basal según esquema. Analgesia pautada: [paracetamol 1g c/8h / tramadol 50-100 mg c/8h / morfina 2-5 mg c/4-6h si severo]. Antieméticos: ondansetrón 4 mg c/8h. IBP: pantoprazol 40 mg c/24h (si ayuno o sangrado GI o AINE).',
+    tx_nofarmaco: 'Hidratación IV: [SSN 0.9% ó Ringer lactato a __ mL/h / SF 500 mL bolus si hipotensión]. Dieta: [ayuno / líquidos / blanda / regular / hiposódica / hipocalórica / diabética]. Oxigenoterapia: [no requiere / gafas __ L/min / mascarilla __ L/min / OAF / VNI si PaO2/FiO2 <300]. Monitoreo: constantes c/__ h / SaO2 continua / diuresis horaria. Movilización: [reposo absoluto / relativo / deambulación con ayuda / fisioterapia]. Prevención de complicaciones hospitalarias: medias/HBPM (TVP) + cabecera 30° (broncoaspiración) + cambios posturales (úlceras decúbito) + higiene oral.',
+    seguimiento: 'Evolución esperada en __ días. Alta hospitalaria si: afebril ≥24h + SaO2 estable + oral tolerado + movilidad funcional + plan ambulatorio coordinado. Informe de alta: diagnósticos + tratamiento domiciliario + seguimiento en __ días con: médico de cabecera / especialista. Signos de alarma para regresar urgencias.'
+  },
+  equilibrio_electrolitico: {
+    label: 'Electrolitos / Ácido-Base',
+    diagnostico: 'Trastorno electrolítico (E87.8) / Acidosis metabólica (E87.2) / Alcalosis metabólica (E87.3)',
+    sintomas: 'Motivo de evaluación del equilibrio: [hallazgo en laboratorio rutinario / síntomas de diselectrolitemia: calambres/debilidad muscular/parestesias/arritmia/confusión / hipotensión / contexto clínico: vómito/diarrea/deshidratación/insuficiencia renal/cirrosis/cetoacidosis]. Síntomas de hipopotasemia: [debilidad muscular proximal / calambres / constipación / íleo / palpitaciones]. Síntomas de hiperpotasemia: [debilidad muscular / parestesias / palpitaciones / bradicardia]. Síntomas de hiponatremia: [náusea/cefalea (leve) / confusión/somnolencia (moderada) / convulsiones/coma (severa)]. Síntomas de acidosis: [hiperventilación compensatoria (Kussmaul) / letargia / náusea]. Causa probable del trastorno: [vómito/diarrea/NGS / diuréticos / IRC / DBT cetoacidosis / acidosis láctica / IAD (ingesta alcohólica/desnutrición) / fármacos: IECA/K-ahorrador/AINE / hiperaldosteronismo / iatrogénico].',
+    exfisica: 'TA: __/__ mmHg · FC: __ lpm (arritmia en diselectrolitemia severa) · SaO2: __%. Estado de hidratación: [normohidratado / deshidratado: taquicardia+hipotensión ortostática+turgor reducido+mucosas secas / sobrehidratado: edema+crepitantes]. Fuerza muscular: [normal/debilidad proximal — K bajo]. Reflejos osteotendinosos: [normales / aumentados (alcalosis) / disminuidos / arreflexia (K muy bajo o Mg bajo)]. Frecuencia respiratoria: [normal / Kussmaul — acidosis metabólica severa / hipoventilación — alcalosis + sedación]. Calambres / espasmo muscular: [no/sí — Chvostek/Trousseau si hipocalcemia].',
+    estudios: 'Electrolitos séricos: Na: __ mEq/L · K: __ mEq/L · Cl: __ mEq/L · CO3H (HCO3): __ mEq/L · Ca total: __ mg/dL · Ca iónico: __ mmol/L · Mg: __ mEq/L · P: __ mg/dL. Función renal: Cr: __ · TFGe: __ · BUN: __. Gasometría arterial/venosa: pH: __ · PaCO2: __ mmHg · HCO3: __ mEq/L · EB (exceso de base): __ · SaO2: __%. Interpretación gasométrica: [acidosis metabólica AG __ mEq/L / acidosis metabólica sin AG / alcalosis metabólica / acidosis respiratoria / alcalosis respiratoria / trastorno mixto]. Osmolalidad sérica calculada: __ mOsm/kg (2Na + glucosa/18 + BUN/2.8) · medida: __. Orina: Na: __ / K: __ / osmolalidad urinaria: __ / pH orina: __. ECG (K<3.0 ó >5.5): [onda U (K bajo) / T picudas/QRS ancho (K alto) / normal].',
+    impresion: 'Trastorno principal: [Hiponatremia __ mEq/L: [leve 130-135 / moderada 125-130 / severa <125] — causa: hipovolémica/euvolémica/hipervolémica — osmolalidad: hipotónica/isotónica/hipertónica / Hipernatremia __ mEq/L: causa: pérdidas/déficit de agua libre / Hipopotasemia __ mEq/L: leve>3.0/moderada 2.5-3.0/severa<2.5 — causa: pérdidas GI/renales/redistribución / Hiperpotasemia __ mEq/L: leve<5.5/moderada 5.5-6.5/severa>6.5 — causa: IECA+ERC+AINE/CAD/rabdomiólisis / Acidosis metabólica pH __ AG __ — causa MUDPILES / Alcalosis metabólica pH __ HCO3 __ — causa: vómito/diuréticos / Trastorno mixto]. Urgencia: [manejo ambulatorio / hospitalización / UCI si pH<7.1 ó K>6.5 ó Na<120 sintomático].',
+    tx_farmaco: 'Hipopotasemia (<3.5 mEq/L): [KCl oral 40-80 mEq/día si K>3.0 ó sin síntomas / KCl IV 10-40 mEq/h máx (≤10 mEq/h periférico, ≤20 mEq/h central) si K<3.0 o sintomático — NO en bolus]. Hiperpotasemia (>5.5 mEq/L): [K>6.5 ó ECG alterado: Gluconato de Ca 1g IV (estabilización) → Insulina regular 10 UI + Glucosa 50g IV (redistribución, 15-30 min) → Salbutamol 10-20 mg neb + Bicarbonato 1 mEq/kg si acidosis → Patiromer/Zirconium (eliminación oral) → Hemodiálisis si refractario/anúrico]. Hiponatremia: [hipovol: SSN 0.9% + corregir causa / SIADH: restricción hídrica 500-800 mL/día ± furosemida ± Tolvaptán 15 mg/día (si severa) / corrección máx 10-12 mEq/L en primeras 24h — riesgo mielinólisis pontina]. Acidosis metabólica: [tratar causa / Bicarbonato IV si pH<7.1 o HCO3<10 mEq/L: déficit = 0.3×kg×(HCO3 deseado−actual), administrar 1/2 en 8h]. Hipomagnesiemia: [Sulfato de Mg 2g IV en 15-20 min si sintomático / 400-800 mg VO/día si leve].',
+    tx_nofarmaco: 'Hidratación dirigida según estado de volumen (déficit calculado). Dieta: restricción de K si hiperpotasemia crónica (<2 g/día). Suspender fármacos causales. Monitoreo de electrolitos c/4-8h durante corrección activa. ECG si K<3.0 ó >5.5. Consulta a Nefrología si: trastorno persistente/refractario/indicación de diálisis. Calcular osmolalidad, brecha aniónica, compensación esperada (reglas de Henderson-Hasselbalch).',
+    seguimiento: 'Electrolitos c/4-8h durante corrección activa → c/24h cuando estable → c/72h al alta. No corregir hiponatremia crónica >10-12 mEq/L/día (riesgo OPC). ECG de control después de tratamiento de hiperpotasemia. Identificar y tratar la causa subyacente (no solo el trastorno electrolítico). Revisión de medicamentos precipitantes: IECA/ARA2/K-ahorradores en hiperpotasemia / furosemida/SNG/vómito en hipopotasemia.'
+  }
+});
+
+Object.assign(WIZARD_SCHEMA, {
+  medicina_interna: {
+    title: '🏥 Medicina Interna',
+    sections: [
+      {
+        name: 'Motivo y gravedad',
+        fields: [
+          { id: 'motivo_ingreso', type: 'textarea', label: 'Motivo de ingreso', rows: 2 },
+          { id: 'gravedad_ingreso', type: 'select', label: 'Gravedad al ingreso', options: [
+            { value: 'estable', label: 'Estable' },
+            { value: 'moderadamente_grave', label: 'Moderadamente grave' },
+            { value: 'grave', label: 'Grave' },
+            { value: 'critico', label: 'Crítico — UCI' }
+          ] },
+          { id: 'dias_hospitalizacion', type: 'select', label: 'Duración estimada de hospitalización', options: [
+            { value: '1-2', label: '1-2 días' },
+            { value: '3-5', label: '3-5 días' },
+            { value: '6-10', label: '6-10 días' },
+            { value: '>10', label: '>10 días' },
+            { value: 'alta_hoy', label: 'Alta planificada hoy' }
+          ] },
+          { id: 'barthel', type: 'number', label: 'Índice de Barthel basal (/100)', min: 0, max: 100 },
+          { id: 'funcional_independiente', type: 'checkbox', label: 'Independiente funcional en domicilio' }
+        ]
+      },
+      {
+        name: 'Diagnósticos activos',
+        fields: [
+          { id: 'diagnostico_principal', type: 'select', label: 'Diagnóstico principal de ingreso', options: [
+            { value: 'infeccion_sepsis', label: 'Infección/Sepsis' },
+            { value: 'descomp_cardiaca', label: 'Descompensación cardíaca' },
+            { value: 'descomp_respiratoria', label: 'Descompensación respiratoria' },
+            { value: 'descomp_metabolica', label: 'Descompensación metabólica' },
+            { value: 'dolor_sindrome_febril', label: 'Dolor/Síndrome febril' },
+            { value: 'evc_ictus', label: 'EVC/Ictus' },
+            { value: 'sangrado', label: 'Sangrado' },
+            { value: 'trombosis', label: 'Trombosis' },
+            { value: 'otro', label: 'Otro' }
+          ] },
+          { id: 'comorbilidades', type: 'checkbox-group', label: 'Comorbilidades activas', options: [
+            { id: 'mi_has', label: 'HAS' },
+            { id: 'mi_dm2', label: 'DM2' },
+            { id: 'mi_icc', label: 'ICC' },
+            { id: 'mi_epoc', label: 'EPOC' },
+            { id: 'mi_erc', label: 'ERC' },
+            { id: 'mi_cirrosis', label: 'Cirrosis' },
+            { id: 'mi_neoplasia', label: 'Neoplasia activa' },
+            { id: 'mi_inmunosupresion', label: 'Inmunosupresión' }
+          ] },
+          { id: 'num_diagnosticos_activos', type: 'number', label: 'Número de diagnósticos activos', min: 1, max: 15 }
+        ]
+      },
+      {
+        name: 'Laboratorio de ingreso',
+        fields: [
+          { id: 'hb_mi', type: 'number', label: 'Hemoglobina (g/dL)', step: 0.1, min: 4, max: 20 },
+          { id: 'leucocitos_mi', type: 'number', label: 'Leucocitos (×10³/μL)', step: 0.1, min: 1, max: 50 },
+          { id: 'creatinina_mi', type: 'number', label: 'Creatinina (mg/dL)', step: 0.1, min: 0.2, max: 15 },
+          { id: 'sodio_mi', type: 'number', label: 'Sodio (mEq/L)', min: 110, max: 160 },
+          { id: 'potasio_mi', type: 'number', label: 'Potasio (mEq/L)', step: 0.1, min: 2, max: 8 },
+          { id: 'pcr_mi', type: 'number', label: 'PCR (mg/L)', step: 0.1, min: 0, max: 500 },
+          { id: 'glucosa_mi', type: 'number', label: 'Glucosa (mg/dL)', min: 40, max: 500 },
+          { id: 'albumina_mi', type: 'number', label: 'Albúmina (g/dL)', step: 0.1, min: 1, max: 5 },
+          { id: 'lactato_elevado', type: 'checkbox', label: 'Lactato >2 mmol/L' },
+          { id: 'bnp_elevado', type: 'checkbox', label: 'BNP/NT-proBNP elevado' }
+        ]
+      },
+      {
+        name: 'Plan y alta',
+        fields: [
+          { id: 'tromboprofilaxis_mi', type: 'checkbox', label: 'Tromboprofilaxis activa' },
+          { id: 'oxigenoterapia_mi', type: 'checkbox', label: 'Requiere oxigenoterapia suplementaria' },
+          { id: 'ayuno_mi', type: 'checkbox', label: 'En ayuno' },
+          { id: 'plan_alta', type: 'select', label: 'Plan de alta', options: [
+            { value: 'pendiente_estabilizacion', label: 'Pendiente estabilización' },
+            { value: 'alta_24-48h', label: 'Alta en 24-48h' },
+            { value: 'alta_semana', label: 'Alta planificada esta semana' },
+            { value: 'traslado', label: 'Traslado a otro servicio' },
+            { value: 'paliativo', label: 'Decisión compartida — paliativo' }
+          ] },
+          { id: 'seguimiento_coordinado', type: 'checkbox', label: 'Seguimiento ambulatorio coordinado al alta' }
+        ]
+      }
+    ]
+  },
+  equilibrio_electrolitico: {
+    title: '⚗️ Electrolitos / Ácido-Base',
+    sections: [
+      {
+        name: 'Trastorno identificado',
+        fields: [
+          { id: 'trastorno_principal', type: 'select', label: 'Trastorno principal', options: [
+            { value: 'sin_trastorno', label: 'Sin trastorno' },
+            { value: 'hiponatremia', label: 'Hiponatremia' },
+            { value: 'hipernatremia', label: 'Hipernatremia' },
+            { value: 'hipopotasemia', label: 'Hipopotasemia' },
+            { value: 'hiperpotasemia', label: 'Hiperpotasemia' },
+            { value: 'acidosis_metabolica', label: 'Acidosis metabólica' },
+            { value: 'alcalosis_metabolica', label: 'Alcalosis metabólica' },
+            { value: 'acidosis_respiratoria', label: 'Acidosis respiratoria' },
+            { value: 'alcalosis_respiratoria', label: 'Alcalosis respiratoria' },
+            { value: 'trastorno_mixto', label: 'Trastorno mixto' }
+          ] },
+          { id: 'severidad_trastorno', type: 'select', label: 'Severidad', options: [
+            { value: 'leve_ambulatorio', label: 'Leve — manejo ambulatorio' },
+            { value: 'moderado_hospitalizacion', label: 'Moderado — hospitalización' },
+            { value: 'severo_uci', label: 'Severo — UCI' },
+            { value: 'urgencia_vital', label: 'Urgencia vital' }
+          ] },
+          { id: 'ecg_alterado', type: 'checkbox', label: 'ECG alterado por electrolitos' }
+        ]
+      },
+      {
+        name: 'Electrolitos séricos',
+        fields: [
+          { id: 'sodio_el', type: 'number', label: 'Sodio (mEq/L)', min: 110, max: 170 },
+          { id: 'potasio_el', type: 'number', label: 'Potasio (mEq/L)', step: 0.1, min: 1.5, max: 9.0 },
+          { id: 'cloro_el', type: 'number', label: 'Cloro (mEq/L)', min: 80, max: 130 },
+          { id: 'bicarbonato_el', type: 'number', label: 'Bicarbonato (HCO3 mEq/L)', step: 0.5, min: 5, max: 45 },
+          { id: 'calcio_el', type: 'number', label: 'Calcio total (mg/dL)', step: 0.1, min: 5, max: 15 },
+          { id: 'magnesio_el', type: 'number', label: 'Magnesio (mEq/L)', step: 0.1, min: 0.5, max: 5 },
+          { id: 'fosforo_el', type: 'number', label: 'Fósforo (mg/dL)', step: 0.1, min: 0.5, max: 12 }
+        ]
+      },
+      {
+        name: 'Gasometría',
+        fields: [
+          { id: 'ph_gas', type: 'number', label: 'pH', step: 0.01, min: 6.8, max: 7.8 },
+          { id: 'paco2_gas', type: 'number', label: 'PaCO2 (mmHg)', min: 10, max: 90 },
+          { id: 'hco3_gas', type: 'number', label: 'HCO3 gasometría (mEq/L)', step: 0.5, min: 5, max: 45 },
+          { id: 'eb_gas', type: 'number', label: 'Exceso de Base (mEq/L)', step: 0.5, min: -30, max: 30 },
+          { id: 'interpretacion_gasometria', type: 'select', label: 'Interpretación', options: [
+            { value: 'normal', label: 'Normal' },
+            { value: 'acidosis_metabolica_ag_alt', label: 'Acidosis metabólica AG elevado' },
+            { value: 'acidosis_metabolica_ag_norm', label: 'Acidosis metabólica AG normal' },
+            { value: 'alcalosis_metabolica', label: 'Alcalosis metabólica' },
+            { value: 'acidosis_respiratoria_aguda', label: 'Acidosis respiratoria aguda' },
+            { value: 'acidosis_respiratoria_cronica', label: 'Acidosis respiratoria crónica' },
+            { value: 'alcalosis_respiratoria', label: 'Alcalosis respiratoria' },
+            { value: 'trastorno_mixto', label: 'Trastorno mixto' }
+          ] },
+          { id: 'brecha_anionica', type: 'number', label: 'Brecha Aniónica (mEq/L)', min: 0, max: 40 }
+        ]
+      },
+      {
+        name: 'Tratamiento activo',
+        fields: [
+          { id: 'correccion_activa', type: 'checkbox', label: 'Corrección electrolítica activa en curso' },
+          { id: 'kcl_iv', type: 'checkbox', label: 'KCl IV activo' },
+          { id: 'bicarb_iv', type: 'checkbox', label: 'Bicarbonato IV administrado' },
+          { id: 'calcio_gluconato', type: 'checkbox', label: 'Gluconato de Ca para estabilización K' },
+          { id: 'insulina_glucosa', type: 'checkbox', label: 'Insulina+glucosa para hiperpotasemia' },
+          { id: 'tolvaptan_activo', type: 'checkbox', label: 'Tolvaptán para SIADH' },
+          { id: 'monitorizacion', type: 'select', label: 'Monitoreo de electrolitos', options: [
+            { value: 'uci_1-2h', label: 'Electrolitos c/1-2h — UCI' },
+            { value: 'hosp_4-8h', label: 'Electrolitos c/4-8h' },
+            { value: 'hosp_24h', label: 'Electrolitos c/24h' },
+            { value: 'ambulatorio', label: 'Ambulatorio' }
+          ] }
+        ]
+      }
+    ]
+  }
+});
+
+function buildMedicinaInternaNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const motivo = v('motivo_ingreso') || '[No especificado]';
+  const gravedad = v('gravedad_ingreso') || 'estable';
+  const barthel = n('barthel');
+  const hb = n('hb_mi', 'g/dL');
+  const leucocitos = n('leucocitos_mi', '×10³/μL');
+  const creatinina = n('creatinina_mi', 'mg/dL');
+  const sodio = n('sodio_mi', 'mEq/L');
+  const potasio = n('potasio_mi', 'mEq/L');
+  const pcr = n('pcr_mi', 'mg/L');
+  const glucosa = n('glucosa_mi', 'mg/dL');
+  const albumina = n('albumina_mi', 'g/dL');
+
+  const lactato_elevado = v('lactato_elevado') ? ' — ⚠️ LACTATO ELEVADO' : '';
+  const bnp_elevado = v('bnp_elevado') ? ' — ⚠️ BNP ELEVADO' : '';
+  const creat_flag = creatinina > 1.2 ? ' — ⚠️ CREATININA ELEVADA' : '';
+  const potasio_flag = potasio > 5.5 ? ' — ⚠️ HIPERPOTASEMIA' : potasio < 3.5 ? ' — ⚠️ HIPOPOTASEMIA' : '';
+  const sodio_flag = sodio < 130 ? ' — ⚠️ HIPONATREMIA' : sodio > 145 ? ' — ⚠️ HIPERNATREMIA' : '';
+
+  const gravedad_text = gravedad === 'estable' ? 'Estable' :
+                       gravedad === 'moderadamente_grave' ? 'Moderadamente grave' :
+                       gravedad === 'grave' ? 'Grave' : 'Crítico — Requiere UCI';
+
+  const comorbilidades = [];
+  if (v('mi_has')) comorbilidades.push('HAS');
+  if (v('mi_dm2')) comorbilidades.push('DM2');
+  if (v('mi_icc')) comorbilidades.push('ICC');
+  if (v('mi_epoc')) comorbilidades.push('EPOC');
+  if (v('mi_erc')) comorbilidades.push('ERC');
+  if (v('mi_cirrosis')) comorbilidades.push('Cirrosis');
+  if (v('mi_neoplasia')) comorbilidades.push('Neoplasia activa');
+  if (v('mi_inmunosupresion')) comorbilidades.push('Inmunosupresión');
+  const comorbilidades_text = comorbilidades.length > 0 ? comorbilidades.join(' / ') : 'Sin comorbilidades registradas';
+
+  const tromboprofilaxis = v('tromboprofilaxis_mi') ? 'Sí — HBPM Enoxaparina 40 mg SC/día' : 'Evaluación pendiente';
+  const oxigenoterapia = v('oxigenoterapia_mi') ? 'Requiere soporte oxígeno' : 'No requiere';
+  const seguimiento = v('seguimiento_coordinado') ? 'Seguimiento ambulatorio coordinado al alta' : 'Pendiente coordinación';
+
+  const sintomas = `Motivo de ingreso: ${motivo}. Situación funcional basal: Barthel ${barthel}/100 (${v('funcional_independiente') ? 'independiente' : 'con dependencia'}). Gravedad al ingreso: ${gravedad_text}. Número de diagnósticos activos: ${n('num_diagnosticos_activos') || '[Sin especificar]'}.`;
+
+  const impresion = `EVALUACIÓN AL INGRESO: Enfermedad grave que requiere evaluación/manejo hospitalario. Comorbilidades activas: ${comorbilidades_text}. Situación funcional basal: Barthel ${barthel}/100.
+
+LABORATORIO CRÍTICO:
+• Hemoglobina: ${hb}
+• Leucocitos: ${leucocitos}
+• Creatinina: ${creatinina}${creat_flag}
+• Sodio: ${sodio}${sodio_flag}
+• Potasio: ${potasio}${potasio_flag}
+• PCR: ${pcr}
+• Glucosa: ${glucosa}
+• Albúmina: ${albumina}${lactato_elevado}${bnp_elevado}
+
+PLAN TERAPÉUTICO:
+Tromboprofilaxis: ${tromboprofilaxis}. Oxigenoterapia: ${oxigenoterapia}. Estado nutricional: ${v('ayuno_mi') ? 'Actualmente en ayuno' : 'Tolerancia oral a evaluar'}. ${seguimiento}.`;
+
+  return { sintomas, impresion };
+}
+
+function buildEquilibrioElectroliticoNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const trastorno = v('trastorno_principal') || 'sin_trastorno';
+  const severidad = v('severidad_trastorno') || 'leve_ambulatorio';
+
+  const sodio = n('sodio_el', 'mEq/L');
+  const potasio = n('potasio_el', 'mEq/L');
+  const cloro = n('cloro_el', 'mEq/L');
+  const bicarbonato = n('bicarbonato_el', 'mEq/L');
+  const calcio = n('calcio_el', 'mg/dL');
+  const magnesio = n('magnesio_el', 'mEq/L');
+  const fosforo = n('fosforo_el', 'mg/dL');
+
+  const ph = parseFloat(v('ph_gas')) || 7.40;
+  const paco2 = n('paco2_gas', 'mmHg');
+  const hco3_gas = n('hco3_gas', 'mEq/L');
+  const eb = n('eb_gas', 'mEq/L');
+
+  const cloro_parsed = parseFloat(v('cloro_el')) || 0;
+  const bicarbonato_parsed = parseFloat(v('bicarbonato_el')) || 0;
+  const sodio_parsed = parseFloat(v('sodio_el')) || 0;
+
+  // Calcular brecha aniónica: AG = Na - (Cl + HCO3)
+  const ag = sodio_parsed - (cloro_parsed + bicarbonato_parsed);
+  const ag_text = ag.toFixed(1);
+
+  const ag_flag = ag > 12 ? ' — ⚠️ AG ELEVADO' : '';
+  const potasio_flag = potasio > 6.0 ? ' — 🚨 HIPERPOTASEMIA SEVERA' : potasio > 5.5 ? ' — ⚠️ HIPERPOTASEMIA' : potasio < 2.5 ? ' — 🚨 HIPOPOTASEMIA SEVERA' : potasio < 3.0 ? ' — ⚠️ HIPOPOTASEMIA' : '';
+  const sodio_flag = sodio < 120 ? ' — 🚨 HIPONATREMIA SEVERA' : sodio < 130 ? ' — ⚠️ HIPONATREMIA' : sodio > 155 ? ' — ⚠️ HIPERNATREMIA' : '';
+  const ph_flag = ph < 7.1 ? ' — 🚨 ACIDOSIS SEVERA' : ph < 7.35 ? ' — ⚠️ ACIDOSIS' : ph > 7.55 ? ' — ⚠️ ALCALOSIS' : '';
+
+  const trastorno_text = trastorno === 'sin_trastorno' ? 'No hay trastorno electrolítico significativo' :
+                        trastorno === 'hiponatremia' ? 'Hiponatremia' :
+                        trastorno === 'hipernatremia' ? 'Hipernatremia' :
+                        trastorno === 'hipopotasemia' ? 'Hipopotasemia' :
+                        trastorno === 'hiperpotasemia' ? 'Hiperpotasemia' :
+                        trastorno === 'acidosis_metabolica' ? 'Acidosis metabólica' :
+                        trastorno === 'alcalosis_metabolica' ? 'Alcalosis metabólica' :
+                        trastorno === 'acidosis_respiratoria' ? 'Acidosis respiratoria' :
+                        trastorno === 'alcalosis_respiratoria' ? 'Alcalosis respiratoria' :
+                        trastorno === 'trastorno_mixto' ? 'Trastorno mixto' : 'Trastorno no especificado';
+
+  const severidad_text = severidad === 'leve_ambulatorio' ? 'Leve — manejo ambulatorio' :
+                        severidad === 'moderado_hospitalizacion' ? 'Moderado — hospitalización recomendada' :
+                        severidad === 'severo_uci' ? 'Severo — requiere UCI' :
+                        'Urgencia vital';
+
+  const ecg_alterado = v('ecg_alterado') ? ' — ECG ALTERADO PRESENTE' : '';
+
+  const sintomas = `EVALUACIÓN DE TRASTORNO ELECTROLÍTICO: Trastorno principal identificado: ${trastorno_text}. Severidad: ${severidad_text}${ecg_alterado}.`;
+
+  const impresion = `ANÁLISIS ELECTROLÍTICO Y GASOMÉTRICO:
+
+ELECTROLITOS SÉRICOS:
+• Sodio: ${sodio}${sodio_flag}
+• Potasio: ${potasio}${potasio_flag}
+• Cloro: ${cloro}
+• Bicarbonato: ${bicarbonato}
+• Calcio: ${calcio}
+• Magnesio: ${magnesio}
+• Fósforo: ${fosforo}
+
+BRECHA ANIÓNICA: ${ag_text} mEq/L${ag_flag}
+
+GASOMETRÍA:
+• pH: ${ph.toFixed(2)}${ph_flag}
+• PaCO2: ${paco2}
+• HCO3 (gasometría): ${hco3_gas}
+• Exceso de Base: ${eb}
+• Interpretación: ${v('interpretacion_gasometria') || 'A evaluación'}
+
+TRASTORNO DIAGNOSTICADO: ${trastorno_text}. Severidad: ${severidad_text}.
+
+ESTADO DE CORRECCIÓN: ${v('correccion_activa') ? 'Corrección activa en curso' : 'Monitoreo y corrección pendiente'}. Métodos activos: ${[
+  v('kcl_iv') ? 'KCl IV' : null,
+  v('bicarb_iv') ? 'Bicarbonato IV' : null,
+  v('calcio_gluconato') ? 'Gluconato de Ca' : null,
+  v('insulina_glucosa') ? 'Insulina+glucosa' : null,
+  v('tolvaptan_activo') ? 'Tolvaptán' : null
+].filter(x => x).join(' / ') || 'Ninguno en curso'}
+
+MONITORIZACIÓN: ${v('monitorizacion') || 'Ambulatorio / según protocolo'}`;
+
+  return { sintomas, impresion };
+}
+
+Object.assign(WIZARD_BUILDERS, {
+  medicina_interna: buildMedicinaInternaNote,
+  equilibrio_electrolitico: buildEquilibrioElectroliticoNote
+});
+
+['medicina_interna', 'equilibrio_electrolitico'].forEach(m => IMPLEMENTED_MODULES.add(m));
+
 </script>
 </body>
 </html>
