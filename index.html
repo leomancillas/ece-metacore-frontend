@@ -329,21 +329,33 @@
     .rx-ac-wrap { position:relative; }
     .rx-ac-input { background:white;border:1.5px solid #9ae6b4;border-radius:7px;padding:7px 12px;font-size:0.88rem;width:100%;outline:none;box-sizing:border-box;transition:border-color 0.15s; }
     .rx-ac-input:focus { border-color:#38a169; }
-    .rx-ac-dropdown { position:absolute;top:calc(100% + 2px);left:0;right:0;background:white;border:1.5px solid #9ae6b4;border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,0.13);z-index:9999;max-height:220px;overflow-y:auto;display:none; }
+    .rx-ac-dropdown { position:absolute;top:calc(100% + 2px);left:0;right:0;background:white;border:1.5px solid #9ae6b4;border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,0.13);z-index:9999;max-height:240px;overflow-y:auto;display:none; }
     .rx-ac-dropdown.open { display:block; }
-    .rx-ac-item { padding:7px 12px;cursor:pointer;font-size:0.84rem;border-bottom:1px solid #f0fff4;display:flex;justify-content:space-between;align-items:center;gap:8px; }
+    .rx-ac-item { padding:8px 12px;cursor:pointer;font-size:0.84rem;border-bottom:1px solid #f0fff4;display:flex;align-items:center;gap:8px; }
     .rx-ac-item:hover,.rx-ac-item.sel { background:#f0fff4; }
-    .rx-ac-item-name { font-weight:600;color:#276749;flex:1; }
-    .rx-ac-item-brand { font-size:0.75rem;color:#718096; }
-    .rx-ac-item-cat { font-size:0.7rem;background:#e6fffa;color:#234e52;padding:1px 6px;border-radius:10px;flex-shrink:0; }
-    .rx-drug-form { display:none;margin-top:8px;background:white;border:1px solid #c6f6d5;border-radius:8px;padding:10px 12px; }
-    .rx-drug-form.visible { display:block; }
-    .rx-drug-form-grid { display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px; }
-    .rx-drug-form label { font-size:0.72rem;font-weight:700;color:#276749;display:block;margin-bottom:3px; }
-    .rx-drug-form select,.rx-drug-form input[type=text],.rx-drug-form input[type=number] { width:100%;border:1px solid #9ae6b4;border-radius:6px;padding:5px 8px;font-size:0.82rem;box-sizing:border-box;background:white;outline:none; }
-    .rx-drug-preview { font-size:0.78rem;color:#276749;background:#f0fff4;border-radius:5px;padding:5px 8px;margin-bottom:7px;display:none;font-style:italic;border-left:3px solid #38a169; }
+    .rx-ac-item-label { font-weight:600;color:#276749;flex:1; }
+    .rx-ac-item-brand { font-size:0.74rem;color:#718096;flex-shrink:0; }
+    .rx-ac-item-cat { font-size:0.68rem;background:#e6fffa;color:#234e52;padding:1px 6px;border-radius:10px;flex-shrink:0; }
+    /* Compact one-line dose form shown after picking a presentation */
+    .rx-drug-form { display:none;margin-top:8px;background:white;border:1px solid #c6f6d5;border-radius:8px;padding:8px 12px; }
+    .rx-drug-form.visible { display:flex;flex-direction:column;gap:7px; }
+    .rx-drug-form-header { display:flex;align-items:center;gap:8px; }
+    .rx-drug-form-name { font-weight:700;color:#276749;font-size:0.88rem;flex:1; }
+    .rx-drug-form-row { display:flex;align-items:flex-end;gap:6px;flex-wrap:wrap; }
+    .rx-drug-form-field { display:flex;flex-direction:column;gap:2px; }
+    .rx-drug-form-field label { font-size:0.68rem;font-weight:700;color:#276749;white-space:nowrap; }
+    .rx-drug-form-field select,.rx-drug-form-field input { border:1px solid #9ae6b4;border-radius:6px;padding:5px 7px;font-size:0.82rem;background:white;outline:none;box-sizing:border-box; }
+    .rx-drug-form-field.f-dose input  { width:54px; }
+    .rx-drug-form-field.f-via select  { width:108px; }
+    .rx-drug-form-field.f-freq select { width:128px; }
+    .rx-drug-form-field.f-dur  { display:flex;flex-direction:column;gap:2px; }
+    .rx-drug-form-field.f-dur .dur-row { display:flex;gap:3px;align-items:center; }
+    .rx-drug-form-field.f-dur input   { width:42px; }
+    .rx-drug-form-field.f-dur select  { width:54px; }
+    .rx-drug-form-field.f-extra input { width:160px; }
+    .rx-drug-preview { font-size:0.77rem;color:#276749;background:#f0fff4;border-radius:5px;padding:4px 8px;display:none;font-style:italic;border-left:3px solid #38a169;line-height:1.4; }
     .rx-drug-preview.visible { display:block; }
-    .rx-add-btn { background:linear-gradient(135deg,#276749,#2f855a);color:white;border:none;border-radius:7px;padding:7px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;width:100%;transition:opacity 0.15s; }
+    .rx-add-btn { align-self:flex-end;background:linear-gradient(135deg,#276749,#2f855a);color:white;border:none;border-radius:7px;padding:6px 16px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity 0.15s; }
     .rx-add-btn:hover { opacity:0.88; }
     /* legacy lookup kept hidden */
     .rx-drug-lookup { display:none; }
@@ -901,58 +913,67 @@
     </div>
     <!-- Drug autocomplete builder -->
     <div class="rx-drug-builder">
-      <div class="rx-drug-builder-title">💊 Agregar medicamento de la base de datos mexicana <span style="font-weight:400;color:#4a7c59">(569 fármacos)</span></div>
+      <div class="rx-drug-builder-title">💊 Agregar medicamento <span style="font-weight:400;color:#4a7c59">— base de datos mexicana (569 fármacos)</span></div>
       <div class="rx-ac-wrap">
-        <input class="rx-ac-input" id="rxAcInput" placeholder="🔍 Buscar por nombre genérico o marca comercial..." autocomplete="off"
+        <input class="rx-ac-input" id="rxAcInput" placeholder="🔍 Escribe el nombre genérico o marca para ver presentaciones disponibles..." autocomplete="off"
           oninput="rxAcSearch(this.value)" onkeydown="rxAcKeyNav(event)">
         <div class="rx-ac-dropdown" id="rxAcDropdown"></div>
       </div>
+      <!-- Compact dose row — appears after selecting a presentation -->
       <div class="rx-drug-form" id="rxDrugForm">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span id="rxFormDrugName" style="font-weight:700;color:#276749;font-size:0.9rem"></span>
-          <button onclick="rxClearForm()" style="background:none;border:none;color:#a0aec0;cursor:pointer;font-size:0.8rem">✕ Cambiar</button>
+        <div class="rx-drug-form-header">
+          <span class="rx-drug-form-name" id="rxFormDrugName"></span>
+          <button onclick="rxClearForm()" style="background:none;border:none;color:#a0aec0;cursor:pointer;font-size:0.78rem;padding:2px 6px">✕ cambiar</button>
         </div>
-        <div class="rx-drug-form-grid">
-          <div><label>Concentración</label><select id="rxFormConc"></select></div>
-          <div><label>Dosis</label><input type="number" id="rxFormDose" placeholder="1" min="0.1" step="0.1" oninput="rxUpdatePreview()"></div>
-          <div><label>Vía</label><select id="rxFormRoute" onchange="rxUpdatePreview()">
-            <option value="VO">VO (oral)</option>
-            <option value="IV">IV</option>
-            <option value="IM">IM</option>
-            <option value="SC">SC</option>
-            <option value="SL">SL (sublingual)</option>
-            <option value="Tópico">Tópico</option>
-            <option value="Inhalado">Inhalado</option>
-            <option value="Rectal">Rectal</option>
-            <option value="Ótico">Ótico</option>
-            <option value="Oftálmico">Oftálmico</option>
-            <option value="Vaginal">Vaginal</option>
-          </select></div>
-          <div><label>Frecuencia</label><select id="rxFormFreq" onchange="rxUpdatePreview()">
-            <option value="c/24h">c/24h (cada día)</option>
-            <option value="c/12h" selected>c/12h (cada 12h)</option>
-            <option value="c/8h">c/8h (cada 8h)</option>
-            <option value="c/6h">c/6h (cada 6h)</option>
-            <option value="c/4h">c/4h (cada 4h)</option>
-            <option value="c/72h">c/72h (cada 3 días)</option>
-            <option value="c/semana">1 vez/semana</option>
-            <option value="c/mes">1 vez/mes</option>
-            <option value="PRN">PRN (si necesario)</option>
-          </select></div>
-        </div>
-        <div style="display:grid;grid-template-columns:110px 1fr;gap:8px;margin-bottom:8px">
-          <div><label>Duración</label>
-            <div style="display:flex;gap:4px;align-items:center">
-              <input type="number" id="rxFormDurNum" placeholder="30" min="1" style="width:55px;border:1px solid #9ae6b4;border-radius:6px;padding:5px 6px;font-size:0.82rem;outline:none" oninput="rxUpdatePreview()">
-              <select id="rxFormDurUnit" onchange="rxUpdatePreview()" style="border:1px solid #9ae6b4;border-radius:6px;padding:5px 4px;font-size:0.8rem;outline:none">
+        <div class="rx-drug-form-row">
+          <div class="rx-drug-form-field f-dose">
+            <label>Dosis</label>
+            <input type="number" id="rxFormDose" value="1" min="0.1" step="0.1" oninput="rxUpdatePreview()">
+          </div>
+          <div class="rx-drug-form-field f-via">
+            <label>Vía</label>
+            <select id="rxFormRoute" onchange="rxUpdatePreview()">
+              <option value="VO">VO — oral</option>
+              <option value="IV">IV — intravenosa</option>
+              <option value="IM">IM — intramuscular</option>
+              <option value="SC">SC — subcutánea</option>
+              <option value="SL">SL — sublingual</option>
+              <option value="Tópico">Tópico</option>
+              <option value="Inhalado">Inhalado</option>
+              <option value="Rectal">Rectal</option>
+              <option value="Ótico">Ótico</option>
+              <option value="Oftálmico">Oftálmico</option>
+              <option value="Vaginal">Vaginal</option>
+            </select>
+          </div>
+          <div class="rx-drug-form-field f-freq">
+            <label>Frecuencia</label>
+            <select id="rxFormFreq" onchange="rxUpdatePreview()">
+              <option value="c/24h">c/24h — cada día</option>
+              <option value="c/12h" selected>c/12h — cada 12 h</option>
+              <option value="c/8h">c/8h — cada 8 h</option>
+              <option value="c/6h">c/6h — cada 6 h</option>
+              <option value="c/4h">c/4h — cada 4 h</option>
+              <option value="c/72h">c/72h — cada 3 días</option>
+              <option value="c/semana">1 vez por semana</option>
+              <option value="c/mes">1 vez por mes</option>
+              <option value="PRN">PRN — si necesario</option>
+            </select>
+          </div>
+          <div class="rx-drug-form-field f-dur">
+            <label>Duración</label>
+            <div class="dur-row">
+              <input type="number" id="rxFormDurNum" placeholder="30" min="1" oninput="rxUpdatePreview()">
+              <select id="rxFormDurUnit" onchange="rxUpdatePreview()">
                 <option value="días">días</option>
-                <option value="semanas">sem</option>
+                <option value="sem">sem</option>
                 <option value="meses">mes</option>
               </select>
             </div>
           </div>
-          <div><label>Indicaciones adicionales (opcional)</label>
-            <input type="text" id="rxFormExtra" placeholder="con alimentos, en ayuno, antes de dormir..." oninput="rxUpdatePreview()" style="border:1px solid #9ae6b4;border-radius:6px;padding:5px 8px;font-size:0.82rem;width:100%;outline:none">
+          <div class="rx-drug-form-field f-extra">
+            <label>Indicación (opcional)</label>
+            <input type="text" id="rxFormExtra" placeholder="con alimentos, en ayuno..." oninput="rxUpdatePreview()">
           </div>
         </div>
         <div class="rx-drug-preview" id="rxDrugPreview"></div>
@@ -2387,19 +2408,46 @@ function selectRxConsultorio(n) {
 function openPrescriptionModal(patientId) {
   const pat = currentPatient;
   if (!pat) return;
-  const lastSoap = (currentNotes || []).find(n => {
+  const notes = currentNotes || [];
+
+  // Pull last evolution/history note for medications reference
+  const lastSoap = notes.find(n => {
     try { return JSON.parse(n.plan_tratamiento)?._tipo === 'evolucion'; } catch { return false; }
   });
   const meta = (() => { try { return lastSoap ? JSON.parse(lastSoap.plan_tratamiento) : {}; } catch { return {}; } })();
+
   const age = pat.fecha_nacimiento ? Math.floor((Date.now() - new Date(pat.fecha_nacimiento)) / (365.25*24*3600*1000)) : '';
-  document.getElementById('rx_nombre').value = [pat.nombre, pat.apellido_paterno, pat.apellido_materno].filter(Boolean).join(' ');
+  document.getElementById('rx_nombre').value    = [pat.nombre, pat.apellido_paterno, pat.apellido_materno].filter(Boolean).join(' ');
   document.getElementById('rx_nacimiento').value = pat.fecha_nacimiento ? pat.fecha_nacimiento.split('T')[0] : '';
-  document.getElementById('rx_edad').value = age;
-  document.getElementById('rx_fecha').value = fmtDT(new Date(), 'date');
-  document.getElementById('rx_medicamentos').value = meta.tx_farmaco || '';
-  document.getElementById('rx_diagnostico').value = meta.diagnostico || '';
+  document.getElementById('rx_edad').value      = age;
+  document.getElementById('rx_fecha').value     = fmtDT(new Date(), 'date');
+  document.getElementById('rx_medicamentos').value  = meta.tx_farmaco || '';
   document.getElementById('rx_instrucciones').value = meta.tx_nofarmaco || '';
-  document.getElementById('rx_show_diag').checked = true;
+  document.getElementById('rx_show_diag').checked   = true;
+
+  // ── Auto-fill diagnosis: collect up to 3 unique diagnoses from recent notes ──
+  const seenDx = new Set();
+  const dxList = [];
+  const dxNotes = [...notes]
+    .sort((a,b) => new Date(b.created_at||0) - new Date(a.created_at||0))
+    .filter(n => n.tipo === 'evolucion' || n.tipo === 'historia_clinica' || n.tipo === 'interconsulta');
+  for (const n of dxNotes) {
+    const raw = (n.diagnostico || '').trim();
+    if (raw && !seenDx.has(raw)) { seenDx.add(raw); dxList.push(raw); }
+    try {
+      if (typeof n.plan_tratamiento === 'string' && n.plan_tratamiento.startsWith('{')) {
+        const m = JSON.parse(n.plan_tratamiento);
+        const md = (m.diagnostico || '').trim();
+        if (md && !seenDx.has(md)) { seenDx.add(md); dxList.push(md); }
+      }
+    } catch(e) {}
+    if (dxList.length >= 3) break;
+  }
+  document.getElementById('rx_diagnostico').value = dxList.join(' · ');
+
+  // ── Reset drug builder ──
+  rxClearForm && rxClearForm();
+
   selectRxConsultorio(1);
   renderRxTemplates();
   document.getElementById('prescriptionModal').classList.add('open');
@@ -5393,29 +5441,56 @@ function rxLookupDrug(val) {}
 
 // ══════════════════════════════════════════════════════════════
 // 💊 DRUG AUTOCOMPLETE — MEX_DRUGS DATABASE
+// Expanded-by-presentation: each concentration = one dropdown row
 // ══════════════════════════════════════════════════════════════
-let _rxAcResults = [];
-let _rxAcIdx = -1;
-let _rxAcSelected = null; // selected drug object
+const _FORMA_MAP = {tab:'tabletas',cap:'cápsulas',sol:'solución',amp:'ampolleta',crm:'crema',inh:'inhalador',susp:'suspensión',gts:'gotas',ovl:'óvulos',jar:'jarabe',iny:'inyectable',gel:'gel',ung:'ungüento',spr:'spray',parche:'parche',pch:'parche',sob:'sobre',lyo:'liofilizado'};
+const _DOSE_UNIT = {tab:'tableta',cap:'cápsula',gts:'gota',amp:'ampolleta',sol:'mL',inh:'inhalación',susp:'mL',jar:'mL',crm:'aplicación',ung:'aplicación',gel:'aplicación',ovl:'óvulo',parche:'parche',pch:'parche',spr:'disparo'};
+
+let _rxAcItems  = [];   // expanded items: {label, drug, conc, forma}
+let _rxAcIdx    = -1;
+let _rxAcSel    = null; // {label, drug, conc, forma}
+
+function _rxNorm(s) { return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 
 function rxAcSearch(val) {
   const dd = document.getElementById('rxAcDropdown');
   if (!dd) return;
-  if (!val || val.length < 2) { dd.classList.remove('open'); dd.innerHTML = ''; _rxAcResults = []; return; }
-  const q = val.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  const matches = (typeof MEX_DRUGS !== 'undefined' ? MEX_DRUGS : []).filter(d => {
-    const name = (d.n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    const brand = (d.b||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    return name.includes(q) || brand.includes(q);
-  }).slice(0, 12);
-  _rxAcResults = matches;
-  _rxAcIdx = -1;
-  if (!matches.length) { dd.classList.remove('open'); dd.innerHTML = '<div style="padding:10px 12px;font-size:0.82rem;color:#718096">Sin resultados para "'+val+'"</div>'; dd.classList.add('open'); return; }
-  dd.innerHTML = matches.map((d, i) =>
+  if (!val || val.length < 2) { dd.classList.remove('open'); dd.innerHTML = ''; _rxAcItems = []; return; }
+  const q = _rxNorm(val);
+  const db = (typeof MEX_DRUGS !== 'undefined') ? MEX_DRUGS : [];
+
+  // Find matching drugs first (keep order: name-starts-with first, then contains)
+  const matchedDrugs = db.filter(d =>
+    _rxNorm(d.n).includes(q) || _rxNorm(d.b).includes(q)
+  );
+
+  // Expand each drug × concentration into individual rows (max 18 total)
+  const items = [];
+  for (const d of matchedDrugs) {
+    const forma = _FORMA_MAP[d.f] || d.f || '';
+    const concs = (d.c && d.c.length) ? d.c : [''];
+    for (const conc of concs) {
+      const label = [d.n, conc, forma].filter(Boolean).join(' ');
+      items.push({ label, drug: d, conc, forma });
+      if (items.length >= 18) break;
+    }
+    if (items.length >= 18) break;
+  }
+
+  _rxAcItems = items;
+  _rxAcIdx   = -1;
+
+  if (!items.length) {
+    dd.innerHTML = `<div style="padding:10px 12px;font-size:0.82rem;color:#718096">Sin resultados para "<b>${val}</b>"</div>`;
+    dd.classList.add('open');
+    return;
+  }
+
+  dd.innerHTML = items.map((it, i) =>
     `<div class="rx-ac-item" data-idx="${i}" onmousedown="rxAcSelect(${i})">
-      <span class="rx-ac-item-name">${d.n}</span>
-      <span class="rx-ac-item-brand">${d.b}</span>
-      <span class="rx-ac-item-cat">${d.t}</span>
+      <span class="rx-ac-item-label">${it.label}</span>
+      <span class="rx-ac-item-brand">${it.drug.b || ''}</span>
+      <span class="rx-ac-item-cat">${it.drug.t || ''}</span>
     </div>`
   ).join('');
   dd.classList.add('open');
@@ -5424,7 +5499,7 @@ function rxAcSearch(val) {
 function rxAcKeyNav(e) {
   const dd = document.getElementById('rxAcDropdown');
   if (!dd || !dd.classList.contains('open')) return;
-  if (e.key === 'ArrowDown') { e.preventDefault(); _rxAcIdx = Math.min(_rxAcIdx+1, _rxAcResults.length-1); rxAcHighlight(); }
+  if (e.key === 'ArrowDown') { e.preventDefault(); _rxAcIdx = Math.min(_rxAcIdx+1, _rxAcItems.length-1); rxAcHighlight(); }
   else if (e.key === 'ArrowUp') { e.preventDefault(); _rxAcIdx = Math.max(_rxAcIdx-1, 0); rxAcHighlight(); }
   else if (e.key === 'Enter') { e.preventDefault(); if (_rxAcIdx >= 0) rxAcSelect(_rxAcIdx); }
   else if (e.key === 'Escape') { dd.classList.remove('open'); }
@@ -5439,88 +5514,120 @@ function rxAcHighlight() {
 }
 
 function rxAcSelect(idx) {
-  const drug = _rxAcResults[idx];
-  if (!drug) return;
-  _rxAcSelected = drug;
-  const dd = document.getElementById('rxAcDropdown');
+  const it = _rxAcItems[idx];
+  if (!it) return;
+  _rxAcSel = it;
+
+  // Close dropdown, update search input to show what was picked
+  const dd  = document.getElementById('rxAcDropdown');
   if (dd) dd.classList.remove('open');
   const inp = document.getElementById('rxAcInput');
-  if (inp) inp.value = drug.n + (drug.b ? ' (' + drug.b + ')' : '');
+  if (inp) inp.value = it.label + (it.drug.b ? '  (' + it.drug.b + ')' : '');
 
-  // populate form
+  // Show drug name in form header
   const nameEl = document.getElementById('rxFormDrugName');
-  if (nameEl) nameEl.innerHTML = '💊 ' + drug.n + (drug.b ? ' <span style="font-weight:400;color:#718096;font-size:0.8rem">· ' + drug.b + '</span>' : '');
-  const concSel = document.getElementById('rxFormConc');
-  if (concSel) {
-    const concs = drug.c || ['Sin especificar'];
-    concSel.innerHTML = concs.map(c => `<option value="${c}">${c}</option>`).join('');
-  }
+  if (nameEl) nameEl.innerHTML =
+    `💊 <b>${it.label}</b>` +
+    (it.drug.b ? ` <span style="font-weight:400;color:#718096;font-size:0.8rem">· ${it.drug.b}</span>` : '');
+
+  // Smart via default: infer from forma
+  const viaMap = {amp:'IV',iny:'IM',gts:'Oftálmico',ovl:'Vaginal',crm:'Tópico',ung:'Tópico',gel:'Tópico',inh:'Inhalado',spr:'Inhalado'};
+  const defaultVia = viaMap[it.drug.f] || 'VO';
+  const routeSel = document.getElementById('rxFormRoute');
+  if (routeSel) routeSel.value = defaultVia;
+
+  // Reset dose field
+  const doseInp = document.getElementById('rxFormDose');
+  if (doseInp) doseInp.value = '1';
+
+  // Show the compact form
   const form = document.getElementById('rxDrugForm');
   if (form) form.classList.add('visible');
-  // Set sensible defaults
-  const doseInp = document.getElementById('rxFormDose');
-  if (doseInp && !doseInp.value) doseInp.value = '1';
+
   rxUpdatePreview();
-  // scroll form into view
-  setTimeout(() => { if (form) form.scrollIntoView({behavior:'smooth',block:'nearest'}); }, 80);
+  setTimeout(() => { if (form) form.scrollIntoView({behavior:'smooth',block:'nearest'}); }, 60);
 }
 
 function rxClearForm() {
-  _rxAcSelected = null;
+  _rxAcSel = null;
   const inp = document.getElementById('rxAcInput');
   if (inp) { inp.value = ''; inp.focus(); }
   const form = document.getElementById('rxDrugForm');
   if (form) form.classList.remove('visible');
-  const dd = document.getElementById('rxAcDropdown');
-  if (dd) { dd.classList.remove('open'); dd.innerHTML = ''; }
+  const dd   = document.getElementById('rxAcDropdown');
+  if (dd)   { dd.classList.remove('open'); dd.innerHTML = ''; }
   const prev = document.getElementById('rxDrugPreview');
   if (prev) { prev.classList.remove('visible'); prev.innerHTML = ''; }
 }
 
 function rxUpdatePreview() {
   const prev = document.getElementById('rxDrugPreview');
-  if (!prev || !_rxAcSelected) return;
+  if (!prev || !_rxAcSel) return;
   const line = rxBuildLine();
   if (line) { prev.innerHTML = '📋 ' + line; prev.classList.add('visible'); }
-  else { prev.classList.remove('visible'); }
+  else      { prev.classList.remove('visible'); }
 }
 
 function rxBuildLine() {
-  if (!_rxAcSelected) return '';
-  const drug = _rxAcSelected;
-  const conc = (document.getElementById('rxFormConc')?.value || '').trim();
-  const dose = (document.getElementById('rxFormDose')?.value || '1').trim();
-  const route = (document.getElementById('rxFormRoute')?.value || 'VO').trim();
-  const freq = (document.getElementById('rxFormFreq')?.value || 'c/12h').trim();
+  if (!_rxAcSel) return '';
+  const it     = _rxAcSel;
+  const dose   = (document.getElementById('rxFormDose')?.value   || '1').trim();
+  const route  = (document.getElementById('rxFormRoute')?.value  || 'VO').trim();
+  const freq   = (document.getElementById('rxFormFreq')?.value   || 'c/12h').trim();
   const durNum = (document.getElementById('rxFormDurNum')?.value || '').trim();
-  const durUnit = (document.getElementById('rxFormDurUnit')?.value || 'días').trim();
-  const extra = (document.getElementById('rxFormExtra')?.value || '').trim();
+  const durUnit= (document.getElementById('rxFormDurUnit')?.value|| 'días').trim();
+  const extra  = (document.getElementById('rxFormExtra')?.value  || '').trim();
 
-  const formaMap = {tab:'tabletas',cap:'cápsulas',sol:'solución',amp:'ampolleta',crm:'crema',inh:'inhalador',susp:'suspensión',gts:'gotas',ovl:'óvulos',jar:'jarabe',iny:'inyectable',gel:'gel',ung:'ungüento',spr:'spray',parche:'parche'};
-  const forma = formaMap[drug.f] || drug.f || '';
-  let line = `${drug.n} ${conc} ${forma}`.trim();
-  if (dose !== '1' || true) line += `, ${dose} ${forma === 'tabletas' ? 'tableta' : forma === 'cápsulas' ? 'cápsula' : 'dosis'}`;
-  line += ` ${route} ${freq}`;
-  if (durNum) line += ` × ${durNum} ${durUnit}`;
-  if (extra) line += ` (${extra})`;
+  // presentation label already has name + conc + forma baked in
+  const doseUnit = _DOSE_UNIT[it.drug.f] || 'dosis';
+  let line = it.label;                               // e.g. "Metformina 850 mg tabletas"
+  line += `, ${dose} ${doseUnit}`;                   // ", 1 tableta"
+  line += ` ${route} ${freq}`;                       // " VO c/12h"
+  if (durNum) line += ` × ${durNum} ${durUnit}`;    // " × 60 días"
+  if (extra)  line += ` (${extra})`;                 // " (con alimentos)"
   return line;
 }
 
 function rxAddDrugLine() {
   const line = rxBuildLine();
-  if (!line) { alert('Selecciona un medicamento primero.'); return; }
+  if (!line) { alert('Selecciona una presentación primero.'); return; }
   const ta = document.getElementById('rx_medicamentos');
   if (!ta) return;
   const current = ta.value.trim();
-  // Count existing lines to number new one
-  const lineCount = current ? current.split('\n').filter(l => l.trim()).length + 1 : 1;
-  const newLine = lineCount + '. ' + line;
-  ta.value = current ? current + '\n' + newLine : newLine;
-  // visual flash on textarea
+  const n = current ? current.split('\n').filter(l => l.trim()).length + 1 : 1;
+  ta.value = current ? current + '\n' + n + '. ' + line : n + '. ' + line;
   ta.style.borderColor = '#38a169';
-  setTimeout(() => { ta.style.borderColor = ''; }, 800);
-  // clear form for next drug
+  setTimeout(() => { ta.style.borderColor = ''; }, 700);
   rxClearForm();
+}
+
+// ── Auto-fill diagnosis from patient's latest note ──────────────
+function rxAutoFillDiagnosis() {
+  const el = document.getElementById('rx_diagnostico');
+  if (!el) return;
+  if (el.value.trim()) return; // already has content, don't overwrite
+  const notes = (typeof currentNotes !== 'undefined' && Array.isArray(currentNotes)) ? currentNotes : [];
+  const candidates = notes
+    .filter(n => n.tipo === 'evolucion' || n.tipo === 'historia_clinica' || n.tipo === 'interconsulta')
+    .sort((a,b) => new Date(b.created_at||0) - new Date(a.created_at||0));
+  // Collect up to 3 unique, non-empty diagnoses
+  const seen = new Set();
+  const diags = [];
+  for (const note of candidates) {
+    const d = (note.diagnostico || '').trim();
+    if (d && !seen.has(d)) { seen.add(d); diags.push(d); }
+    if (diags.length >= 3) break;
+    // also try parsed meta
+    try {
+      if (typeof note.plan_tratamiento === 'string' && note.plan_tratamiento.startsWith('{')) {
+        const meta = JSON.parse(note.plan_tratamiento);
+        const md = (meta.diagnostico || '').trim();
+        if (md && !seen.has(md)) { seen.add(md); diags.push(md); }
+      }
+    } catch(e) {}
+    if (diags.length >= 3) break;
+  }
+  if (diags.length) el.value = diags.join(' · ');
 }
 
 // Close dropdown when clicking outside
