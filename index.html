@@ -290,6 +290,18 @@
     .wizard-preview-section { margin-bottom: 12px; }
     .wizard-preview-section b { font-size: 0.76rem; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 4px; }
     .wizard-preview-section pre { white-space: pre-wrap; word-break: break-word; font-size: 0.72rem; color: #4a5568; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; margin: 0; font-family: inherit; line-height: 1.5; }
+    /* ── Sharing ── */
+    .btn-share { background: linear-gradient(135deg,#4299e1,#3182ce); color: white; border: none; padding: 5px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+    .btn-share:hover { opacity: 0.85; }
+    .shared-badge { background: #bee3f8; color: #2a69ac; font-size: 0.7rem; padding: 2px 8px; border-radius: 8px; font-weight: 700; margin-left: 6px; }
+    .shared-section-title { font-size: 0.75rem; font-weight: 700; color: #4299e1; text-transform: uppercase; letter-spacing: 0.06em; padding: 12px 0 6px; }
+    .share-doctor-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; border: 2px solid var(--border); margin-bottom: 8px; cursor: pointer; transition: all 0.15s; }
+    .share-doctor-item:hover { border-color: #4299e1; background: #ebf8ff; }
+    .share-doctor-item.selected { border-color: #3182ce; background: #bee3f8; }
+    .share-doctor-avatar { width: 36px; height: 36px; border-radius: 50%; background: #4299e1; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
+    .share-doctor-name { font-weight: 600; font-size: 0.9rem; }
+    .share-doctor-role { font-size: 0.75rem; color: #718096; }
+    .share-current-tag { font-size: 0.7rem; background: #c6f6d5; color: #276749; padding: 2px 8px; border-radius: 8px; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -334,7 +346,7 @@
       <div class="form-group"><label>Especialidad</label><input id="reg_esp" placeholder="Medicina Interna, Cardiología..."></div>
       <div class="form-group"><label>Institución</label><input id="reg_inst" placeholder="Hospital, clínica u organización"></div>
       <p id="reg_error" class="error-msg"></p>
-      <p id="reg_ok" style="color:#276749;font-size:0.85rem;display:none">✅ Solicitud enviada. Recibirás acceso una vez que el administrador la apruebe.</p>
+      <p id="reg_ok" style="color:#276749;font-size:0.85rem;display:none">✅ Solicitud enviada. Tu cuenta ha sido activada. El Dr. Mancillas revisará tu perfil en las próximas 72 horas.</p>
       <button class="btn btn-primary" onclick="submitAccessRequest()">Enviar solicitud</button>
       <button class="btn btn-secondary" style="width:100%;margin-top:8px" onclick="document.getElementById('registerForm').style.display='none'">Cancelar</button>
     </div>
@@ -799,6 +811,27 @@
       <span style="font-size:0.78rem;color:#718096;flex:1">Se abrirá una ventana de impresión</span>
       <button class="btn btn-secondary" onclick="closeModal('prescriptionModal')">Cancelar</button>
       <button class="btn btn-primary" style="width:auto;background:linear-gradient(135deg,#6b21a8,#1a5c8a)" onclick="printPrescription()">🖨 Guardar e Imprimir</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COMPARTIR PACIENTE -->
+<div class="modal-overlay" id="sharePatientModal">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <h2 class="modal-title">👥 Compartir paciente</h2>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('sharePatientModal')">✕</button>
+    </div>
+    <div id="sharePatientInfo" style="background:#f7fafc;border-radius:8px;padding:12px;margin-bottom:16px;font-size:0.9rem">
+      <b id="sharePatientName"></b><br>
+      <span id="sharePatientExp" style="color:#718096;font-size:0.8rem"></span>
+    </div>
+    <p style="font-size:0.85rem;color:#4a5568;margin-bottom:12px">Selecciona los médicos o colaboradores que tendrán acceso a este expediente:</p>
+    <div id="shareDoctorList" style="max-height:300px;overflow-y:auto"></div>
+    <div id="shareStatusMsg" style="font-size:0.82rem;margin-top:10px;min-height:20px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('sharePatientModal')">Cancelar</button>
+      <button class="btn btn-primary" style="width:auto;background:linear-gradient(135deg,#4299e1,#2b6cb0)" onclick="confirmSharePatient()">💾 Guardar accesos</button>
     </div>
   </div>
 </div>
@@ -1796,7 +1829,13 @@ async function saveNote() {
     noteOpenTime = null;
     editingNoteId = null;
     closeModal('noteModal');
-    viewPatient(currentNotePatientId);
+    // Check if current patient is a shared patient (not in own list)
+    const _ownIds = new Set((allPatients||[]).map(p => p.id));
+    if (!_ownIds.has(currentNotePatientId) && _shareData?.shares?.[currentNotePatientId]) {
+      viewPatientShared(currentNotePatientId, true);
+    } else {
+      viewPatient(currentNotePatientId);
+    }
   } catch (e) { document.getElementById('noteError').textContent = 'Error: ' + e.message; }
 }
 
@@ -4393,6 +4432,374 @@ function applyTemplate(key) {
 })();
 
 // ── PWA SERVICE WORKER ─────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════
+// PATIENT SHARING MODULE
+// Sharing data is persisted in GitHub repo (data/sharing.json) so
+// it is accessible from any device/browser.
+// Read  → public raw.githubusercontent.com (no auth required)
+// Write → GitHub API with PAT (admin action only, PAT in localStorage)
+// ══════════════════════════════════════════════════════════════════
+
+const GH_OWNER = 'leomancillas';
+const GH_REPO  = 'ece-metacore-frontend';
+const GH_SHARING_RAW = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/data/sharing.json`;
+const GH_SHARING_API = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/data/sharing.json`;
+const GH_PAT_KEY = 'ece_gh_pat'; // localStorage key for admin's GitHub PAT
+
+let _shareData = null;  // { shares: { patientId: { shared_by, shared_with: [userId], patient_snapshot: {...} } } }
+let _sharingPatientId = null;
+let _allUsers = [];
+
+/** Fetch sharing.json from GitHub (public read) */
+async function loadShareData(forceRefresh = false) {
+  if (_shareData && !forceRefresh) return _shareData;
+  try {
+    const res = await fetch(GH_SHARING_RAW + '?t=' + Date.now());
+    if (res.ok) {
+      _shareData = await res.json();
+    } else {
+      _shareData = { shares: {} };
+    }
+  } catch {
+    _shareData = { shares: {} };
+  }
+  return _shareData;
+}
+
+/** Get patients shared with the current user */
+async function getSharedPatients() {
+  if (!currentUser) return [];
+  const data = await loadShareData();
+  const result = [];
+  for (const [pid, info] of Object.entries(data.shares || {})) {
+    if ((info.shared_with || []).includes(currentUser.id)) {
+      result.push({ ...info.patient_snapshot, _isShared: true, _sharedBy: info.shared_by_name });
+    }
+  }
+  return result;
+}
+
+/** Get list of user IDs currently shared for a patient */
+function getSharedUsersForPatient(patientId) {
+  const data = _shareData || { shares: {} };
+  return (data.shares[patientId]?.shared_with) || [];
+}
+
+/** Save sharing.json back to GitHub (requires admin PAT) */
+async function saveShareData(newData) {
+  let pat = localStorage.getItem(GH_PAT_KEY);
+  if (!pat) {
+    pat = prompt('Para guardar los accesos, ingresa tu token de GitHub (PAT con permiso de escritura):');
+    if (!pat) throw new Error('Token requerido para guardar accesos.');
+    localStorage.setItem(GH_PAT_KEY, pat);
+  }
+  // Get current file SHA (needed for PUT)
+  let sha = null;
+  try {
+    const r = await fetch(GH_SHARING_API, { headers: { Authorization: 'token ' + pat } });
+    if (r.ok) { const d = await r.json(); sha = d.sha; }
+  } catch {}
+
+  const body = JSON.stringify({
+    message: 'Update patient sharing',
+    content: btoa(unescape(encodeURIComponent(JSON.stringify(newData, null, 2)))),
+    ...(sha ? { sha } : {})
+  });
+  const res = await fetch(GH_SHARING_API, {
+    method: 'PUT',
+    headers: { Authorization: 'token ' + pat, 'Content-Type': 'application/json' },
+    body
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    localStorage.removeItem(GH_PAT_KEY); // clear bad PAT
+    throw new Error('Error al guardar: ' + (err.message || res.status));
+  }
+  _shareData = newData;
+}
+
+/** Open the share modal for a patient */
+async function openShareModal(patientId) {
+  _sharingPatientId = patientId;
+  const patient = allPatients.find(p => p.id === patientId) || currentPatient;
+  if (!patient) return;
+
+  // Fill patient info
+  document.getElementById('sharePatientName').textContent =
+    `${patient.nombre} ${patient.apellido_paterno} ${patient.apellido_materno || ''}`.trim();
+  document.getElementById('sharePatientExp').textContent = 'Expediente: ' + patient.expediente;
+  document.getElementById('shareStatusMsg').textContent = '';
+  document.getElementById('shareDoctorList').innerHTML = '<p class="loading">Cargando médicos...</p>';
+
+  document.getElementById('sharePatientModal').classList.add('open');
+
+  // Load sharing data + user list in parallel
+  await loadShareData(true);
+  const currentlyShared = getSharedUsersForPatient(patientId);
+
+  if (_allUsers.length === 0) {
+    try {
+      _allUsers = await api('/api/admin/users');
+    } catch {
+      // If not admin, we only have the current user — cannot list others
+      _allUsers = [];
+    }
+  }
+
+  // Filter out current user and the patient's creator
+  const doctors = _allUsers.filter(u =>
+    u.id !== currentUser.id &&
+    (u.role === 'medico' || u.role === 'admin' || u.role === 'recepcion') &&
+    u.status === 'active'
+  );
+
+  if (doctors.length === 0) {
+    document.getElementById('shareDoctorList').innerHTML =
+      '<p style="color:#718096;font-size:0.85rem;text-align:center;padding:16px">No hay otros médicos registrados en el sistema.</p>';
+    return;
+  }
+
+  document.getElementById('shareDoctorList').innerHTML = doctors.map(u => {
+    const initials = (u.name || u.email || 'U').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    const isSelected = currentlyShared.includes(u.id);
+    const roleLabel = { medico: 'Médico', admin: 'Administrador', recepcion: 'Recepción' }[u.role] || u.role;
+    return `<div class="share-doctor-item ${isSelected ? 'selected' : ''}" id="share_doc_${u.id}" onclick="toggleShareDoctor('${u.id}')">
+      <div class="share-doctor-avatar">${initials}</div>
+      <div style="flex:1">
+        <div class="share-doctor-name">${u.name || u.email}</div>
+        <div class="share-doctor-role">${roleLabel}${u.especialidad ? ' · ' + u.especialidad : ''}</div>
+      </div>
+      ${isSelected ? '<span class="share-current-tag">✓ Con acceso</span>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function toggleShareDoctor(userId) {
+  const el = document.getElementById('share_doc_' + userId);
+  if (!el) return;
+  el.classList.toggle('selected');
+}
+
+async function confirmSharePatient() {
+  const patientId = _sharingPatientId;
+  if (!patientId) return;
+
+  const patient = allPatients.find(p => p.id === patientId) || currentPatient;
+  const selected = Array.from(document.querySelectorAll('#shareDoctorList .share-doctor-item.selected'))
+    .map(el => el.id.replace('share_doc_', ''));
+
+  const statusEl = document.getElementById('shareStatusMsg');
+  statusEl.style.color = '#718096';
+  statusEl.textContent = '⏳ Guardando accesos...';
+
+  try {
+    const data = await loadShareData(true);
+    if (!data.shares) data.shares = {};
+
+    if (selected.length === 0) {
+      // Remove sharing entry
+      delete data.shares[patientId];
+    } else {
+      // Build patient snapshot (demographics only — stored in JSON so shared doctors can see it)
+      const snapshot = patient ? {
+        id: patient.id,
+        expediente: patient.expediente,
+        nombre: patient.nombre,
+        apellido_paterno: patient.apellido_paterno,
+        apellido_materno: patient.apellido_materno || '',
+        fecha_nacimiento: patient.fecha_nacimiento,
+        sexo: patient.sexo,
+        telefono: patient.telefono || '',
+        email: patient.email || '',
+        alergias: patient.alergias || '',
+        antecedentes: patient.antecedentes || ''
+      } : {};
+
+      data.shares[patientId] = {
+        shared_by: currentUser.id,
+        shared_by_name: currentUser.name || currentUser.email,
+        shared_with: selected,
+        patient_snapshot: snapshot,
+        updated_at: new Date().toISOString()
+      };
+    }
+
+    await saveShareData(data);
+    statusEl.style.color = '#276749';
+    statusEl.textContent = selected.length === 0
+      ? '✅ Accesos eliminados correctamente.'
+      : `✅ Acceso compartido con ${selected.length} colaborador(es).`;
+
+    setTimeout(() => closeModal('sharePatientModal'), 1800);
+  } catch (e) {
+    statusEl.style.color = '#c53030';
+    statusEl.textContent = '❌ ' + e.message;
+  }
+}
+
+/** Enhanced renderPatients: shows own patients + shared patients */
+const _origRenderPatients = renderPatients;
+async function renderPatients(search = '') {
+  const c = document.getElementById('mainContent');
+  c.innerHTML = '<p class="loading">Cargando...</p>';
+  try {
+    // Load own patients + shared patients in parallel
+    const [ownData, sharedPatients] = await Promise.all([
+      api('/api/patients?limit=100' + (search ? '&search=' + encodeURIComponent(search) : '')),
+      getSharedPatients().catch(() => [])
+    ]);
+    allPatients = ownData.patients || [];
+
+    const canShare = isMedico(); // doctors and admins can share
+    const isAdminUser = currentUser?.role === 'admin';
+
+    const buildRow = (p, isShared = false) => `
+      <tr>
+        <td><span class="badge badge-blue">${p.expediente}</span>${isShared ? '<span class="shared-badge">Compartido</span>' : ''}</td>
+        <td><b>${p.apellido_paterno} ${p.apellido_materno || ''}</b>, ${p.nombre}</td>
+        <td>${(p.fecha_nacimiento||'').split('T')[0] || ''}</td>
+        <td>${p.sexo || '-'}</td>
+        <td>${p.telefono || '-'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-secondary btn-sm" onclick='viewPatientShared("${p.id}",${isShared})'>Ver expediente</button>
+          ${!isShared ? `<button class="btn btn-secondary btn-sm" onclick='editPatient("${p.id}")'>Editar</button>` : ''}
+          ${canShare && !isShared ? `<button class="btn-share btn-sm" onclick='openShareModal("${p.id}")' title="Compartir con otro médico">🔗 Compartir</button>` : ''}
+        </td>
+      </tr>`;
+
+    // Filter shared patients to exclude those already in own list
+    const ownIds = new Set(allPatients.map(p => p.id));
+    const filteredShared = sharedPatients.filter(p => {
+      if (ownIds.has(p.id)) return false;
+      if (!search) return true;
+      const q = search.toLowerCase();
+      return `${p.nombre} ${p.apellido_paterno} ${p.apellido_materno} ${p.expediente}`.toLowerCase().includes(q);
+    });
+
+    c.innerHTML = `
+      <div class="section-title">Pacientes</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="display:flex;gap:10px;flex:1;margin-right:16px">
+          <input id="searchInput" placeholder="Buscar por nombre o expediente..." value="${search}" onkeydown="if(event.key==='Enter')renderPatients(this.value)">
+          <button class="btn btn-secondary" onclick="renderPatients(document.getElementById('searchInput').value)">Buscar</button>
+        </div>
+        <button class="btn btn-primary btn-sm" style="width:auto" onclick="openNewPatient()">+ Nuevo Paciente</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table><thead><tr><th>Expediente</th><th>Paciente</th><th>Nacimiento</th><th>Sexo</th><th>Teléfono</th><th>Acciones</th></tr></thead>
+        <tbody>
+          ${allPatients.length || filteredShared.length
+            ? [...allPatients.map(p => buildRow(p, false)), ...filteredShared.map(p => buildRow(p, true))].join('')
+            : '<tr><td colspan=6 class="empty-state">No se encontraron pacientes</td></tr>'}
+        </tbody></table>
+      </div>
+      ${filteredShared.length > 0 ? `<p style="font-size:0.78rem;color:#718096;margin-top:8px;text-align:right">🔗 ${filteredShared.length} expediente(s) compartido(s) contigo</p>` : ''}`;
+  } catch (e) { c.innerHTML = '<p class="error-msg">' + e.message + '</p>'; }
+}
+
+/** View a patient — works for own patients AND shared patients */
+async function viewPatientShared(id, isShared = false) {
+  if (!isShared) {
+    viewPatient(id);
+    return;
+  }
+  // For shared patients: use snapshot data + direct notes endpoint
+  await loadShareData();
+  const shareEntry = _shareData?.shares?.[id];
+  if (!shareEntry) { viewPatient(id); return; }
+  const pat = shareEntry.patient_snapshot;
+
+  const myReqId = ++navRequestId;
+  const c = document.getElementById('mainContent');
+  c.innerHTML = '<p class="loading">Cargando expediente compartido...</p>';
+  try {
+    // Notes endpoint works for shared patients
+    const [notes, vitals, labs] = await Promise.all([
+      api('/api/patients/' + id + '/notes').catch(() => []),
+      api('/api/patients/' + id + '/vitals').catch(() => []),
+      api('/api/patients/' + id + '/labs').catch(() => [])
+    ]);
+    if (navRequestId !== myReqId) return;
+    currentPatient = pat;
+    currentNotes = notes;
+    currentVitals = vitals || [];
+    currentLabs = labs || [];
+    currentCitas = [];
+
+    const age = pat.fecha_nacimiento ? Math.floor((Date.now() - new Date(pat.fecha_nacimiento)) / (365.25*24*3600*1000)) : '?';
+    const lastV = (vitals||[])[0] || {};
+
+    c.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap" class="no-print">
+        <button class="btn btn-secondary btn-sm" onclick="renderPatients()">← Volver</button>
+        <div class="section-title" style="margin:0">${pat.nombre} ${pat.apellido_paterno} ${pat.apellido_materno || ''}</div>
+        <span class="badge badge-blue">${pat.expediente}</span>
+        <span class="shared-badge">🔗 Compartido por ${shareEntry.shared_by_name}</span>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          ${isMedico() ? `<button class="btn btn-secondary btn-sm no-print" onclick="openNoteModal('${id}')" style="background:var(--primary);color:white;border:none">🖊 Nueva nota</button>` : ''}
+          <button class="btn-pdf no-print" onclick="exportPatientPDF()">📄 Exportar PDF</button>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-num">${age}</div><div class="stat-label">Años · ${pat.sexo==='M'?'Masc':'Fem'}</div></div>
+        <div class="stat-card"><div class="stat-num">${lastV.presion_sistolica ? lastV.presion_sistolica+'/'+lastV.presion_diastolica : '-'}</div><div class="stat-label">T/A (mmHg)</div></div>
+        <div class="stat-card"><div class="stat-num">${lastV.frecuencia_cardiaca || '-'}</div><div class="stat-label">FC (lpm)</div></div>
+        <div class="stat-card"><div class="stat-num">${lastV.peso_kg || '-'}</div><div class="stat-label">Peso (kg)</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Datos del paciente</span></div>
+          <table style="font-size:0.85rem">
+            <tr><td style="color:#718096;width:40%">Expediente</td><td>${pat.expediente}</td></tr>
+            <tr><td style="color:#718096">Fecha nac.</td><td>${(pat.fecha_nacimiento||'').split('T')[0]}</td></tr>
+            <tr><td style="color:#718096">Sexo</td><td>${pat.sexo==='M'?'Masculino':'Femenino'}</td></tr>
+            <tr><td style="color:#718096">Teléfono</td><td>${pat.telefono||'-'}</td></tr>
+            <tr><td style="color:#718096">Email</td><td>${pat.email||'-'}</td></tr>
+            <tr><td style="color:#718096">Alergias</td><td>${pat.alergias||'Sin registro'}</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Antecedentes</span></div>
+          <p style="font-size:0.85rem;white-space:pre-wrap">${pat.antecedentes||'Sin registro'}</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Notas clínicas (${notes.length})</span>
+          ${isMedico() ? `<button class="btn btn-primary btn-sm" style="width:auto" onclick="openNoteModal('${id}')">+ Nueva nota</button>` : ''}
+        </div>
+        ${renderNotesList(notes, id)}
+      </div>`;
+  } catch (e) {
+    c.innerHTML = '<p class="error-msg">Error al cargar expediente: ' + e.message + '</p>';
+  }
+}
+
+/** Add share button to patient expedition header */
+const _origViewPatient = viewPatient;
+// Patch: add share button to existing viewPatient header
+// (we override renderPatients so Share button appears in table rows;
+//  also patch the expedition header when viewPatient is called for own patients)
+const _patchViewPatientHeader = () => {
+  // After viewPatient renders, inject share button into header actions div
+  const origVP = window.viewPatient;
+  window.viewPatient = async function(id) {
+    await origVP.call(this, id);
+    const canShare = isMedico() && currentUser?.role !== 'recepcion';
+    if (!canShare) return;
+    // Find the header action bar (no-print div at top)
+    const actionBar = document.querySelector('#mainContent .no-print > div[style*="margin-left:auto"]');
+    if (actionBar && !actionBar.querySelector('.btn-share-header')) {
+      const shareBtn = document.createElement('button');
+      shareBtn.className = 'btn-share btn-sm btn-share-header';
+      shareBtn.innerHTML = '🔗 Compartir';
+      shareBtn.onclick = () => openShareModal(id);
+      actionBar.prepend(shareBtn);
+    }
+  };
+};
+_patchViewPatientHeader();
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {/* ignore in dev */});
