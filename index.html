@@ -4442,7 +4442,6 @@ function applyTemplate(key) {
 
 const GH_OWNER = 'leomancillas';
 const GH_REPO  = 'ece-metacore-frontend';
-const GH_SHARING_RAW = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/data/sharing.json`;
 const GH_SHARING_API = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/data/sharing.json`;
 const GH_PAT_KEY = 'ece_gh_pat'; // localStorage key for admin's GitHub PAT
 
@@ -4450,13 +4449,23 @@ let _shareData = null;  // { shares: { patientId: { shared_by, shared_with: [use
 let _sharingPatientId = null;
 let _allUsers = [];
 
-/** Fetch sharing.json from GitHub (public read) */
+/** Decode base64 (handles UTF-8) */
+function _b64decode(str) {
+  try {
+    return decodeURIComponent(escape(atob(str.replace(/\s/g, ''))));
+  } catch { return atob(str.replace(/\s/g, '')); }
+}
+
+/** Fetch sharing.json from GitHub API (bypasses CDN cache, works for public repos) */
 async function loadShareData(forceRefresh = false) {
   if (_shareData && !forceRefresh) return _shareData;
   try {
-    const res = await fetch(GH_SHARING_RAW + '?t=' + Date.now());
+    const res = await fetch(GH_SHARING_API, {
+      headers: { 'Accept': 'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' }
+    });
     if (res.ok) {
-      _shareData = await res.json();
+      const meta = await res.json();
+      _shareData = JSON.parse(_b64decode(meta.content));
     } else {
       _shareData = { shares: {} };
     }
@@ -4489,33 +4498,37 @@ function getSharedUsersForPatient(patientId) {
 async function saveShareData(newData) {
   let pat = localStorage.getItem(GH_PAT_KEY);
   if (!pat) {
-    pat = prompt('Para guardar los accesos, ingresa tu token de GitHub (PAT con permiso de escritura):');
+    pat = prompt('Para guardar los accesos, ingresa tu token de GitHub (PAT con permiso de escritura en ece-metacore-frontend):');
     if (!pat) throw new Error('Token requerido para guardar accesos.');
-    localStorage.setItem(GH_PAT_KEY, pat);
+    localStorage.setItem(GH_PAT_KEY, pat.trim());
+    pat = pat.trim();
   }
-  // Get current file SHA (needed for PUT)
+  // Get current file SHA (needed for PUT) — use authenticated request
   let sha = null;
   try {
-    const r = await fetch(GH_SHARING_API, { headers: { Authorization: 'token ' + pat } });
+    const r = await fetch(GH_SHARING_API, { headers: { Authorization: 'token ' + pat, 'Accept': 'application/vnd.github.v3+json' } });
     if (r.ok) { const d = await r.json(); sha = d.sha; }
   } catch {}
 
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(newData, null, 2))));
   const body = JSON.stringify({
-    message: 'Update patient sharing',
-    content: btoa(unescape(encodeURIComponent(JSON.stringify(newData, null, 2)))),
+    message: 'Update patient sharing [ECE META CORE]',
+    content: encoded,
     ...(sha ? { sha } : {})
   });
   const res = await fetch(GH_SHARING_API, {
     method: 'PUT',
-    headers: { Authorization: 'token ' + pat, 'Content-Type': 'application/json' },
+    headers: { Authorization: 'token ' + pat, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
     body
   });
   if (!res.ok) {
-    const err = await res.json();
+    const err = await res.json().catch(() => ({}));
     localStorage.removeItem(GH_PAT_KEY); // clear bad PAT
     throw new Error('Error al guardar: ' + (err.message || res.status));
   }
   _shareData = newData;
+  // Also pre-store the PAT for future writes
+  localStorage.setItem(GH_PAT_KEY, pat);
 }
 
 /** Open the share modal for a patient */
