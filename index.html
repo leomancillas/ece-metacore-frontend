@@ -313,10 +313,12 @@
     /* ── Recordatorios preventivos ── */
     @keyframes reminder-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(197,48,48,0.6)} 50%{box-shadow:0 0 0 7px rgba(197,48,48,0)} }
     .reminder-pulse { animation: reminder-pulse 2.2s infinite; }
-    .reminder-item { transition: transform 0.15s, box-shadow 0.15s; }
-    .reminder-item:hover { transform: translateX(3px); }
-    @keyframes slideInReminder { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
-    .reminders-panel { animation: slideInReminder 0.3s ease; }
+    .reminder-item { transition: background 0.15s; }
+    .reminder-item:hover { background: #f7fafc !important; }
+    @keyframes slideInReminder { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+    .reminders-panel { animation: slideInReminder 0.25s ease; }
+    .reminders-panel summary::-webkit-details-marker { display:none; }
+    .reminders-panel[open] summary { border-bottom-color: #e2e8f0 !important; }
     /* ── Drug lookup panel ── */
     .rx-drug-lookup { background:#f0fff4;border:1px solid #9ae6b4;border-radius:8px;padding:10px 14px;margin-top:8px; }
     .rx-drug-lookup input { background:white;border:1px solid #9ae6b4;border-radius:6px;padding:6px 10px;font-size:0.85rem;width:100%;outline:none; }
@@ -5453,33 +5455,37 @@ function renderRemindersPanel(reminders) {
   const order = {overdue:0, due_soon:1, ok:2, missing:3};
   const sorted = reminders.slice().sort((a,b)=>(order[a.type]||9)-(order[b.type]||9));
   const cfg = {
-    overdue: {icon:'🔴', color:'#c53030', bg:'#fed7d7', border:'#fc8181'},
-    due_soon: {icon:'🟡', color:'#d69e2e', bg:'#feebc8', border:'#f6ad55'},
-    ok: {icon:'🟢', color:'#276749', bg:'#c6f6d5', border:'#9ae6b4'},
-    missing: {icon:'⬜', color:'#718096', bg:'#edf2f7', border:'#cbd5e0'}
+    overdue: {dot:'🔴', color:'#c53030', bar:'#fc8181'},
+    due_soon: {dot:'🟡', color:'#b7791f', bar:'#f6ad55'},
+    ok: {dot:'🟢', color:'#276749', bar:'#9ae6b4'},
+    missing: {dot:'⬜', color:'#718096', bar:'#cbd5e0'}
   };
   const items = sorted.map(r => {
     const c = cfg[r.type] || cfg.missing;
     const pulse = r.type === 'overdue' ? 'reminder-pulse' : '';
-    return `<div class="reminder-item ${pulse}" style="background:${c.bg};border:2px solid ${c.border};border-radius:8px;padding:10px 14px;margin-bottom:7px;display:flex;align-items:flex-start;gap:10px">
-      <span style="font-size:1.1rem;flex-shrink:0">${c.icon}</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:700;color:${c.color};font-size:0.85rem">${r.title}</div>
-        <div style="font-size:0.78rem;color:#4a5568">${r.detail}</div>
-      </div>
+    return `<div class="reminder-item ${pulse}" style="display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:6px;border-left:3px solid ${c.bar};background:white;margin-bottom:3px">
+      <span style="font-size:0.85rem;flex-shrink:0">${c.dot}</span>
+      <span style="font-weight:600;color:${c.color};font-size:0.8rem;flex-shrink:0">${r.title}</span>
+      <span style="font-size:0.75rem;color:#718096;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.detail}</span>
     </div>`;
   }).join('');
   const overdueCount = sorted.filter(r=>r.type==='overdue').length;
-  const badge = overdueCount > 0 ? `<span style="background:#c53030;color:white;border-radius:10px;padding:2px 8px;font-size:0.72rem;font-weight:700;margin-left:6px">⚠️ ${overdueCount} vencido${overdueCount>1?'s':''}</span>` : '';
-  return `<div class="reminders-panel" style="margin-bottom:18px;background:white;border-radius:10px;padding:14px 16px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #edf2f7">
-      <span style="font-size:1.3rem">🔔</span>
-      <span style="font-weight:700;font-size:1rem;color:#2d3748">Recordatorios preventivos</span>
+  const dueSoonCount = sorted.filter(r=>r.type==='due_soon').length;
+  const badge = overdueCount > 0
+    ? `<span style="background:#c53030;color:white;border-radius:10px;padding:1px 7px;font-size:0.7rem;font-weight:700">⚠️ ${overdueCount} vencido${overdueCount>1?'s':''}</span>`
+    : dueSoonCount > 0
+    ? `<span style="background:#d69e2e;color:white;border-radius:10px;padding:1px 7px;font-size:0.7rem;font-weight:700">🕐 ${dueSoonCount} próximo${dueSoonCount>1?'s':''}</span>`
+    : '';
+  const openAttr = overdueCount > 0 ? ' open' : '';
+  return `<details class="reminders-panel"${openAttr} style="margin-bottom:12px;background:white;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(0,0,0,0.04);overflow:hidden">
+    <summary style="display:flex;align-items:center;gap:7px;padding:8px 12px;cursor:pointer;list-style:none;user-select:none;border-bottom:1px solid transparent">
+      <span style="font-size:1rem">🔔</span>
+      <span style="font-weight:700;font-size:0.87rem;color:#2d3748">Recordatorios preventivos</span>
       ${badge}
-      <span style="margin-left:auto;font-size:0.75rem;color:#718096;background:#edf2f7;padding:3px 8px;border-radius:4px">${reminders.length} recordatorio${reminders.length!==1?'s':''}</span>
-    </div>
-    <div style="max-height:500px;overflow-y:auto">${items}</div>
-  </div>`;
+      <span style="margin-left:auto;font-size:0.72rem;color:#a0aec0">${reminders.length} · ▸</span>
+    </summary>
+    <div style="padding:8px 10px 6px;max-height:360px;overflow-y:auto">${items}</div>
+  </details>`;
 }
 
 // ══════════════════════════════════════════════════════════════
