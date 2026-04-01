@@ -381,6 +381,23 @@
     .dp-panel .rx-drug-form-field.f-freq select { width:120px; }
     .dp-panel .rx-drug-form-field.f-extra input { width:130px; }
     .dp-panel .rx-add-btn { font-size:0.78rem;padding:5px 14px; }
+    /* ── Toast notifications ── */
+    #toast-container { position:fixed;top:70px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none; }
+    .toast { background:#1a202c;color:#f7fafc;border-radius:10px;padding:11px 14px;font-size:0.85rem;font-weight:500;box-shadow:0 6px 20px rgba(0,0,0,0.28);transform:translateX(calc(100% + 24px));transition:transform 0.3s cubic-bezier(0.34,1.4,0.64,1);pointer-events:auto;max-width:310px;min-width:200px;display:flex;align-items:flex-start;gap:9px; }
+    .toast.t-show { transform:translateX(0); }
+    .toast.t-success { border-left:4px solid #48bb78; }
+    .toast.t-error   { border-left:4px solid #fc8181; }
+    .toast.t-info    { border-left:4px solid #63b3ed; }
+    .toast.t-warn    { border-left:4px solid #f6ad55; }
+    .toast-body { flex:1;line-height:1.45; }
+    .toast-x { background:none;border:none;color:rgba(255,255,255,0.35);cursor:pointer;font-size:1rem;padding:0;line-height:1;flex-shrink:0; }
+    .toast-x:hover { color:rgba(255,255,255,0.8); }
+    /* ── Note modal: sticky save footer ── */
+    .note-modal-footer { position:sticky;bottom:0;background:white;padding:10px 0 4px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;z-index:10;margin-top:12px; }
+    .note-modal-footer .kbd-hint { font-size:0.72rem;color:#a0aec0;align-self:center;margin-right:auto; }
+    /* ── Note auto-draft banner ── */
+    .ndraft-banner { background:#fffff0;border:1px solid #ecc94b;border-radius:8px;padding:7px 12px;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-size:0.82rem;color:#744210; }
+    .ndraft-ind { font-size:0.72rem;color:#a0aec0;transition:opacity 0.5s; }
 </style>
 </head>
 <body>
@@ -628,6 +645,7 @@
       </div>
     </div>
 
+    <div class="ndraft-banner" id="_ndraft_banner" style="display:none"></div>
     <div id="noteFormContainer"></div>
 
     <div style="display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 0;border-top:1px solid var(--border)">
@@ -637,7 +655,8 @@
       </label>
     </div>
     <p id="noteError" class="error-msg"></p>
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+    <div class="note-modal-footer">
+      <span class="kbd-hint">Ctrl+Enter para guardar · <span id="_ndraft_ind" class="ndraft-ind" style="opacity:0.4"></span></span>
       <button class="btn btn-secondary" onclick="closeModal('noteModal')">Cancelar</button>
       <button class="btn btn-primary" style="width:auto" onclick="saveNote()">💾 Guardar Nota</button>
     </div>
@@ -1215,7 +1234,7 @@ async function deletePasskey(id) {
   try {
     await api(`/api/passkeys/${id}`, { method: 'DELETE' });
     loadPasskeys();
-  } catch (e) { alert('Error: ' + e.message); }
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 function logout() {
@@ -1818,7 +1837,8 @@ function openNoteModal(patientId) {
   editingNoteId = null;
   currentNoteType = 'evolucion';
   document.getElementById('noteError').textContent = '';
-  document.getElementById('noteModalTitle').textContent = 'Nueva nota clínica';
+  const _patLabel = currentPatient ? ` · ${[currentPatient.nombre, currentPatient.apellido_paterno].filter(Boolean).join(' ')}` : '';
+  document.getElementById('noteModalTitle').textContent = 'Nueva nota clínica' + _patLabel;
   document.getElementById('notTypeSelector').style.display = '';
   const st = document.getElementById('analyzeStatus');
   if (st) st.style.display = 'none';
@@ -1830,6 +1850,8 @@ function openNoteModal(patientId) {
   renderNoteForm('evolucion');
   noteOpenTime = Date.now();
   document.getElementById('noteModal').classList.add('open');
+  _ndraftStart();
+  setTimeout(_ndraftCheckBanner, 60);
 }
 
 function openEditNote(noteId) {
@@ -1838,7 +1860,7 @@ function openEditNote(noteId) {
   const meta = (() => { try { return typeof note.plan_tratamiento === 'string' && note.plan_tratamiento.startsWith('{') ? JSON.parse(note.plan_tratamiento) : null; } catch(e){ return null; } })();
   const tipo = (meta && meta._tipo) ? meta._tipo : (note.tipo || 'evolucion');
   if (tipo === 'receta') {
-    alert('Las recetas se generan desde el botón "💊 Receta". Para cambiarla, genera una nueva.');
+    showToast('Las recetas se generan desde 💊 Receta. Para cambiarla, genera una nueva.', 'info');
     return;
   }
   editingNoteId = noteId;
@@ -1955,6 +1977,16 @@ function renderNoteForm(tipo) {
       </div>
       <div class="form-group"><label>Indicaciones no farmacológicas</label>${vArea('n_tx_nofarmaco',2,'Dieta, ejercicio, medidas generales...')}</div>
       <div class="form-group"><label>Seguimiento y próxima cita</label>${vArea('n_seguimiento',2,'Cita en 4 semanas, HbA1c en 3 meses...')}</div>`;
+    // Prefill last diagnosis as placeholder (only for new notes)
+    if (!editingNoteId && currentNotes?.length) {
+      const lastDxNote = [...currentNotes]
+        .sort((a,b) => new Date(b.created_at||0) - new Date(a.created_at||0))
+        .find(n => (n.tipo==='evolucion'||n.tipo==='historia_clinica'||n.tipo==='interconsulta') && (n.diagnostico||'').trim());
+      if (lastDxNote?.diagnostico?.trim()) {
+        const dxEl = document.getElementById('n_diagnostico');
+        if (dxEl) dxEl.placeholder = `Último: ${lastDxNote.diagnostico.trim().slice(0,100)}`;
+      }
+    }
   } else if (tipo === 'historia_clinica') {
     c.innerHTML = `
       <div class="section-tag">Historia Clínica · NOM-004-SSA3-2012 Art. 7</div>
@@ -2087,9 +2119,12 @@ async function saveNote() {
         body: JSON.stringify({ tipo, motivo_consulta, diagnostico, plan_tratamiento, duracion_minutos, es_defuncion })
       });
     }
+    _ndraftStop(); _ndraftClear();
+    const _wasEditing = !!editingNoteId;
     noteOpenTime = null;
     editingNoteId = null;
     closeModal('noteModal');
+    showToast(_wasEditing ? '✏️ Nota actualizada' : '📋 Nota guardada', 'success');
     // Check if current patient is a shared patient (not in own list)
     const _ownIds = new Set((allPatients||[]).map(p => p.id));
     if (!_ownIds.has(currentNotePatientId) && _shareData?.shares?.[currentNotePatientId]) {
@@ -2127,7 +2162,7 @@ function toggleVoice(fieldId, btn) {
   if (activeVoiceField === fieldId) { stopVoice(); return; }
   stopVoice();
   if (!voiceRecognition) voiceRecognition = initVoice();
-  if (!voiceRecognition) { alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome.'); return; }
+  if (!voiceRecognition) { showToast('Tu navegador no soporta voz. Usa Chrome o Safari.', 'warn'); return; }
   activeVoiceField = fieldId;
   document.querySelectorAll('.btn-voice').forEach(b => b.classList.remove('recording'));
   btn.classList.add('recording');
@@ -2196,6 +2231,7 @@ async function savePatient() {
       await api('/api/patients', { method: 'POST', body: JSON.stringify(body) });
     }
     closeModal('patientModal');
+    showToast('👤 Paciente guardado', 'success');
     renderPatients();
   } catch (e) { document.getElementById('modalError').textContent = e.message; }
 }
@@ -2237,7 +2273,7 @@ async function askAI() {
     document.getElementById('aiResponseText').textContent = data.answer;
     document.getElementById('aiTokens').textContent = 'Tokens: ' + data.tokens_used;
     document.getElementById('aiResponse').style.display = 'block';
-  } catch (e) { alert('Error IA: ' + e.message); }
+  } catch (e) { showToast('Error IA: ' + e.message, 'error'); }
   finally { btn.textContent = 'Consultar IA →'; btn.disabled = false; }
 }
 
@@ -2508,7 +2544,7 @@ function rxSaveTemplate() {
   const meds = document.getElementById('rx_medicamentos').value.trim();
   const diag = document.getElementById('rx_diagnostico').value.trim();
   const instr = document.getElementById('rx_instrucciones').value.trim();
-  if (!meds) { alert('Escribe los medicamentos antes de guardar la plantilla.'); return; }
+  if (!meds) { showToast('Escribe los medicamentos antes de guardar la plantilla.', 'warn'); return; }
   const firstLine = meds.split('\n')[0].replace(/^\d+[\.\-\)]\s*/, '').substring(0, 40);
   const name = prompt('Nombre para esta plantilla:', firstLine || 'Mi plantilla');
   if (!name) return;
@@ -2688,7 +2724,7 @@ async function printPrescription() {
   const diag = document.getElementById('rx_diagnostico').value.trim();
   const instr = document.getElementById('rx_instrucciones').value.trim();
   const showDiag = document.getElementById('rx_show_diag').checked;
-  if (!meds) { alert('Agrega al menos un medicamento en el campo Rp.'); return; }
+  if (!meds) { showToast('Agrega al menos un medicamento en el campo Rp.', 'warn'); return; }
   stopVoice();
 
   // 1. Guardar en el expediente
@@ -3537,7 +3573,7 @@ async function startImpersonation(userId) {
     // Re-render full app as the impersonated user
     showApp();
   } catch(e) {
-    alert('Error al iniciar simulación: ' + e.message);
+    showToast('Error al iniciar simulación: ' + e.message, 'error');
     if (btn) { btn.textContent = '👁 Ver como'; btn.disabled = false; }
   }
 }
@@ -3622,13 +3658,13 @@ async function adminUpdateUser(userId, status) {
   try {
     await api('/api/admin/users/' + userId, { method:'PUT', body: JSON.stringify({ status }) });
     showAdminPanel();
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast(e.message, 'error'); }
 }
 
 async function adminUpdateRole(userId, role) {
   try {
     await api('/api/admin/users/' + userId, { method:'PUT', body: JSON.stringify({ role }) });
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast(e.message, 'error'); }
 }
 
 async function adminDeactivate(userId) {
@@ -3636,7 +3672,7 @@ async function adminDeactivate(userId) {
   try {
     await api('/api/admin/users/' + userId, { method:'DELETE' });
     showAdminPanel();
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast(e.message, 'error'); }
 }
 
 // ── SIGNOS VITALES ─────────────────────────────────────────────────
@@ -3751,6 +3787,7 @@ async function saveVitals() {
       method: 'POST', body: JSON.stringify(body)
     });
     closeModal('vitalsModal');
+    showToast('📊 Signos vitales guardados', 'success');
     viewPatient(currentPatient.id);
   } catch(e) { document.getElementById('vitalsError').textContent = e.message; }
 }
@@ -3883,6 +3920,7 @@ async function saveCita() {
       body: JSON.stringify({ fecha_cita: fecha, motivo, especialidad, notas })
     });
     closeModal('citaModal');
+    showToast('📅 Cita agendada', 'success');
     viewPatient(currentPatient.id);
   } catch(e) { document.getElementById('citaError').textContent = e.message; }
 }
@@ -3894,7 +3932,7 @@ async function updateCitaEstado(citaId, estado) {
       body: JSON.stringify({ estado })
     });
     viewPatient(currentPatient.id);
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast(e.message, 'error'); }
 }
 
 async function deleteCita(citaId) {
@@ -3902,7 +3940,7 @@ async function deleteCita(citaId) {
   try {
     await api('/api/patients/' + currentPatient.id + '/citas/' + citaId, { method: 'DELETE' });
     viewPatient(currentPatient.id);
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast(e.message, 'error'); }
 }
 
 // ── AI RESUMEN CLÍNICO ─────────────────────────────────────────────
@@ -3949,11 +3987,18 @@ function printEpicrisis() {
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
   stopVoice();
+  if (id === 'noteModal') _ndraftStop();
 }
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { stopVoice(); document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open')); }
   if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') doLogin();
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    if (document.getElementById('noteModal')?.classList.contains('open'))       { e.preventDefault(); saveNote(); }
+    else if (document.getElementById('patientModal')?.classList.contains('open'))    { e.preventDefault(); savePatient(); }
+    else if (document.getElementById('vitalsModal')?.classList.contains('open'))     { e.preventDefault(); saveVitals(); }
+    else if (document.getElementById('citaModal')?.classList.contains('open'))       { e.preventDefault(); saveCita(); }
+  }
 });
 
 if (token && currentUser) showApp();
@@ -4128,7 +4173,7 @@ async function editMed(id) {
     const meds = await api('/api/patients/' + currentPatient.id + '/medications');
     const med = meds.find(m => m.id === id);
     if (med) openMedModal(med);
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast(e.message, 'error'); }
 }
 
 async function saveMed() {
@@ -4149,6 +4194,7 @@ async function saveMed() {
     const url = '/api/patients/' + currentPatient.id + '/medications' + (currentMedId ? '/' + currentMedId : '');
     await api(url, { method, body: JSON.stringify(body) });
     closeModal('medModal');
+    showToast('💊 Medicamento guardado', 'success');
     loadMedications(currentPatient.id);
   } catch(e) { document.getElementById('medError').textContent = e.message; }
 }
@@ -4158,7 +4204,7 @@ async function deleteMed(id) {
   try {
     await api('/api/patients/' + currentPatient.id + '/medications/' + id, { method: 'DELETE' });
     loadMedications(currentPatient.id);
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast(e.message, 'error'); }
 }
 
 async function toggleMedActivo(id, activo) {
@@ -4167,7 +4213,7 @@ async function toggleMedActivo(id, activo) {
       method: 'PUT', body: JSON.stringify({ activo })
     });
     loadMedications(currentPatient.id);
-  } catch(e) { alert(e.message); }
+  } catch(e) { showToast(e.message, 'error'); }
 }
 
 // ── PLANTILLAS DE NOTAS ────────────────────────────────────────────
@@ -4887,7 +4933,7 @@ function applyWizardToNote() {
 function applySelectedModules() {
   const checkboxes = document.querySelectorAll('#moduleCheckboxes input[type=checkbox]:checked');
   if (checkboxes.length === 0) {
-    alert('Selecciona al menos un módulo de plantilla antes de aplicar.');
+    showToast('Selecciona al menos un módulo antes de aplicar.', 'warn');
     return;
   }
   const keys = Array.from(checkboxes).map(cb => cb.value);
@@ -5563,7 +5609,7 @@ function _dpClear(prefix) {
 
 function _dpAdd(prefix, targetId) {
   const line = _dpBuildLine(prefix);
-  if (!line) { alert('Selecciona una presentación primero.'); return; }
+  if (!line) { showToast('Selecciona una presentación primero.', 'warn'); return; }
   const ta = document.getElementById(targetId);
   if (!ta) return;
   const cur = ta.value.trim();
@@ -12695,6 +12741,81 @@ const MEX_DRUGS = [
 { n: "Pseudoefedrina tableta", b: "Sudafed", c: ["30mg","60mg"], f: "tab", t: "ORL descongestivo sistémico" }
 ];
 
+// ── TOAST NOTIFICATIONS ──────────────────────────────────────────────────────
+function showToast(msg, type='success', ms=3400) {
+  let box = document.getElementById('toast-container');
+  if (!box) { box = document.createElement('div'); box.id = 'toast-container'; document.body.appendChild(box); }
+  const icons = { success:'✅', error:'❌', info:'ℹ️', warn:'⚠️' };
+  const t = document.createElement('div');
+  t.className = `toast t-${type}`;
+  t.innerHTML = `<span style="flex-shrink:0">${icons[type]||'💬'}</span><span class="toast-body">${msg}</span><button class="toast-x" onclick="this.closest('.toast').remove()" title="Cerrar">✕</button>`;
+  box.appendChild(t);
+  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('t-show')));
+  setTimeout(() => { t.classList.remove('t-show'); setTimeout(() => t.remove(), 320); }, ms);
+}
+
+// ── NOTE AUTO-DRAFT ──────────────────────────────────────────────────────────
+let _noteDraftTimer = null;
+const _ndraftFields = ['n_motivo','n_sintomas','n_sint_asociados','n_exfisica','n_estudios','n_diagnostico','n_impresion','n_tx_farmaco','n_tx_nofarmaco','n_seguimiento','n_ta','n_fc','n_fr','n_temp','n_sat','n_peso','n_ahf','n_apnp','n_app','n_padecimiento','n_interrogatorio','n_plan','n_pronostico','n_especialidad','n_solicitud','n_estado_ingreso','n_tratamiento','n_instrucciones','n_unidad_envio','n_unidad_receptora','n_estado_clinico'];
+
+function _ndraftKey() {
+  return 'ece_ndraft_' + (currentUser?.id || currentUser?.email || 'u') + '_' + (currentNotePatientId || 'x');
+}
+
+function _ndraftSave() {
+  if (!currentNoteType || currentNoteType === 'receta') return;
+  const fields = {};
+  _ndraftFields.forEach(id => { const el = document.getElementById(id); if (el?.value?.trim()) fields[id] = el.value; });
+  if (!Object.keys(fields).length) return;
+  localStorage.setItem(_ndraftKey(), JSON.stringify({ tipo: currentNoteType, fields, ts: Date.now() }));
+  const ind = document.getElementById('_ndraft_ind');
+  if (ind) { ind.textContent = '💾 ' + new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}); ind.style.opacity='1'; setTimeout(()=>{ const e=document.getElementById('_ndraft_ind'); if(e) e.style.opacity='0.4'; },2200); }
+}
+
+function _ndraftStart() {
+  _ndraftStop();
+  _noteDraftTimer = setInterval(_ndraftSave, 20000);
+}
+
+function _ndraftStop() {
+  if (_noteDraftTimer) { clearInterval(_noteDraftTimer); _noteDraftTimer = null; }
+}
+
+function _ndraftClear() {
+  localStorage.removeItem(_ndraftKey());
+}
+
+function _ndraftCheckBanner() {
+  const raw = localStorage.getItem(_ndraftKey());
+  const draft = (() => { try { return raw ? JSON.parse(raw) : null; } catch { return null; } })();
+  const banner = document.getElementById('_ndraft_banner');
+  if (!banner) return;
+  if (!draft || !draft.fields || Object.keys(draft.fields).length === 0 || editingNoteId) {
+    banner.style.display = 'none'; return;
+  }
+  const age = Math.round((Date.now() - (draft.ts||0)) / 60000);
+  if (age > 180) { _ndraftClear(); banner.style.display = 'none'; return; }
+  const ageStr = age < 1 ? 'hace menos de 1 min' : `hace ${age} min`;
+  banner.style.display = '';
+  banner.innerHTML = `<span>💾 Borrador disponible (${ageStr} · ${draft.tipo})</span>
+    <button onclick="_ndraftRestore()" style="background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;border-radius:6px;padding:2px 10px;font-size:0.78rem;font-weight:700;cursor:pointer;margin-left:4px">Restaurar</button>
+    <button onclick="document.getElementById('_ndraft_banner').style.display='none';_ndraftClear()" style="background:none;border:none;color:#a0aec0;cursor:pointer;font-size:0.9rem;margin-left:auto">✕</button>`;
+}
+
+function _ndraftRestore() {
+  const draft = (() => { try { return JSON.parse(localStorage.getItem(_ndraftKey()) || 'null'); } catch { return null; } })();
+  if (!draft?.fields) return;
+  const restore = () => {
+    Object.entries(draft.fields).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.value = val; });
+    const banner = document.getElementById('_ndraft_banner');
+    if (banner) banner.style.display = 'none';
+    showToast('Borrador restaurado', 'success');
+  };
+  if (draft.tipo !== currentNoteType) {
+    const btn = document.querySelector(`.note-type-btn[onclick*="'${draft.tipo}'"]`);
+    if (btn) { selectNoteType(draft.tipo, btn); setTimeout(restore, 80); } else restore();
+  } else { restore(); }
+}
 
 </script>
 </body>
