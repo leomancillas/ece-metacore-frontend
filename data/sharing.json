@@ -20,6 +20,28 @@
         "antecedentes": ""
       },
       "updated_at": "2026-04-01T04:03:41.304Z"
+    },
+    "2659cf51-cbed-443d-b935-74e283368804": {
+      "shared_by": "4c7c3132-c961-4f42-99c9-a6c9b68530c9",
+      "shared_by_name": "Dr. Leonardo Mancillas",
+      "shared_with": [
+        "cfdc75a2-c299-4565-a5a1-854ad7bbc49e",
+        "995e9cd7-3f81-442a-ac4e-490c9aa8be6c"
+      ],
+      "patient_snapshot": {
+        "id": "2659cf51-cbed-443d-b935-74e283368804",
+        "expediente": "ECE-DEMO-001",
+        "nombre": "María Guadalupe",
+        "apellido_paterno": "Ramírez",
+        "apellido_materno": "Vega",
+        "fecha_nacimiento": "1968-04-15T00:00:00.000Z",
+        "sexo": "F",
+        "telefono": "8112345678",
+        "email": "mgrv68@gmail.com",
+        "alergias": "",
+        "antecedentes": ""
+      },
+      "updated_at": "2026-04-01T04:34:34.088Z"
     }
   }
 }
