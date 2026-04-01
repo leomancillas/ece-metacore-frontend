@@ -360,6 +360,17 @@
     /* legacy lookup kept hidden */
     .rx-drug-lookup { display:none; }
     .rx-drug-instr { display:none; }
+    /* ── Drug favorites row ── */
+    .drug-favs-row { display:flex;flex-wrap:wrap;gap:5px;padding:5px 0 8px;min-height:26px;align-items:center; }
+    .drug-favs-empty { font-size:0.72rem;color:#a0aec0;font-style:italic; }
+    .fav-pill { display:inline-flex;align-items:center;gap:4px;background:#fefcbf;border:1px solid #f6e05e;border-radius:20px;padding:3px 8px 3px 10px;cursor:pointer;max-width:160px;transition:background 0.12s; }
+    .fav-pill:hover { background:#fef08a; }
+    .fav-pill-label { font-size:0.74rem;font-weight:600;color:#713f12;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px; }
+    .fav-pill-remove { background:none;border:none;color:#a0aec0;cursor:pointer;font-size:0.68rem;padding:0;line-height:1;flex-shrink:0; }
+    .fav-pill-remove:hover { color:#e53e3e; }
+    .fav-star-btn { background:#fefcbf;border:1px solid #f6e05e;border-radius:6px;padding:2px 8px;font-size:0.72rem;cursor:pointer;color:#92400e;font-weight:700;white-space:nowrap;transition:background 0.12s; }
+    .fav-star-btn:hover { background:#fef08a; }
+    .fav-star-btn.saved { background:#d1fae5;border-color:#6ee7b7;color:#065f46; }
     /* ── Embeddable drug picker (note form) ── */
     .dp-panel { background:#f0fff4;border:1px solid #9ae6b4;border-radius:9px;padding:9px 12px; }
     .dp-panel .rx-ac-input { font-size:0.84rem;padding:6px 10px; }
@@ -464,12 +475,13 @@
     </div>
     <div class="form-group">
       <label>Medicamento / principio activo *</label>
+      <div class="drug-favs-row" id="med_favs" style="margin-bottom:4px"></div>
       <div class="rx-ac-wrap">
         <input class="rx-ac-input" id="med_nombre" placeholder="🔍 Escribe el nombre genérico o marca comercial..."
           oninput="medAcSearch(this.value)" onkeydown="medAcKeyNav(event)" autocomplete="off">
         <div class="rx-ac-dropdown" id="med_dp_dd"></div>
       </div>
-      <div id="med_drug_hint" style="display:none"></div>
+      <div id="med_drug_hint" style="margin-top:4px;display:none"></div>
     </div>
     <div class="grid-2">
       <div class="form-group"><label>Presentación</label><input id="med_presenta" placeholder="850 mg tabletas, 20 mg cápsulas..."></div>
@@ -932,6 +944,8 @@
     <!-- Drug autocomplete builder -->
     <div class="rx-drug-builder">
       <div class="rx-drug-builder-title">💊 Agregar medicamento <span style="font-weight:400;color:#4a7c59">— base de datos mexicana (569 fármacos)</span></div>
+      <!-- Favorites row -->
+      <div class="drug-favs-row" id="rx_favs"></div>
       <div class="rx-ac-wrap">
         <input class="rx-ac-input" id="rx_dp_input" placeholder="🔍 Escribe el nombre genérico o marca para ver presentaciones disponibles..." autocomplete="off"
           oninput="rxAcSearch(this.value)" onkeydown="rxAcKeyNav(event)">
@@ -941,6 +955,7 @@
       <div class="rx-drug-form" id="rx_dp_form">
         <div class="rx-drug-form-header">
           <span class="rx-drug-form-name" id="rx_dp_name"></span>
+          <button onclick="addFavDrug(_dpSel,'rx')" class="fav-star-btn" id="rx_fav_btn">⭐ Guardar favorito</button>
           <button onclick="rxClearForm()" style="background:none;border:none;color:#a0aec0;cursor:pointer;font-size:0.78rem;padding:2px 6px">✕ cambiar</button>
         </div>
         <div class="rx-drug-form-row">
@@ -2470,8 +2485,9 @@ function openPrescriptionModal(patientId) {
   }
   document.getElementById('rx_diagnostico').value = dxList.join(' · ');
 
-  // ── Reset drug builder ──
+  // ── Reset drug builder + render favorites ──
   rxClearForm && rxClearForm();
+  setTimeout(() => renderFavDrugs('rx_favs', 'rx', 'rx_medicamentos'), 0);
 
   selectRxConsultorio(1);
   renderRxTemplates();
@@ -4100,10 +4116,11 @@ function openMedModal(med) {
   document.getElementById('medError').textContent = '';
   document.getElementById('medModal').classList.add('open');
 
-  // Clear autocomplete state on open
+  // Clear autocomplete state on open + render favorites
   _medAcItems = []; _medAcIdx = -1;
   const dd = document.getElementById('med_dp_dd');
   if (dd) { dd.classList.remove('open'); dd.innerHTML = ''; }
+  setTimeout(() => renderFavDrugs('med_favs', 'med', 'med'), 0);
 }
 
 async function editMed(id) {
@@ -5628,11 +5645,13 @@ function dpToggle(targetId) {
   if (panel.style.display !== 'none') { panel.style.display = 'none'; _dpClear('note'); return; }
   panel.style.display = 'block';
   panel.innerHTML = _dpPanelHTML('note', targetId);
+  renderFavDrugs('note_favs', 'note', targetId);
   panel.querySelector('#note_dp_input')?.focus();
 }
 
 function _dpPanelHTML(prefix, targetId) {
   return `
+  <div class="drug-favs-row" id="${prefix}_favs"></div>
   <div class="rx-ac-wrap">
     <input class="rx-ac-input" id="${prefix}_dp_input" placeholder="🔍 Escribe el nombre genérico o marca..." autocomplete="off"
       oninput="_dpSearch('${prefix}',this.value)" onkeydown="_dpKeyNav('${prefix}',event)">
@@ -5641,6 +5660,7 @@ function _dpPanelHTML(prefix, targetId) {
   <div class="rx-drug-form" id="${prefix}_dp_form">
     <div class="rx-drug-form-header">
       <span class="rx-drug-form-name" id="${prefix}_dp_name"></span>
+      <button type="button" onclick="addFavDrug(_dpSel,'${prefix}')" class="fav-star-btn" id="${prefix}_fav_btn">⭐ Guardar favorito</button>
       <button type="button" onclick="_dpClear('${prefix}')" style="background:none;border:none;color:#a0aec0;cursor:pointer;font-size:0.78rem;padding:2px 6px">✕ cambiar</button>
     </div>
     <div class="rx-drug-form-row">
@@ -5686,6 +5706,88 @@ function _dpPanelHTML(prefix, targetId) {
     <div class="rx-drug-preview" id="${prefix}_dp_preview"></div>
     <button type="button" class="rx-add-btn" onclick="_dpAdd('${prefix}','${targetId}')">➕ Agregar al tratamiento</button>
   </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// ⭐ MEDICAMENTOS FAVORITOS
+// Guardados por médico en localStorage, disponibles en los 3 contextos
+// ══════════════════════════════════════════════════════════════
+function favDrugKey() {
+  return 'ece_fav_drug_' + (currentUser?.id || currentUser?.email || 'default');
+}
+function getFavDrugs() {
+  try { return JSON.parse(localStorage.getItem(favDrugKey()) || '[]'); } catch { return []; }
+}
+function saveFavDrugs(f) { localStorage.setItem(favDrugKey(), JSON.stringify(f)); }
+
+function addFavDrug(item, prefix) {
+  if (!item) return;
+  const favs = getFavDrugs();
+  if (favs.some(f => f.label === item.label)) {
+    // Already saved — mark button as saved
+    const btn = document.getElementById((prefix||'rx') + '_fav_btn');
+    if (btn) { btn.textContent = '✅ Ya guardado'; btn.classList.add('saved'); }
+    return;
+  }
+  favs.unshift({ label: item.label, drug: item.drug, conc: item.conc, forma: item.forma });
+  if (favs.length > 20) favs.splice(20);
+  saveFavDrugs(favs);
+  // Visual feedback on button
+  const btn = document.getElementById((prefix||'rx') + '_fav_btn');
+  if (btn) { btn.textContent = '✅ Guardado'; btn.classList.add('saved'); setTimeout(() => { btn.textContent = '⭐ Guardar favorito'; btn.classList.remove('saved'); }, 1800); }
+  renderAllFavContainers();
+}
+
+function removeFavDrug(idx) {
+  const favs = getFavDrugs();
+  favs.splice(idx, 1);
+  saveFavDrugs(favs);
+  renderAllFavContainers();
+}
+
+function renderFavDrugs(containerId, prefix, targetId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const favs = getFavDrugs();
+  if (!favs.length) {
+    el.innerHTML = '<span class="drug-favs-empty">Sin favoritos — guarda presentaciones frecuentes con ⭐</span>';
+    return;
+  }
+  el.innerHTML = favs.map((f, i) => {
+    const isMed = (prefix === 'med');
+    const clickFn = isMed ? `medSelectFav(${i})` : `_dpSelectFav('${prefix}',${i})`;
+    return `<div class="fav-pill" title="${f.label}">
+      <span class="fav-pill-label" onclick="${clickFn}">${f.label}</span>
+      <button class="fav-pill-remove" onclick="removeFavDrug(${i})" title="Quitar favorito">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function renderAllFavContainers() {
+  // Re-render any currently visible favorites rows
+  if (document.getElementById('rx_favs'))   renderFavDrugs('rx_favs', 'rx', 'rx_medicamentos');
+  if (document.getElementById('med_favs'))  renderFavDrugs('med_favs', 'med', 'med');
+  if (document.getElementById('note_favs')) renderFavDrugs('note_favs', 'note', 'n_tx_farmaco');
+}
+
+// Select a favorite in prescription / note picker — reuses _dpSelectItem
+function _dpSelectFav(prefix, idx) {
+  const favs = getFavDrugs();
+  const fav = favs[idx];
+  if (!fav) return;
+  _dpItems = [fav];
+  _dpIdx   = 0;
+  _dpSelectItem(prefix, 0);
+}
+
+// Select a favorite in the med modal — fills individual fields
+function medSelectFav(idx) {
+  const favs = getFavDrugs();
+  const fav = favs[idx];
+  if (!fav) return;
+  // Push into _medAcItems and call medAcSelect
+  _medAcItems = [fav];
+  medAcSelect(0);
 }
 
 // ── Auto-fill diagnosis from patient's latest note ──────────────
@@ -6065,6 +6167,16 @@ function medAcSelect(idx) {
   if (via !== undefined) {
     const viaEl = document.getElementById('med_via');
     if (viaEl && via) viaEl.value = via;
+  }
+  // Store last selection for fav button, show hint
+  window._lastMedSel = it;
+  const hint = document.getElementById('med_drug_hint');
+  if (hint) {
+    hint.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-top:5px">
+      <span style="font-size:0.75rem;color:#276749;font-weight:600">💊 ${it.label}</span>
+      <button onclick="addFavDrug(window._lastMedSel,'med')" class="fav-star-btn" id="med_fav_btn">⭐ Guardar favorito</button>
+    </div>`;
+    hint.style.display = 'block';
   }
   // Focus dosis field next
   setTimeout(() => { document.getElementById('med_dosis')?.focus(); }, 50);
