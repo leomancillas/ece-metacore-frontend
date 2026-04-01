@@ -6238,6 +6238,946 @@ function renderSpecialtyBadges(patientId) {
 (function() {
   loadPatientProfiles().catch(e => console.warn('[Profiles] Could not preload:', e.message));
 })();
+
+// ════════════════════════════════════════════════════════════════════
+// TIER 1 SPECIALTY WIZARDS — Medicina General, Cardiología, Nefrología
+// ════════════════════════════════════════════════════════════════════
+// ── MEDICINA GENERAL — Templates ─────────────────────────────────────────
+Object.assign(TEMPLATE_MODULES, {
+  hipertension: {
+    label: 'Hipertensión Arterial',
+    diagnostico: 'Diagnóstico clínico de hipertensión arterial confirmada por mediciones repetidas. Evaluación de daño de órgano blanco y riesgo cardiovascular asociado.',
+    sintomas: 'Cefalea occipital matutina, mareo, acúfenos, visión borrosa. Síntomas de afección de órgano blanco: [disnea / palpitaciones / angina / hematuria / focalización neurológica]. Años de diagnóstico: __. Adherencia a medicamentos: [buena / regular / mala].',
+    exfisica: 'Tensión arterial en ambos brazos (bilateral): brazo derecho __ / __ mmHg, brazo izquierdo __ / __ mmHg. Frecuencia cardíaca: __ lpm. Peso: __ kg, talla: __ cm, IMC: __ kg/m². Fondo de ojo: retinopatía hipertensiva grado __. Soplos carotídeos y abdominales (soplo renal). Pulsos periféricos simétricos. Reflejos osteotendinosos presentes.',
+    estudios: 'Laboratorio: glucosa __, creatinina __, TFGe __ (KDIGO), electrolitos K/Na __, perfil lipídico (CT/HDL/LDL), HbA1c __. Orina: proteinuria __, microalbuminuria __. ECG: HVI presente/ausente, Sokolow-Lyon __ mm, eje __, ritmo sinusal. Ecocardiograma si HVI presente.',
+    impresion: 'Clasificación HAS: Grado [1 (140-159/90-99) / 2 (160-179/100-109) / 3 (≥180/≥110) / Sistólica aislada]. Riesgo cardiovascular SCORE2: __%. Daño de órgano blanco: [cardíaco (HVI) / renal (TFGe __, albuminuria) / cerebrovascular / vascular periférico]. Control actual: [bien controlado (<130/80) / parcialmente controlado (130-139/80-89) / mal controlado (≥140/90)].',
+    tx_farmaco: 'Esquema terapéutico: [monoterapia / combinación dual / triple]. Primera línea: IECA __ / ARA2 __ más amlodipino __ más [tiazida / clortalidona] __. Betabloqueador __ si ICC/taquicardia/post-IAM. Espironolactona __ si HAS resistente. Meta TA: <130/80 mmHg (o <140/90 si >80 años).',
+    tx_nofarmaco: 'Reducción de peso: meta IMC <25 kg/m². Restricción de sodio <2.3 g/día (<1.5 g/día si posible). Dieta DASH (vegetales, frutas, lácteos bajos en grasa). Ejercicio aeróbico moderado ≥150 min/semana. Limitación de alcohol <2 bebidas/día (varones) <1 bebida/día (mujeres). Cese de tabaquismo.',
+    seguimiento: 'Control de TA cada __ meses. Meta TA <130/80 mmHg en la mayoría de pacientes; <140/90 si >80 años. Laboratorio anual: creatinina, TFGe, electrolitos, glucosa, perfil lipídico. ECG cada 2 años. Evaluación de adherencia y tolerancia a medicamentos. Refuerzo de medidas no farmacológicas.'
+  },
+
+  epoc: {
+    label: 'EPOC (Enfermedad Pulmonar Obstructiva Crónica)',
+    diagnostico: 'Diagnóstico de EPOC confirmado por espirometría post-broncodilatador (FEV1/FVC <0.70). Clasificación GOLD según FEV1 y síntomatología/exacerbaciones.',
+    sintomas: 'Disnea crónica: escala mMRC [0 / 1 / 2 / 3 / 4]. Tos crónica [con / sin] expectoración. Exacerbaciones en último año: __ hospitalizaciones, __ visitas urgencias. Tabaquismo: [fumador activo (__ cig/día, __ paquetes-año) / exfumador desde __ años]. Síntomas nocturnos: [no / sí]. Uso de salbutamol de rescate: __ veces/semana.',
+    exfisica: 'Frecuencia cardíaca: __ lpm. Frecuencia respiratoria: __ rpm, SaO2 basal: __ %. Tórax en tonel. Auscultación: hiperresonancia, murmullo vesicular disminuido, [sibilancias / roncus espiratorios]. Tiempo espiratorio prolongado. [Uso / no uso] de músculos accesorios. Signos cor pulmonale: [ninguno / ingurgitación yugular / edema MMII].',
+    estudios: 'Espirometría post-broncodilatador: FVC __ L (__ %), FEV1 __ L (__ %), relación FEV1/FVC __. Clasificación GOLD: [GOLD 1 (≥80%) / GOLD 2 (50-79%) / GOLD 3 (30-49%) / GOLD 4 (<30%)]. Gasometría arterial si SaO2 <92%: pH __, PaO2 __ mmHg, PaCO2 __ mmHg, HCO3 __. Hemograma: [sin poliglobulia / poliglobulia presente].',
+    impresion: 'EPOC, GOLD estadio __: [Grupo A (bajo riesgo, baja sintomatología) / Grupo B (bajo riesgo, alta sintomatología) / Grupo E (alto riesgo, exacerbaciones frecuentes)]. Fenotipo: [agudizador frecuente / no agudizador / fenotipo asma-EPOC]. Control sintomático: [adecuado / inadecuado — CAT score __].',
+    tx_farmaco: 'Broncodilatadores: LAMA (tiotropio __ μg/día / umeclidinio __) como base. Añadir LABA (formoterol/salmeterol) si sintomatología moderada. Corticoide inhalado si eosinófilos ≥300 o fenotipo mixto. SABA (salbutamol) de rescate según sea necesario. [Teofilina / antibiótico profiláctico (azitromicina)] si refractario.',
+    tx_nofarmaco: 'Cesación tabáquica: máxima prioridad. Consejería, terapia sustitutiva nicotínica, vareniclina. Vacunación: influenza anual, neumococo (PCV20 o PPSV23), COVID-19. Rehabilitación pulmonar ≥8 semanas (ejercicio + educación). Oxigenoterapia domiciliaria si PaO2 <55 mmHg o SaO2 persistente <88%.',
+    seguimiento: 'Espirometría anual. CAT score en cada visita (meta <10). Revisión de técnica inhalatoria cada 3-6 meses. Derivación a rehabilitación pulmonar. Vigilancia de comorbilidades (HAS, DM2, ICC, osteoporosis). Planificación de autocuidado ante agudización.'
+  },
+
+  vacunacion: {
+    label: 'Vacunación Adulto',
+    diagnostico: 'Evaluación del estado de vacunación según edad y factores de riesgo. Actualización del esquema NOM-036 (México) o recomendaciones nacionales de inmunización.',
+    sintomas: 'Registro de vacunas aplicadas en los últimos años. Esquema de vacunación previo: [completo / incompleto — vacunas pendientes: __]. Condiciones de salud que modifican esquema: [ninguna / DM2 / ERC (TFGe __ mL/min) / inmunocompromiso / embarazo / mayores 65 años / personal de salud / VIH / asplenia / viajes internacionales].',
+    exfisica: 'Inspección de sitios de vacunación previa (si aplica). Registro de reacciones adversas a vacunas anteriores: [ninguna / eritema local / fiebre / reacción sistémica moderada / anafilaxia]. Vacuna que causó reacción: __. Contraindicaciones actuales: [ninguna / hipersensibilidad a componentes / síndrome de Guillain-Barré previo].',
+    estudios: 'Serología de confirmación si indicada: Anti-HBs post-vacunación VHB (meta >10 mUI/mL). IgG de varicela si antecedente de vacunación dudoso. VPH: no requiere serología post-vacuna. Niveles de inmunoglobulinas si inmunocompromiso sospechado.',
+    impresion: 'Estado de vacunación: [esquema completo / esquema incompleto]. Vacunas pendientes: __ (prioridad [alta / media / baja]). Factores de riesgo presentes: [ninguno / DM2 / ERC / inmunocompromiso / embarazo / ≥65 años / personal salud / viajero / asplenia]. Próxima vacuna programada: __ en __ meses.',
+    tx_farmaco: 'Esquema de inmunización según edad y riesgo: Influenza (anual, dosis única). COVID-19 (refuerzo anual). Neumococo: PCV20 (una dosis ≥65a o riesgo alto) / PPSV23 (12+ meses después). Tdap (cada 10 años, Td si Tdap previa). VPH: hasta 26a (serie completa) o 27-45a si no vacunado. Hepatitis A+B (si no inmune): serie primaria. Zóster recombinante Shingrix (≥50a, 2 dosis 2-6 meses). Meningococo si asplenia/viajes.',
+    tx_nofarmaco: 'Consejería sobre beneficios de vacunación y prevención de enfermedades inmunoprevenibles. Registro completo en Cartilla Nacional de Vacunación o certificado de inmunización. Educación sobre reacciones esperadas (leves) vs. reacciones adversas graves.',
+    seguimiento: 'Próxima vacuna pendiente: __ programada en __ meses/años. Influenza: revacunación anual en siguiente temporada. COVID-19: refuerzo anual según recomendaciones epidemiológicas. Verificación de calendario cada 5 años en mayores de 65 años. Registro de todas las dosis aplicadas.'
+  }
+});
+
+// ── MEDICINA GENERAL — Wizard Schemas ────────────────────────────────────
+Object.assign(WIZARD_SCHEMA, {
+  hipertension: {
+    title: '🩺 Hipertensión Arterial',
+    sections: [
+      {
+        title: 'Síntomas y Antecedentes',
+        fields: [
+          { id: 'cefalea', type: 'checkbox', label: 'Cefalea occipital matutina' },
+          { id: 'mareo', type: 'checkbox', label: 'Mareo' },
+          { id: 'vision_borrosa', type: 'checkbox', label: 'Visión borrosa' },
+          { id: 'disnea', type: 'checkbox', label: 'Disnea' },
+          { id: 'palpitaciones', type: 'checkbox', label: 'Palpitaciones' },
+          { id: 'epistaxis', type: 'checkbox', label: 'Epistaxis' },
+          { id: 'anos_diagnostico', type: 'number', label: 'Años de diagnóstico', min: 0, max: 80 },
+          { id: 'adherencia_farmaco', type: 'select', label: 'Adherencia a medicamentos', options: ['Buena', 'Regular', 'Mala'] }
+        ]
+      },
+      {
+        title: 'Exploración Física',
+        fields: [
+          { id: 'ta_sistolica_d', type: 'number', label: 'TA sistólica brazo derecho (mmHg)', min: 70, max: 250 },
+          { id: 'ta_diastolica_d', type: 'number', label: 'TA diastólica brazo derecho (mmHg)', min: 40, max: 140 },
+          { id: 'ta_sistolica_i', type: 'number', label: 'TA sistólica brazo izquierdo (mmHg)', min: 70, max: 250 },
+          { id: 'ta_diastolica_i', type: 'number', label: 'TA diastólica brazo izquierdo (mmHg)', min: 40, max: 140 },
+          { id: 'fc', type: 'number', label: 'Frecuencia cardíaca (lpm)', min: 30, max: 200 },
+          { id: 'peso', type: 'number', label: 'Peso (kg)', min: 20, max: 200, step: 0.1 },
+          { id: 'talla', type: 'number', label: 'Talla (cm)', min: 100, max: 230 }
+        ]
+      },
+      {
+        title: 'Daño de Órgano Blanco',
+        fields: [
+          { id: 'hvi_ecg', type: 'checkbox', label: 'HVI en ECG (Sokolow-Lyon positivo)' },
+          { id: 'microalbuminuria', type: 'checkbox', label: 'Microalbuminuria' },
+          { id: 'creatinina_elevada', type: 'checkbox', label: 'Creatinina elevada / TFGe baja' },
+          { id: 'fondo_ojo_htas', type: 'checkbox', label: 'Retinopatía hipertensiva al fondo de ojo' },
+          { id: 'evc_previo', type: 'checkbox', label: 'Evento cerebrovascular previo' },
+          { id: 'iam_previo', type: 'checkbox', label: 'Infarto agudo miocardio previo' }
+        ]
+      },
+      {
+        title: 'Clasificación',
+        fields: [
+          { id: 'estadio_has', type: 'select', label: 'Grado de HAS', options: ['Grado 1 (140-159/90-99)', 'Grado 2 (160-179/100-109)', 'Grado 3 (≥180/≥110)', 'HAS Sistólica Aislada'] },
+          { id: 'riesgo_cv', type: 'select', label: 'Riesgo Cardiovascular', options: ['Bajo', 'Moderado', 'Alto', 'Muy Alto'] }
+        ]
+      }
+    ]
+  },
+
+  epoc: {
+    title: '💨 EPOC',
+    sections: [
+      {
+        title: 'Tabaquismo',
+        fields: [
+          { id: 'anos_fumador', type: 'number', label: 'Años fumando (años)', min: 0, max: 100 },
+          { id: 'cigarros_dia', type: 'number', label: 'Cigarrillos por día', min: 0, max: 100 },
+          { id: 'exfumador', type: 'checkbox', label: 'Exfumador' },
+          { id: 'ano_abandono', type: 'number', label: 'Año de abandono del tabaco', min: 1950, max: 2050, dependsOn: 'exfumador' }
+        ]
+      },
+      {
+        title: 'Síntomas Clínicos',
+        fields: [
+          { id: 'mmrc_score', type: 'select', label: 'Escala mMRC de disnea', options: ['mMRC 0 — Sin disnea', 'mMRC 1 — Disnea en esfuerzos', 'mMRC 2 — Limitación a paso normal', 'mMRC 3 — Disnea frecuente', 'mMRC 4 — Disnea en reposo'] },
+          { id: 'tos_cronica', type: 'checkbox', label: 'Tos crónica' },
+          { id: 'expectoracion_habitual', type: 'checkbox', label: 'Expectoración habitual' },
+          { id: 'disnea_reposo', type: 'checkbox', label: 'Disnea en reposo' },
+          { id: 'uso_rescate_frecuente', type: 'checkbox', label: 'Uso frecuente de salbutamol de rescate' },
+          { id: 'exacerbaciones_ano', type: 'number', label: 'Exacerbaciones en último año', min: 0, max: 20 }
+        ]
+      },
+      {
+        title: 'Espirometría',
+        fields: [
+          { id: 'fev1_pct', type: 'number', label: 'FEV1 (% predicho)', min: 0, max: 150, step: 1 },
+          { id: 'fvc_pct', type: 'number', label: 'FVC (% predicho)', min: 0, max: 150, step: 1 },
+          { id: 'fev1_fvc_ratio', type: 'number', label: 'FEV1/FVC (ratio)', min: 0.2, max: 1.0, step: 0.01 },
+          { id: 'gold_estadio', type: 'select', label: 'Estadio GOLD', options: ['GOLD 1 (≥80%)', 'GOLD 2 (50-79%)', 'GOLD 3 (30-49%)', 'GOLD 4 (<30%)'] }
+        ]
+      },
+      {
+        title: 'Evaluación GOLD y Óxígeno',
+        fields: [
+          { id: 'gold_grupo', type: 'select', label: 'Grupo GOLD', options: ['Grupo A — Bajo riesgo, baja sintomatología', 'Grupo B — Bajo riesgo, alta sintomatología', 'Grupo E — Alto riesgo, exacerbaciones'] },
+          { id: 'oxigenoterapia_domiciliaria', type: 'checkbox', label: 'Requiere oxigenoterapia domiciliaria' },
+          { id: 'sao2_basal', type: 'number', label: 'SaO2 basal (%)', min: 50, max: 100 }
+        ]
+      }
+    ]
+  },
+
+  vacunacion: {
+    title: '💉 Vacunación Adulto',
+    sections: [
+      {
+        title: 'Estado del Paciente',
+        fields: [
+          { id: 'edad_grupo', type: 'select', label: 'Grupo de edad', options: ['18-49 años', '50-64 años', '65+ años'] },
+          { id: 'dm2', type: 'checkbox', label: 'Diabetes Mellitus tipo 2' },
+          { id: 'erc', type: 'checkbox', label: 'Enfermedad Renal Crónica' },
+          { id: 'inmunocompromiso', type: 'checkbox', label: 'Inmunocompromiso (VIH, quimioterapia, etc.)' },
+          { id: 'embarazo', type: 'checkbox', label: 'Embarazo' },
+          { id: 'personal_salud', type: 'checkbox', label: 'Personal de salud' },
+          { id: 'vih_diagnosticado', type: 'checkbox', label: 'VIH diagnosticado' },
+          { id: 'asplenia', type: 'checkbox', label: 'Asplenia funcional o anatómica' },
+          { id: 'viaje_internacional', type: 'checkbox', label: 'Viajes internacionales frecuentes' }
+        ]
+      },
+      {
+        title: 'Vacunas Aplicadas',
+        fields: [
+          { id: 'influenza_ultima', type: 'checkbox', label: 'Influenza (este año)' },
+          { id: 'covid_refuerzo', type: 'checkbox', label: 'COVID-19 refuerzo (reciente)' },
+          { id: 'neumococo', type: 'checkbox', label: 'Neumococo (PCV20 o PPSV23)' },
+          { id: 'tdap', type: 'checkbox', label: 'Tdap (últimos 10 años)' },
+          { id: 'hep_b', type: 'checkbox', label: 'Hepatitis B (serie completa)' },
+          { id: 'hep_a', type: 'checkbox', label: 'Hepatitis A (serie completa)' },
+          { id: 'vph', type: 'checkbox', label: 'VPH (serie completa)' },
+          { id: 'varicela', type: 'checkbox', label: 'Varicela (2 dosis o seronegatividad confirmada)' },
+          { id: 'zoster', type: 'checkbox', label: 'Zóster recombinante Shingrix (≥50 años)' },
+          { id: 'mmr', type: 'checkbox', label: 'MMR (Sarampión/Rubeola)' },
+          { id: 'meningococo', type: 'checkbox', label: 'Meningococo (si asplenia o viajero)' }
+        ]
+      },
+      {
+        title: 'Reacciones Adversas Previas',
+        fields: [
+          { id: 'reaccion_previa', type: 'checkbox', label: 'Reacción adversa a vacuna previa' },
+          { id: 'severidad_reaccion', type: 'select', label: 'Severidad de reacción', options: ['Local leve (eritema)', 'Sistémica moderada (fiebre)', 'Anafilaxia'], dependsOn: 'reaccion_previa' },
+          { id: 'vacuna_problematica', type: 'text', label: 'Vacuna que causó reacción', dependsOn: 'reaccion_previa' }
+        ]
+      }
+    ]
+  }
+});
+
+// ── MEDICINA GENERAL — Builder Functions ─────────────────────────────────
+
+function buildHipertensionNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  // Interpret TA values to determine control status
+  const ta_s = Math.max(n('ta_sistolica_d'), n('ta_sistolica_i'));
+  const ta_d = Math.max(n('ta_diastolica_d'), n('ta_diastolica_i'));
+
+  let control_status = 'mal controlado (≥140/90)';
+  if (ta_s < 130 && ta_d < 80) {
+    control_status = 'bien controlado (<130/80)';
+  } else if (ta_s < 140 && ta_d < 90) {
+    control_status = 'parcialmente controlado (130-139/80-89)';
+  }
+
+  // Build impresion with TA values, grado, and daño orgánico
+  let daño_organo = [];
+  if (v('hvi_ecg')) daño_organo.push('cardíaco (HVI)');
+  if (v('microalbuminuria')) daño_organo.push('renal (microalbuminuria)');
+  if (v('creatinina_elevada')) daño_organo.push('renal (TFGe baja)');
+  if (v('evc_previo')) daño_organo.push('cerebrovascular');
+  if (v('iam_previo')) daño_organo.push('cardiovascular (IAM previo)');
+
+  const daño_text = daño_organo.length > 0 ? ': ' + daño_organo.join(', ') : ': ninguno';
+
+  const impresion = `Clasificación HAS: ${v('estadio_has')}. Riesgo cardiovascular: ${v('riesgo_cv')}. Daño de órgano blanco${daño_text}. Control actual: ${control_status}.`;
+
+  return {
+    impresion: impresion
+  };
+}
+
+function buildEpocNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  // Calculate paquetes-año
+  let paquetes_ano = 0;
+  const anos = n('anos_fumador');
+  const cigarros = n('cigarros_dia');
+  if (anos > 0 && cigarros > 0) {
+    paquetes_ano = (anos * cigarros) / 20;
+  }
+
+  // Build impresion showing GOLD grade, exacerbations, mMRC
+  const gold_grado = v('gold_estadio');
+  const gold_grupo = v('gold_grupo');
+  const exacerbaciones = n('exacerbaciones_ano');
+  const mmrc = v('mmrc_score');
+
+  const impresion = `EPOC ${gold_grado}. Clasificación: ${gold_grupo}. Síntomatología: ${mmrc}. Exacerbaciones último año: ${exacerbaciones}. ${v('oxigenoterapia_domiciliaria') ? 'Requiere oxigenoterapia domiciliaria.' : 'Sin oxigenoterapia domiciliaria.'}`;
+
+  return {
+    impresion: impresion
+  };
+}
+
+function buildVacunacionNote(mk) {
+  const v = (f) => wv(mk, f);
+
+  // Determine pending vaccines based on age and risk factors
+  let pending = [];
+  const edad = v('edad_grupo');
+
+  // Base vaccines by age
+  if (!v('influenza_ultima')) pending.push('Influenza (anual)');
+  if (!v('covid_refuerzo')) pending.push('COVID-19 (refuerzo)');
+
+  if (edad === '65+ años') {
+    if (!v('neumococo')) pending.push('Neumococo PCV20');
+    if (!v('zoster')) pending.push('Zóster Shingrix (2 dosis)');
+  } else if (edad === '50-64 años') {
+    if (!v('zoster')) pending.push('Zóster Shingrix (≥50 años)');
+    if (!v('neumococo') && (v('dm2') || v('erc') || v('inmunocompromiso'))) pending.push('Neumococo (por riesgo)');
+  }
+
+  // Risk-based vaccines
+  if (!v('tdap')) pending.push('Tdap (cada 10 años)');
+  if (!v('hep_b') && !v('inmunocompromiso')) pending.push('Hepatitis B (si no inmune)');
+  if (!v('hep_a') && !v('inmunocompromiso')) pending.push('Hepatitis A (si no inmune)');
+  if (v('viaje_internacional') && !v('meningococo')) pending.push('Meningococo (por viaje)');
+  if (v('asplenia') && !v('meningococo')) pending.push('Meningococo (por asplenia)');
+
+  const pendiente_text = pending.length > 0 ? pending.join(', ') : 'Ninguna (esquema completo)';
+
+  let factores_riesgo = [];
+  if (v('dm2')) factores_riesgo.push('DM2');
+  if (v('erc')) factores_riesgo.push('ERC');
+  if (v('inmunocompromiso')) factores_riesgo.push('inmunocompromiso');
+  if (v('embarazo')) factores_riesgo.push('embarazo');
+  if (v('personal_salud')) factores_riesgo.push('personal salud');
+  if (v('vih_diagnosticado')) factores_riesgo.push('VIH');
+  if (v('asplenia')) factores_riesgo.push('asplenia');
+
+  const factores_text = factores_riesgo.length > 0 ? ': ' + factores_riesgo.join(', ') : ': ninguno';
+
+  const impresion = `Vacunas pendientes: ${pendiente_text}. Factores de riesgo presentes${factores_text}. Edad: ${v('edad_grupo')}.`;
+
+  return {
+    impresion: impresion
+  };
+}
+
+// Register builders
+Object.assign(WIZARD_BUILDERS, {
+  hipertension: buildHipertensionNote,
+  epoc: buildEpocNote,
+  vacunacion: buildVacunacionNote
+});
+
+// Mark modules as implemented
+['hipertension', 'epoc', 'vacunacion'].forEach(m => IMPLEMENTED_MODULES.add(m));
+
+// ── CARDIOLOGÍA — Templates ──────────────────────────────────────────────────
+
+Object.assign(TEMPLATE_MODULES, {
+  insuficiencia_cardiaca: {
+    label: 'Insuficiencia Cardíaca',
+    diagnostico: 'Insuficiencia cardíaca aguda/crónica con disfunción sistólica o diastólica. Clasificación por FEVI (FEVIr <40%, FEVIlm 40-49%, FEVIc ≥50%) y clase funcional NYHA.',
+    sintomas: '── INSUFICIENCIA CARDÍACA ──\nClase funcional NYHA: [Clase I — Sin limitación / Clase II — Limitación leve al esfuerzo / Clase III — Limitación marcada / Clase IV — Síntomas en reposo]. Disnea de esfuerzo: [no / sí — grado __ METs]. Disnea paroxística nocturna: [no/sí]. Ortopnea: [no / sí — __ almohadas]. Edema miembros inferiores: [no / bilateral simétrico / asimétrico]. Nicturia: __ veces/noche. Fatiga y debilidad general. Palpitaciones: [no/sí — descripción]. Síntomas de bajo gasto: [ausentes / mareo / presíncope / síncope / confusión]. Hospitalizaciones previas por ICC en último año: [no / sí — __ ingresos].',
+    exfisica: 'TA: __/__ mmHg · FC: __ lpm (ritmo: [sinusal / FA / FA rápida]) · FR: __ × min · SaO2: __% aire ambiente · Peso actual: __ kg · Peso seco estimado: __ kg. Ingurgitación yugular: [no / sí — PVY __ cm H2O]. Galope ventricular (B3): [no/sí]. Crepitantes: [no / hasta __ bases bibasales]. Desplazamiento ápex: [normal / lateral — 6.° EIC o más allá LMA]. Edema maleolar: [no / fóvea grado __ bilateral / asimétrico]. Hepatomegalia: [no / sí — borde __ cm bajo RCD]. Reflujo hepatoyugular: [no/sí].',
+    estudios: 'BNP: __ pg/mL [OR] NT-proBNP: __ pg/mL (diagnóstico si BNP >100 o NT-proBNP >300). ECG: [ritmo sinusal / FA / Flutter / BRIHH ancho / HVI / sin cambios agudos]. Ecocardiograma: FEVI __% · [FEVIr <40 / FEVIlm 40-49% / FEVIc ≥50%]. VI diámetro telediastólico: __ mm [normal si <55 mm]. Disfunción diastólica: [no / Grado I / Grado II / Grado III]. Valvulopatía: [no / sí — descripción]. PSAP estimada: __ mmHg. Bioquímica: Creatinina __ mg/dL · TFGe: __ mL/min/1.73m² · Sodio: __ mEq/L · Potasio: __ mEq/L. Ferritina sérica: __ ng/mL · TSAT: __% (déficit Fe si ferritina <100 o TSAT <20%).',
+    impresion: 'ICC [FEVIr / FEVIlm / FEVIc] — FEVI __% · Clase funcional NYHA __. Etiología: [isquémica / hipertensiva / idiopática / alcohólica / miocarditis / valvular / arritmia inducida]. Estado actual: [compensado / descompensado — precipitante: __]. Hospitalizaciones: __ en último año. Comorbilidades: [FA / DM2 / ERC / HAS / anemia / déficit de hierro / SAOS]. Criterios de incluir en ARNI/betabloqueador/ARM/iSGLT2: [cumple todos/pendiente optimizar].',
+    tx_farmaco: 'PILAR 4 (ICC FEVIr): (1) IECA/ARA2/ARNI: sacubitril-valsartán __ mg c/12h [o IECA/ARA2 __ mg/día] — titular a dosis óptima tolerada. (2) Betabloqueador: carvedilol __ mg c/12h [o bisoprolol __ mg/día] — titular progresivamente c/2-4 sem. (3) Antagonista mineralocorticoides: espironolactona/eplerenona __ mg/día — solo si K+ ≤5.0 mEq/L. (4) iSGLT2: dapagliflozina 10 mg/día [o empagliflozina 10 mg/día]. Diurético asa (si congestión): furosemida __ mg/día [o dosis equivalente] — titular según congestión. Hierro IV (si déficit documentado + NYHA II-IV): carboximaltosa férrica __ g IV en dosis. Otros: digoxina si FA + respuesta ventricular rápida; ivabradina si FC >70 bpm persistente.',
+    tx_nofarmaco: 'Monitoreo: Peso diario domiciliario — alerta si aumento >2 kg en 2 días o >3 kg en 3 días → ajustar diurético. Restricción hídrica: 1.5-2 L/día si Na <130 o congestión severa. Restricción dietética de sodio: <2 g/día. Actividad física: ejercicio aeróbico tolerado o derivar a programa de rehabilitación cardíaca. Vacunación: influenza anual + neumococo. Cese de tóxicos (alcohol, cocaína si aplicable). Optimización de factores de riesgo: TA <130/80 mmHg, DM2 (HbA1c <7-8%).',
+    seguimiento: 'Peso diario en domicilio con diario. Control de laboratorio (Cr, K, Na, BNP/NT-proBNP, Fe) a las 2 semanas de ajuste de dosis. Ecocardiograma de reevaluación: 3-6 meses post-optimización farmacológica. Consulta urgente si: disnea progresiva en reposo, edema rápido, ganancia ponderal >3 kg/3 días, síncope, arritmias sintomáticas. Considerar resincronización (TRC/TRC-D) si QRS ≥130 ms + FEVI ≤35%.'
+  },
+
+  cardiopatia_isquemica: {
+    label: 'Cardiopatía Isquémica',
+    diagnostico: 'Enfermedad coronaria obstructiva documentada por coronariografía o infarto agudo de miocardio previo (IAMCEST/IAMSEST). Incluye angina estable crónica, síndromes coronarios agudos, isquemia silente.',
+    sintomas: 'Tipo de evento isquémico previo: [sin evento previo / angina estable crónica — esfuerzo grado __ CCS / IAMCEST — fecha: __ / IAMSEST — fecha: __ / angina inestable — fecha: __]. Revascularización previa: [no / ACTP con stent — tipo: [metálico/liberador fármaco], número de stents: __ / CABG — fecha: __ / ambas]. Angina actual: [ausente / esfuerzo grado __ CCS / reposo / inestable]. Desencadenantes: [esfuerzo / estrés emocional / frío / digestión]. Disnea de esfuerzo: [no / sí — grado __]. Limitación funcional: [ninguna / leve / moderada / severa]. Factores de riesgo: [HAS / DM2 / tabaquismo activo / dislipidemia / historia familiar de ECV prematura / sedentarismo / obesidad].',
+    exfisica: 'TA: __/__ mmHg (medir bilateral si sospecha disección: diferencia __/__) · FC: __ lpm · PA sistólica bilateral: [simétrica / asimétrica — diferencia >20 mmHg]. Auscultación: soplo carotídeo [no / sí — bilateral/unilateral]. Soplo cardíaco: [no / sí — __ grado sistólico/diastólico]. Pulsos periféricos: [conservados en todas las localizaciones / disminuidos — localización: __]. Índice tobillo-brazo: __/__ (EAP si <0.90). Signos de insuficiencia cardíaca: [ausentes / presentes — descripción].',
+    estudios: 'ECG en sinusal o durante síntomas: [ritmo sinus / FA] — Eje: __° · PR: __ ms · QRS: __ ms · QTc: __ ms. Cambios isquémicos: [ondas Q patológicas en derivaciones: __ / cambios ST-T en __ / BRIHH / sin cambios agudos]. Troponina: [negativa / positiva — pico: __ ng/L (fecha) / en seguimiento]. Marcadores de necrosis: [CK-MB __ ng/mL / mioglobina __ ng/mL]. Perfil lipídico: LDL __ mg/dL · HDL __ mg/dL · TG __ mg/dL · Colesterol total: __ mg/dL. HbA1c: __%. Coronariografía/angiografía: [no realizado / vasos enfermos: __ — IVAAS: [DAI: __%/TCE: __%/DA: __%/CD: __] / FEVI en cateterismo: __% / revascularización realizada: [angioplastia/stent-liberador/CABG]]. Score GRACE (si SCA): __ puntos (riesgo alto si >140).',
+    impresion: 'Cardiopatía isquémica [estable / SCA] — Fenotipo: [IAM con elevación ST / IAM sin elevación ST / Angina inestable / Angina estable crónica / Isquemia silente]. Número de vasos: [1 vaso / 2 vasos / 3 vasos / tronco común / enfermedad difusa]. FEVI post-infarto: __% [FEVIr/FEVIlm/FEVIc]. Riesgo residual: [bajo / moderado / alto — por factores: revascularización incompleta/múltiples vasos/disfunción VI]. Meta LDL: <55 mg/dL (muy alto riesgo CV). Control de factores de riesgo: [HAS en meta / DM2 en meta / tabaquismo activo: sí/no / dislipidemia en meta]. Pronóstico: [favorable / moderado / reservado].',
+    tx_farmaco: 'ANTIAGREGACIÓN: ácido acetilsalicílico 100 mg/día (indefinido) + doble antiplaquetario: [clopidogrel 75 mg/día / prasugrel 10 mg/día (5 mg si <60 kg) / ticagrelor 90 mg c/12h] × __ meses post-SCA o stent. LÍPIDOS: estatina alta intensidad — [atorvastatina 80 mg/día / rosuvastatina 40 mg/día] (meta LDL <55 mg/dL); ± ezetimiba __ mg/día [si LDL no en meta]; ± inhibidor PCSK9 [si LDL persistentemente elevado]. CARDIOPROTECTOR post-IAM (si FEVI reducida): IECA/ARA2 — __ mg/día + betabloqueador — __ mg/día × 12 meses mínimo (indefinido si FEVI <40%). iSGLT2 (dapagliflozina/empagliflozina) si DM2 o ICC asociada. SÍNTOMAS: nitratos sublinguales 0.4 mg PRN (NTG o dinitrato de isosorbida); betabloqueador para control de síntomas; antagonistas del calcio [diltiazem/verapamilo] si contraindicación betabloqueador.',
+    tx_nofarmaco: 'CESE TABAQUISMO: prioridad máxima — asesoramiento + farmacoterapia (vareniclina/bupropión). DIETA: patrón mediterráneo; restricción Na <2 g/día si HAS/ICC; moderación alcohol. EJERCICIO: programa de rehabilitación cardíaca ≥36 sesiones; ejercicio aeróbico 150 min/sem de intensidad moderada. CONTROL: TA <130/80 mmHg; DM2: HbA1c 7-8%; peso: IMC <25 kg/m². PSICOSOCIAL: manejo de estrés, apoyo psicológico si depresión. VACUNACIÓN: influenza anual + neumococo.',
+    seguimiento: 'Laboratorio: perfil lipídico + LDL a las 4-6 semanas post-ajuste estatina (titulación a meta). Lipidograma cada 6-12 meses. ECG anual o síntomas. Ecocardiograma: 6-12 semanas post-IAM, luego según evolución. Prueba de isquemia (Holter, ergometría o prueba de esfuerzo) si cambios de sintomatología. Test calcio coronario si riesgo borderline sin angiografía previa. Consulta a Cardiología intervencionista: si angina refractaria a tratamiento médico / anatomía coronaria desfavorable para ACTP / consideración CABG. Seguimiento cada 3-6 meses inicialmente, luego anual.'
+  },
+
+  arritmias: {
+    label: 'Arritmias',
+    diagnostico: 'Taquiarritmias o bradiarritmias documentadas por ECG, Holter, monitoreo ambulatorio o eventos sintomáticos. Incluye fibrilación auricular, flutter, TSV, extrasistolia, taquicardia ventricular, bloqueo AV.',
+    sintomas: '── ARRITMIAS ──\nTipo de presentación: [paroxística / persistente / permanente — fecha de inicio: __]. Frecuencia de episodios: __ episodios/semana [o episodios/mes si infrecuentes]. Desencadenantes: [esfuerzo físico / reposo / ingesta de alcohol / cafeína / estrés emocional / no identificado]. Síntomas acompañantes: [palpitaciones percibidas / mareo / presíncope / síncope — descripción / disnea / dolor torácico / palpitaciones imperceptibles]. Impacto en calidad de vida (EHRA): [Clase I — asintomático / Clase II — síntomas leves, no afecta actividades / Clase III — síntomas severos, limita actividades / Clase IV — incapacitante, no tolera actividad]. Cardioversión eléctrica previa: [no / sí — resultado y fecha]. Ablación cardíaca previa: [no / sí — técnica: __ · fecha: __ · resultado].',
+    exfisica: 'FC: __ lpm · Ritmo: [regular / irregularmente irregular / rítmicamente irregular]. TA: __/__ mmHg · Pulso: [palpable, regular / débil / ausente periodos]. Auscultación cardíaca: soplos [no / sí — __ grado sistólico/diastólico]. Signos de insuficiencia cardíaca: [no / crepitantes en __ bases / edema maleolar / PVY elevada]. Exploración tiroidea: [glándula normal / bocio / nódulos palpables].',
+    estudios: 'ECG en ritmo sinusal o durante arritmia: Ritmo [sinusal/FA/Flutter auricular/TSV/EA/TV/BAV]. Eje: __° · PR: __ ms · QRS: __ ms · QTc: __ ms. Características específicas: [onda delta presente si WPW / morfología de P: __ / ondas f en FA / ondas F de flutter en __ derivaciones / pre-excitación]. Holter 24-48h: [carga de FA: __% / número de EA / presencia de pares/tripletes EA / TV sostenida: sí/no / TV no sostenida: duración __ seg / BAV episódico: sí/no / pausas sinusales: duración máxima __ seg]. Monitoreo ambulatorio (Holter >7 días o implantable): [resultados — descripción]. Ecocardiograma: FEVI __% · Aurícula izquierda: diámetro __ mm [o volumen __ mL/m²]. Válvulas: [normales / valvulopatía significativa: __ / prótesis]. TSH sérico: __ mIU/L (descartar hipertiroidismo). Test de esfuerzo: [normal / isquemia inducida / arritmia inducida — descripción].',
+    impresion: 'Diagnóstico de arritmia: [FA paroxística / FA persistente / FA permanente / Flutter auricular / TSVP / WPW / Extrasistolia auricular frecuente / Extrasistolia ventricular frecuente / TV no sostenida / TV sostenida / Bradiarritmia — BAV grado __ / Disfunción sinusal]. Carga de FA: __% [si aplicable]. Fenotipo: [FA solitaria sin cardiopatía / FA en cardiopatía estructural — descripción / FA en hipertiroidismo / FA en apnea del sueño / FA post-quirúrgica]. Riesgo tromboembólico CHA₂DS₂-VASc: __ puntos → [bajo riesgo: anticoagulación no indicada / riesgo moderado: considerar / alto riesgo: anticoagulación indicada]. Riesgo hemorrágico HAS-BLED: __ puntos [si DACAOS]. Disfunción VI: [no / sí — FEVI __% requiere seguimiento]. Cardiopatía estructural: [ausente / presente — tipo]. Indicación de tratamiento rítmico: [sí — ablación/fármacos / no — control frecuencia / pendiente reevaluación].',
+    tx_farmaco: '(1) CONTROL DE FRECUENCIA (FA permanente, meta <80 lpm en reposo): Betabloqueador [bisoprolol __ mg/día / carvedilol __ mg c/12h / atenolol __ mg/día] [O] Bloqueador del nodo AV [diltiazem __ mg c/8h / verapamilo __ mg c/8h] [O] Digoxina __ mg/día (sedentarios). (2) CONTROL DE RITMO (FA paroxística recurrente sintomática o persistente): Amiodarona __ mg/día [o 600 mg/día carga × 7 d, luego __ mg/día mantenimiento] [O] Flecainida __ mg c/12h [solo si sin cardiopatía estructural] [O] Propafenona __ mg c/8h [solo sin cardiopatía estructural]. (3) ANTICOAGULACIÓN (CHA₂DS₂-VASc ≥2 en varones, ≥3 en mujeres, o ≥1 con otras comorbilidades): ACOD: [apixabán 5 mg c/12h / rivaroxabán 20 mg con cena / dabigatrán 150 mg c/12h] — ajustar por TFGe. [O] Warfarina INR 2-3 (si contraindicación ACOD). (4) SÍNTOMAS: Betabloqueador a mayor dosis para bradicardia y control FC. Verapamilo/diltiazem si no tolera betabloqueador. (5) ARRITMIAS VENTRICULARES: Betabloqueador como base; amiodarona si TV recurrente; sotalol si TV no sostenida; implante ICD si TV sostenida o FEVI ≤35%.',
+    tx_nofarmaco: 'ABLACIÓN: Candidato [sí — referir a laboratorio de electrofisiología / no — por __ razones]. Indicaciones: (FA paroxística sintomática refractaria a fármacos) / (FA persistente bien seleccionada) / (Flutter auricular típico) / (TSVP / WPW) / (TV focal monomórfica) / (extrasistolia frecuente sintomática). MARCAPASO: indicado si [BAV grado II-III / disfunción sinusal sintomática — síncope / pausas >3 seg]. OCLUSIÓN DE AAI (Watchman): si FA con contraindicación absoluta a anticoagulación. MODIFICACIÓN DE FACTORES: [reducir/eliminar cafeína / moderación alcohol / evitar estimulantes / manejo del estrés / tratamiento de apnea del sueño / control TA / tratamiento de comorbilidades (DM2, HAS)]. CARDIOVERSIÓN ELÉCTRICA: planificada si [FA <48h sin anticoagulación / FA ≥48h con anticoagulación ≥3 semanas o ETE negativo].',
+    seguimiento: 'Holter o monitoreo ambulatorio: 3-6 meses post-cambio de antiarrítmico o post-ablación. ECG: en cada consulta clínica o si cambios de sintomatología. Si anticoagulado con warfarina: INR cada 4 semanas inicialmente, luego c/4-8 semanas en rango estable. Si ACOD: evaluación de cumplimiento, función renal, sangrado cada 6-12 meses. Evaluación de ablación: si FA paroxística recurrente o síntomas no controlados con fármacos. Ecocardiograma: anual o si cambios de sintomatología/capacidad de ejercicio. Holter post-ablación: verificar abolición de arritmia a 3 y 6 meses. Revisión de terapia antitromboembólica: cada 6-12 meses según GRACE/CHA₂DS₂-VASc. Considerar implante dispositivo (marcapaso/ICD) si indicaciones desarrolladas durante seguimiento.'
+  }
+});
+
+// ── CARDIOLOGÍA — Wizard Schemas ─────────────────────────────────────────────
+
+Object.assign(WIZARD_SCHEMA, {
+  insuficiencia_cardiaca: {
+    title: '💔 Insuficiencia Cardíaca',
+    sections: [
+      {
+        title: 'Clase Funcional y Síntomas',
+        fields: [
+          { id: 'nyha_clase', type: 'select', label: 'Clase funcional NYHA', options: ['Clase I — Sin limitación', 'Clase II — Limitación leve', 'Clase III — Limitación marcada', 'Clase IV — Síntomas en reposo'] },
+          { id: 'disnea_nocturna', type: 'checkbox', label: 'Disnea paroxística nocturna' },
+          { id: 'ortopnea', type: 'checkbox', label: 'Ortopnea' },
+          { id: 'ortopnea_almohadas', type: 'number', label: 'Número de almohadas', min: 1, max: 10, step: 1, dependsOn: 'ortopnea' },
+          { id: 'edema_bilateral', type: 'checkbox', label: 'Edema bilateral de miembros inferiores' },
+          { id: 'nicturia_veces', type: 'number', label: 'Nicturia (veces/noche)', min: 0, max: 20, step: 1 },
+          { id: 'hospitalizaciones_ano', type: 'number', label: 'Hospitalizaciones por ICC en último año', min: 0, max: 20, step: 1 }
+        ]
+      },
+      {
+        title: 'Exploración Física',
+        fields: [
+          { id: 'ta_sist', type: 'number', label: 'TA sistólica (mmHg)', min: 60, max: 220, step: 1 },
+          { id: 'ta_diast', type: 'number', label: 'TA diastólica (mmHg)', min: 30, max: 140, step: 1 },
+          { id: 'fc', type: 'number', label: 'FC (lpm)', min: 30, max: 200, step: 1 },
+          { id: 'sao2', type: 'number', label: 'SaO2 (%)', min: 70, max: 100, step: 1 },
+          { id: 'peso_actual', type: 'number', label: 'Peso actual (kg)', min: 20, max: 250, step: 0.5 },
+          { id: 'peso_seco', type: 'number', label: 'Peso seco estimado (kg)', min: 20, max: 250, step: 0.5 },
+          { id: 'ingurgitacion_yugular', type: 'checkbox', label: 'Ingurgitación yugular' },
+          { id: 'pvy_cm', type: 'number', label: 'PVY (cm H2O)', min: 2, max: 30, step: 1, dependsOn: 'ingurgitacion_yugular' },
+          { id: 'r3_galope', type: 'checkbox', label: 'Galope ventricular (B3)' },
+          { id: 'crepitantes', type: 'checkbox', label: 'Crepitantes' },
+          { id: 'edema_maleolar', type: 'checkbox', label: 'Edema maleolar con fóvea' }
+        ]
+      },
+      {
+        title: 'Ecocardiograma',
+        fields: [
+          { id: 'fevi_icc', type: 'number', label: 'FEVI (%)', min: 5, max: 80, step: 1 },
+          { id: 'tipo_icc', type: 'select', label: 'Tipo de ICC', options: ['FEVIr <40%', 'FEVIlm 40-49%', 'FEVIc ≥50%'] },
+          { id: 'disfuncion_diastolica', type: 'select', label: 'Disfunción diastólica', options: ['No', 'Grado I', 'Grado II', 'Grado III'] },
+          { id: 'valvulopatia_significativa', type: 'checkbox', label: 'Valvulopatía significativa' },
+          { id: 'hipertension_pulmonar_eco', type: 'checkbox', label: 'Hipertensión pulmonar (PSAP elevada)' }
+        ]
+      },
+      {
+        title: 'Biomarcadores',
+        fields: [
+          { id: 'bnp', type: 'number', label: 'BNP (pg/mL)', min: 0, max: 5000, step: 10 },
+          { id: 'potasio_icc', type: 'number', label: 'Potasio (mEq/L)', min: 2.5, max: 7.0, step: 0.1 },
+          { id: 'tfge_icc', type: 'number', label: 'TFGe (mL/min/1.73m²)', min: 5, max: 120, step: 1 },
+          { id: 'ferritina', type: 'number', label: 'Ferritina (ng/mL)', min: 5, max: 1000, step: 10 },
+          { id: 'tsat', type: 'number', label: 'TSAT (%)', min: 0, max: 100, step: 1 },
+          { id: 'deficit_hierro', type: 'checkbox', label: 'Déficit de hierro (TSAT <20% o ferritina <100)' }
+        ]
+      }
+    ]
+  },
+
+  cardiopatia_isquemica: {
+    title: '❤️‍🔥 Cardiopatía Isquémica',
+    sections: [
+      {
+        title: 'Historia Isquémica',
+        fields: [
+          { id: 'evento_previo', type: 'select', label: 'Evento isquémico previo', options: ['Sin evento previo', 'Angina estable', 'IAMCEST', 'IAMSEST', 'Angina inestable'] },
+          { id: 'revascularizacion', type: 'select', label: 'Revascularización previa', options: ['Sin revascularización', 'ACTP + Stent', 'CABG', 'Ambas'] },
+          { id: 'anos_desde_evento', type: 'number', label: 'Años desde último evento', min: 0, max: 50, step: 1 },
+          { id: 'tabaquismo_activo', type: 'checkbox', label: 'Tabaquismo activo actual' }
+        ]
+      },
+      {
+        title: 'Síntomas Actuales',
+        fields: [
+          { id: 'clase_angina', type: 'select', label: 'Clase de angina CCS', options: ['CCS 0 — Sin angina', 'CCS 1 — Solo esfuerzo intenso', 'CCS 2 — Esfuerzo moderado', 'CCS 3 — Esfuerzo mínimo', 'CCS 4 — Reposo'] },
+          { id: 'disnea_esfuerzo_ci', type: 'checkbox', label: 'Disnea de esfuerzo' },
+          { id: 'palpitaciones_ci', type: 'checkbox', label: 'Palpitaciones' },
+          { id: 'sincope_ci', type: 'checkbox', label: 'Síncope o presíncope' }
+        ]
+      },
+      {
+        title: 'Laboratorio e Imagen Coronaria',
+        fields: [
+          { id: 'ldl', type: 'number', label: 'LDL (mg/dL)', min: 20, max: 400, step: 5 },
+          { id: 'fevi_post_iamci', type: 'number', label: 'FEVI actual (%)', min: 5, max: 80, step: 1 },
+          { id: 'troponina_pico', type: 'number', label: 'Troponina pico (ng/L)', min: 0, max: 10000, step: 100 },
+          { id: 'vasos_afectados', type: 'select', label: 'Vasos coronarios afectados', options: ['1 vaso', '2 vasos', '3 vasos', 'Tronco común', 'No determinado'] },
+          { id: 'cambios_ecg_isquemicos', type: 'checkbox', label: 'Cambios ECG isquémicos o Q patológicas' }
+        ]
+      },
+      {
+        title: 'Evaluación de Riesgo',
+        fields: [
+          { id: 'riesgo_residual', type: 'select', label: 'Riesgo residual', options: ['Bajo riesgo residual', 'Moderado riesgo', 'Alto riesgo — revascularización incompleta'] },
+          { id: 'en_meta_ldl', type: 'checkbox', label: 'LDL en meta (<55 mg/dL)' },
+          { id: 'antiagregacion_doble', type: 'checkbox', label: 'Doble antiagregación activa' },
+          { id: 'rehabilitacion_cardiaca', type: 'checkbox', label: 'En programa rehabilitación cardíaca' }
+        ]
+      }
+    ]
+  },
+
+  arritmias: {
+    title: '📡 Arritmias',
+    sections: [
+      {
+        title: 'Tipo de Arritmia',
+        fields: [
+          { id: 'tipo_arritmia', type: 'select', label: 'Tipo de arritmia', options: ['FA paroxística', 'FA persistente', 'FA permanente', 'Flutter auricular', 'TSVP — Taquicardia Supraventricular', 'Extrasistolia ventricular', 'TV — Taquicardia Ventricular', 'BAV — Bloqueo AV', 'WPW', 'Otra'] },
+          { id: 'ehra', type: 'select', label: 'Clase EHRA (impacto sintomático)', options: ['EHRA I — Asintomática', 'EHRA II — Síntomas leves', 'EHRA III — Síntomas severos', 'EHRA IV — Incapacitante'] }
+        ]
+      },
+      {
+        title: 'Scores de Riesgo',
+        fields: [
+          { id: 'cha2ds2', type: 'number', label: 'CHA₂DS₂-VASc score', min: 0, max: 9, step: 1 },
+          { id: 'has_bled', type: 'number', label: 'HAS-BLED score', min: 0, max: 9, step: 1 },
+          { id: 'anticoagulacion_activa', type: 'checkbox', label: 'En anticoagulación activa' },
+          { id: 'cardioversion_reciente', type: 'checkbox', label: 'Cardioversión eléctrica reciente' },
+          { id: 'ablacion_previa_arr', type: 'checkbox', label: 'Ablación cardíaca previa' }
+        ]
+      },
+      {
+        title: 'Ecocardiograma',
+        fields: [
+          { id: 'fevi_arr', type: 'number', label: 'FEVI (%)', min: 5, max: 80, step: 1 },
+          { id: 'ai_volumen', type: 'number', label: 'Volumen AI (mL/m²)', min: 20, max: 80, step: 1 },
+          { id: 'cardiopatia_estructural', type: 'checkbox', label: 'Cardiopatía estructural significativa' },
+          { id: 'valvulopatia_subyacente', type: 'checkbox', label: 'Valvulopatía subyacente' }
+        ]
+      },
+      {
+        title: 'ECG y Holter',
+        fields: [
+          { id: 'qtc', type: 'number', label: 'QTc (ms)', min: 300, max: 600, step: 5 },
+          { id: 'delta_wpw', type: 'checkbox', label: 'Onda delta visible — WPW' },
+          { id: 'tv_no_sostenida_holter', type: 'checkbox', label: 'TV no sostenida en Holter' },
+          { id: 'carga_fa_alta', type: 'checkbox', label: 'Carga de FA alta (>50%)' },
+          { id: 'control_frecuencia', type: 'select', label: 'Control de frecuencia (FA)', options: ['FC en meta <80 lpm', 'FC no controlada >100 lpm', 'No aplica'] }
+        ]
+      }
+    ]
+  }
+});
+
+// ── CARDIOLOGÍA — Builder Functions ──────────────────────────────────────────
+
+function buildInsuficienciaCardiacaNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const nyha = v('nyha_clase');
+  const fevi = n('fevi_icc', '%');
+  const tipo = v('tipo_icc');
+  const hospitalizaciones = n('hospitalizaciones_ano');
+  const ferritina = n('ferritina');
+  const tsat = n('tsat', '%');
+  const potasio = n('potasio_icc', ' mEq/L');
+  const tfge = n('tfge_icc', ' mL/min');
+
+  let sintomas = '';
+  if (nyha || v('disnea_nocturna') || v('ortopnea')) {
+    sintomas = `Clase funcional NYHA: ${nyha || '__'}. `;
+    if (v('disnea_nocturna')) sintomas += 'Disnea paroxística nocturna presente. ';
+    if (v('ortopnea')) sintomas += `Ortopnea: ${v('ortopnea_almohadas') ? n('ortopnea_almohadas') + ' almohadas. ' : '__.'}`;
+    if (v('edema_bilateral')) sintomas += ' Edema bilateral de MMII presente. ';
+    sintomas += `Nicturia: ${n('nicturia_veces')} veces/noche. Hospitalizaciones previas: ${hospitalizaciones} en último año.`;
+  }
+
+  let exfisica = '';
+  if (v('ta_sist') || v('fc')) {
+    exfisica = `TA: ${n('ta_sist')}/${n('ta_diast')} mmHg · FC: ${n('fc')} lpm · SaO2: ${n('sao2')}%. `;
+    exfisica += `Peso actual: ${n('peso_actual')} kg · Peso seco: ${n('peso_seco')} kg. `;
+    if (v('ingurgitacion_yugular')) {
+      exfisica += `PVY: ${v('pvy_cm') ? n('pvy_cm') + ' cm. ' : '__ cm. '}`;
+    }
+    if (v('r3_galope')) exfisica += 'Galope ventricular presente. ';
+    if (v('crepitantes')) exfisica += 'Crepitantes ausculados. ';
+    if (v('edema_maleolar')) exfisica += 'Edema maleolar con fóvea presente.';
+  }
+
+  let estudios = '';
+  if (fevi || tipo) {
+    estudios = `FEVI: ${fevi} · Tipo: ${tipo || '__'}. `;
+    const diastolica = v('disfuncion_diastolica');
+    if (diastolica) estudios += `Disfunción diastólica: ${diastolica}. `;
+    if (v('valvulopatia_significativa')) estudios += 'Valvulopatía significativa presente. ';
+    if (v('hipertension_pulmonar_eco')) estudios += 'Hipertensión pulmonar estimada en ecocardiograma. ';
+    estudios += `Potasio: ${potasio} · TFGe: ${tfge}. `;
+    estudios += `Ferritina: ${ferritina} ng/mL · TSAT: ${tsat}.`;
+  }
+
+  let impresion = '';
+  if (fevi || tipo) {
+    impresion = `ICC ${tipo || 'tipo __'} — FEVI ${fevi}. Clase funcional NYHA ${nyha || '__'}. `;
+    if (v('deficit_hierro')) {
+      impresion += 'Déficit de hierro demostrado (ferritina <100 o TSAT <20%): considerar hierro IV. ';
+    }
+    impresion += `Potasio actual: ${potasio} (rango terapéutico para ARM si <5.0). TFGe: ${tfge}.`;
+  }
+
+  return {
+    sintomas: sintomas || undefined,
+    exfisica: exfisica || undefined,
+    estudios: estudios || undefined,
+    impresion: impresion || undefined
+  };
+}
+
+function buildCardiopatiaIsquemicaNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const evento = v('evento_previo');
+  const clase_angina = v('clase_angina');
+  const fevi = n('fevi_post_iamci', '%');
+  const ldl = n('ldl', ' mg/dL');
+  const vasos = v('vasos_afectados');
+  const riesgo = v('riesgo_residual');
+
+  let sintomas = '';
+  if (evento || clase_angina) {
+    sintomas = `Evento previo: ${evento || 'no especificado'}. `;
+    sintomas += `Revascularización previa: ${v('revascularizacion') || 'no especificada'}. `;
+    sintomas += `Clase CCS actual: ${clase_angina || '__'}. `;
+    if (v('tabaquismo_activo')) sintomas += 'TABAQUISMO ACTIVO actual. ';
+    sintomas += `Años desde último evento: ${n('anos_desde_evento')}.`;
+  }
+
+  let estudios = '';
+  if (ldl || fevi) {
+    estudios = `LDL: ${ldl}. FEVI: ${fevi}. `;
+    estudios += `Vasos afectados: ${vasos || '__'}. `;
+    if (v('cambios_ecg_isquemicos')) estudios += 'Cambios ECG isquémicos o Q patológicas documentadas. ';
+    if (v('troponina_pico')) {
+      estudios += `Troponina pico: ${n('troponina_pico')} ng/L.`;
+    }
+  }
+
+  let impresion = '';
+  if (evento || clase_angina || fevi) {
+    impresion = `Cardiopatía isquémica ${evento ? evento.toLowerCase() : '__'} · Clase CCS: ${clase_angina || '__'}. `;
+    impresion += `FEVI: ${fevi} · Vasos: ${vasos || '__'}. `;
+    impresion += `LDL actual: ${ldl} (meta <55 mg/dL). `;
+    impresion += `Riesgo residual: ${riesgo || '__'}. `;
+    if (v('en_meta_ldl')) {
+      impresion += 'LOGRADO: LDL en meta <55 mg/dL. ';
+    } else {
+      impresion += 'PENDIENTE: intensificar terapia lipidémica. ';
+    }
+    if (v('antiagregacion_doble')) {
+      impresion += 'En doble antiagregación activa. ';
+    }
+    if (v('rehabilitacion_cardiaca')) {
+      impresion += 'Participando en rehabilitación cardíaca.';
+    }
+  }
+
+  return {
+    sintomas: sintomas || undefined,
+    estudios: estudios || undefined,
+    impresion: impresion || undefined
+  };
+}
+
+function buildArritmiasNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const tipo = v('tipo_arritmia');
+  const ehra = v('ehra');
+  const cha2ds2 = n('cha2ds2');
+  const has_bled = n('has_bled');
+  const fevi = n('fevi_arr', '%');
+  const ai_vol = n('ai_volumen', ' mL/m²');
+  const qtc = n('qtc', ' ms');
+
+  let sintomas = '';
+  if (tipo || ehra) {
+    sintomas = `Tipo de arritmia: ${tipo || '__'}. `;
+    sintomas += `Clase EHRA: ${ehra || '__'}. `;
+    if (v('delta_wpw')) sintomas += 'Onda delta presente (WPW). ';
+    if (v('ablacion_previa_arr')) sintomas += 'Ablación cardíaca previa. ';
+  }
+
+  let estudios = '';
+  if (qtc || fevi || ai_vol) {
+    estudios = `QTc: ${qtc}. FEVI: ${fevi}. Volumen AI: ${ai_vol}. `;
+    if (v('tv_no_sostenida_holter')) estudios += 'TV no sostenida documentada en Holter. ';
+    if (v('carga_fa_alta')) estudios += 'Carga de FA alta (>50%). ';
+    if (v('cardiopatia_estructural')) estudios += 'Cardiopatía estructural significativa. ';
+    if (v('valvulopatia_subyacente')) estudios += 'Valvulopatía subyacente.';
+  }
+
+  let impresion = '';
+  if (tipo || cha2ds2 || has_bled) {
+    impresion = `Diagnóstico: ${tipo || '__'}. Clase EHRA: ${ehra || '__'}. `;
+    impresion += `CHA₂DS₂-VASc: ${cha2ds2} puntos. `;
+    impresion += `HAS-BLED: ${has_bled} puntos. `;
+    if (cha2ds2 >= 2) {
+      if (v('anticoagulacion_activa')) {
+        impresion += 'LOGRADO: En anticoagulación activa (indicada por CHA₂DS₂-VASc ≥2). ';
+      } else {
+        impresion += 'PENDIENTE: Iniciar anticoagulación (CHA₂DS₂-VASc ≥2). ';
+      }
+    }
+    const control = v('control_frecuencia');
+    if (control) {
+      impresion += `Control de frecuencia: ${control}. `;
+    }
+    if (v('delta_wpw')) {
+      impresion += 'ALERTA: WPW presente — evaluación de riesgo de preexcitación y candidato a ablación. ';
+    }
+    if (v('tv_no_sostenida_holter')) {
+      impresion += 'ALERTA: TV no sostenida — considerar ICD si FEVI reducida.';
+    }
+  }
+
+  return {
+    sintomas: sintomas || undefined,
+    estudios: estudios || undefined,
+    impresion: impresion || undefined
+  };
+}
+
+// Register builders
+Object.assign(WIZARD_BUILDERS, {
+  insuficiencia_cardiaca: buildInsuficienciaCardiacaNote,
+  cardiopatia_isquemica: buildCardiopatiaIsquemicaNote,
+  arritmias: buildArritmiasNote
+});
+
+// Mark modules as implemented
+['insuficiencia_cardiaca', 'cardiopatia_isquemica', 'arritmias'].forEach(m => IMPLEMENTED_MODULES.add(m));
+
+// ── NEFROLOGÍA — Templates ────────────────────────────────────────────────
+
+Object.assign(TEMPLATE_MODULES, {
+  erc: {
+    label: 'Enfermedad Renal Crónica (ERC)',
+    diagnostico: 'Diagnóstico de Enfermedad Renal Crónica estadio G__ A__ según KDIGO. Etiología: [DM2 / Hipertensión arterial / Glomerulonefritis / ERPAD / Nefropatía por analgésicos / Nefritis tubulointersticial / No determinada].',
+    sintomas: 'Síntomas urémicos: [ninguno / anorexia / náusea y vómito / prurito / fatiga intensa / edema de MMII / disnea / calambres / insomnio]. Diuresis: __ mL/24h (oliguria si <500 mL/día). Coloración de orina: [normal / espumosa / hematúrica]. Adherencia a restricciones dietética y hídrica: [bien / regular / mal]. Control de TA en casa: __ registros semanales. Síntomas que motivaron el diagnóstico: [hallazgo en tamizaje / HAS refractaria / DM2 / nefritis / cólico renal / infección urinaria recurrente].',
+    exfisica: 'TA: __/__  mmHg · FC: __ lpm · Peso actual: __ kg · Peso seco: __ kg. Edema: [no / fóvea ++ MMII / anasarca]. Palidez de mucosas: [sin / leve / moderada / severa — anemia]. Asterixis: [no / sí — encefalopatía urémica]. Soplo en AV/FAV: [no aplica / FAV permeable con frémito/thrill / MAV tunelizado acceso __ sitio __]. Tono muscular: [normal / hipotonía urémica]. Piel: [normal / hiperpigmentación / excoriaciones por prurito].',
+    estudios: 'Creatinina: __ mg/dL · TFGe (CKD-EPI): __ mL/min/1.73m² (estadio G__ según KDIGO)\nAlbuminuria (RAC): __ mg/g (A1 <30 / A2 30-300 / A3 >300)\nBUN: __ mg/dL · BUN/Cr ratio: __ (prerrenal si >20)\nElectrolitos: Na __ · K __ · Cl __ · CO3H __ (acidosis si <22 mEq/L) · Ca __ · P __ (hiperfosfatemia) en mEq/L o mg/dL\nPTHi: __ pg/mL (meta por estadio: G3a <70 / G3b <110 / G4 <300 / G5 <600 pg/mL)\nHb: __ g/dL · VCM: __ fL · Ferritina: __ μg/L · TSAT: __% (déficit de hierro si Ferritina <500 + TSAT <30%)\nVitamina D 25-OH: __ ng/mL · PCR: __ mg/L\nUSG renal: riñón D __ mm · I __ mm · Morfología: [tamaño reducido bilateral / normal / poliquístico / quistes simples]. Flujo Doppler: [normal / alterado].',
+    impresion: 'ERC estadio G__ A__ (KDIGO __). Etiología: [DM2 / HAS / glomerulonefritis / ERPAD / nefropatía por analgésicos / nefritis tubulointersticial / no determinada]. Complicaciones actuales: [anemia / hiperfosfatemia / hiperparatiroidismo secundario / acidosis metabólica / hiperpotasemia / malnutrición]. Progresión de TFGe: __ mL/min/1.73m²/año [estable / progresiva]. Derivación nefrológica: [sí — activa / pendiente / no indicada]. Preparación para terapia de sustitución renal (TSR): [no aún / informada sobre modalidades / en planificación de acceso vascular / en lista de espera para trasplante].',
+    tx_farmaco: 'IECA/ARA2: __________ __ mg/día (nefroprotector — meta proteinuria <0.5 g/día; suspender si TFGe <30 ó K >5.5 mEq/L). Inhibidor SGLT2: dapagliflozina 10 mg/día si DM2 + TFGe ≥20 (también en ERC no-DM2: TFGe ≥25 + proteinuria). Anemia: EPO/darbepoetina __ UI SC c/__ semanas (meta Hb 10-12 g/dL). Hierro IV: carboximaltosa/hierro sacarosa si TSAT <30% + Ferritina <500. Quelante de fósforo: [carbonato de calcio __ mg con alimentos / sevelamer __ mg c/8h / lantano __ mg c/8h]. Suplemento de Vitamina D3: __ UI/día. Bicarbonato sódico: __ mEq/día si CO3H <22.',
+    tx_nofarmaco: 'Dieta baja en potasio (<2.4 g/día si K >5.5), baja en fósforo (<800 mg/día), baja en proteínas (0.6-0.8 g/kg/día si TFGe <30), restricción de sodio <2 g/día. Referir a nutriólogo especializado en ERC. Evaluar acceso vascular precoz (FAV) si TFGe <15-20 (anticipación 6-12 meses). Actividad física aeróbica moderada según tolerancia.',
+    seguimiento: 'TFGe + electrolitos + BUN c/3 meses si G3-G4, c/1 mes si G5. Albuminuria c/6 meses. PTHi c/3-6 meses. Hb c/3 meses si recibiendo EPO. Meta de TA: <130/80 mmHg. Criterios de urgencia: K >6.5, TFGe <10, uremia sintomática → hospitalización/inicio de diálisis.',
+  },
+
+  dialisis: {
+    label: 'Diálisis',
+    diagnostico: 'Paciente en programa de [hemodiálisis / diálisis peritoneal] desde __ meses. Indicación para diálisis: TFGe <10 mL/min/1.73m² o síntomas urémicos severos.',
+    sintomas: 'Modalidad de diálisis: [HD — hemodiálisis / DPCA — diálisis peritoneal continua ambulatoria / DPA — diálisis peritoneal automatizada]. Tiempo en diálisis: __ meses. Tolerancia a sesiones: [buena / calambres / hipotensión intradialítica / náusea]. Diuresis residual: __ mL/24h (función renal residual). Complicaciones recientes: [ninguna / peritonitis (DPCA) — agente: __ / infección de acceso / trombosis FAV / hospitalización por: __]. Calidad de vida subjetiva (escala 1-10): __.',
+    exfisica: 'TA predialítica: __/__ mmHg · postdialítica: __/__ mmHg · FC: __ lpm. Peso seco: __ kg · Peso actual: __ kg · Ganancia interdialítica: __ kg (máximo recomendado 1-2 kg/día). Acceso vascular: [FAV (brazo __) — frémito/thrill: sí/no, maduración: adecuada/inadecuada / CVC tunelizado (sitio: __) / Catéter peritoneal (sitio __) — estado de salida: limpio / con secreción]. Edema: [no / fóvea ++ MMII]. Signos de uremia: [no / asterixis / encefalopatía / pericarditis].',
+    estudios: 'HD: Kt/V: __ (adecuado si ≥1.2/sesión; ≥1.4 para DPA) · URR: __% · Sesiones/semana: __. DPCA: PET (test de equilibrio peritoneal): [alto / alto-medio / bajo-medio / bajo transportador] · Kt/V semanal: __ (meta ≥1.7).\nLaboratorio reciente: Hb: __ g/dL (meta 10-12 g/dL) · K predialítico: __ mEq/L · P: __ mg/dL · PTHi: __ pg/mL · Albúmina: __ g/dL (marcador de nutrición/inflamación) · PCR: __ mg/L · Ferritina: __ μg/L · TSAT: __% (meta 20-30%).',
+    impresion: 'Paciente en [HD / DPCA / DPA] — __ meses en diálisis. Adecuación dialítica: [adecuada Kt/V __ / inadecuada — ajuste de prescripción]. Estado de volumen: [euvolémico / sobrecargado — ganancia __ kg]. Acceso vascular: [funcional / disfuncional — plan: __]. Anemia: [controlada / inadecuada Hb __ g/dL]. Nutrición: [adecuada Alb __ g/dL / desnutrición — albúmina baja]. Complicaciones activas: [peritonitis / infección de acceso / trombosis FAV / ninguna]. Lista de espera para trasplante: [sí / no / evaluación pendiente].',
+    tx_farmaco: 'EPO/darbepoetina: __ UI SC c/__ semanas (ajustar para Hb 10-12 g/dL; suspender si >12 g/dL). Hierro IV: carboximaltosa/sacarosa __ g c/__ semanas (mantener Ferritina 200-500 + TSAT 20-30%). Quelante de fósforo: [sevelamer __ mg c/comida / carbonato de calcio __ mg c/comida]. Activador del receptor de vitamina D: Paricalcitol/Calcitriol __ mcg c/__ veces/semana (si PTHi elevada). Heparina en HD: __ UI dosis de carga + __ UI/h (o libre de heparina si riesgo de sangrado). Cinacalcet __ mg/día si HPT secundario con Ca >9.5 y P controlado.',
+    tx_nofarmaco: 'Dieta: restricción de K <2.4 g/día y P <800 mg/día entre sesiones. Fluidos: restricción <1 L/día si diuresis residual <500 mL. Cuidado estricto del acceso vascular (FAV: no tomar presión, no venopunción, dormir sobre él). Ejercicio físico adaptado (intradiálisis si es posible). Evaluar candidatura a trasplante renal (referir si no hay contraindicación absoluta).',
+    seguimiento: 'Laboratorio mensual: Hb, K, P, Alb, PTHi c/3 meses. Kt/V mensual en HD. Revisión de peso seco con cada control. Evaluación de acceso vascular en cada sesión de HD. Valoración de lista de espera para trasplante anualmente.',
+  },
+});
+
+// ── NEFROLOGÍA — Wizard Schemas ───────────────────────────────────────────
+
+Object.assign(WIZARD_SCHEMA, {
+  erc: {
+    title: '💧 Enf. Renal Crónica',
+    sections: [
+      {
+        title: 'Diagnóstico y etiología',
+        fields: [
+          { id: 'estadio_g', type: 'select', label: 'Estadio KDIGO por TFGe', options: ['G1 (≥90)', 'G2 (60-89)', 'G3a (45-59)', 'G3b (30-44)', 'G4 (15-29)', 'G5 (<15)'] },
+          { id: 'estadio_a', type: 'select', label: 'Estadio KDIGO por albuminuria', options: ['A1 (<30 mg/g)', 'A2 (30-300 mg/g)', 'A3 (>300 mg/g)'] },
+          { id: 'etiologia_erc', type: 'select', label: 'Etiología', options: ['DM2', 'Hipertensión arterial', 'Glomerulonefritis', 'ERPAD', 'Nefropatía por analgésicos', 'Nefritis tubulointersticial', 'No determinada'] },
+          { id: 'anos_erc', type: 'number', label: 'Años de diagnóstico de ERC', min: 0, max: 60, step: 1 },
+        ],
+      },
+      {
+        title: 'Función renal actual',
+        fields: [
+          { id: 'tfge_erc', type: 'number', label: 'TFGe (mL/min/1.73m²)', min: 0, max: 200, step: 1 },
+          { id: 'creatinina_erc', type: 'number', label: 'Creatinina (mg/dL)', min: 0.3, max: 20, step: 0.1 },
+          { id: 'bun_erc', type: 'number', label: 'BUN (mg/dL)', min: 0, max: 200, step: 1 },
+          { id: 'albuminuria_mg', type: 'number', label: 'Albuminuria RAC (mg/g)', min: 0, max: 5000, step: 10 },
+          { id: 'proteinuria_sig', type: 'checkbox', label: 'Proteinuria >0.5 g/día — significativa' },
+        ],
+      },
+      {
+        title: 'Complicaciones metabólicas',
+        fields: [
+          { id: 'potasio_erc', type: 'number', label: 'K (mEq/L)', min: 2.5, max: 8.0, step: 0.1 },
+          { id: 'bicarbonato_erc', type: 'number', label: 'CO3H (mEq/L)', min: 10, max: 35, step: 0.5 },
+          { id: 'fosforo_erc', type: 'number', label: 'P (mg/dL)', min: 1, max: 12, step: 0.1 },
+          { id: 'pth_erc', type: 'number', label: 'PTHi (pg/mL)', min: 0, max: 1500, step: 5 },
+          { id: 'acidosis_metabolica', type: 'checkbox', label: 'Acidosis metabólica (CO3H <22)' },
+          { id: 'hiperfosfatemia_erc', type: 'checkbox', label: 'Hiperfosfatemia' },
+          { id: 'hiperparatiroidismo_sec', type: 'checkbox', label: 'Hiperparatiroidismo secundario' },
+        ],
+      },
+      {
+        title: 'Anemia',
+        fields: [
+          { id: 'hb_erc', type: 'number', label: 'Hb (g/dL)', min: 4, max: 18, step: 0.1 },
+          { id: 'ferritina_erc', type: 'number', label: 'Ferritina (μg/L)', min: 0, max: 2000, step: 10 },
+          { id: 'tsat_erc', type: 'number', label: 'TSAT (%)', min: 0, max: 100, step: 1 },
+          { id: 'bajo_epo', type: 'checkbox', label: 'Recibiendo EPO/darbepoetina' },
+          { id: 'deficit_hierro_erc', type: 'checkbox', label: 'Déficit de hierro (TSAT <30%)' },
+        ],
+      },
+      {
+        title: 'Plan de terapia de sustitución renal',
+        fields: [
+          { id: 'derivado_nefrologia', type: 'checkbox', label: 'Derivado a nefrología' },
+          { id: 'plan_tsr', type: 'select', label: 'Plan de TSR', options: ['Sin plan — TFGe estable', 'Informado sobre opciones', 'Preparando acceso vascular', 'En lista de trasplante', 'Ya en diálisis'] },
+          { id: 'fav_creada', type: 'checkbox', label: 'FAV/MAV creada' },
+        ],
+      },
+    ],
+  },
+
+  dialisis: {
+    title: '🔄 Diálisis',
+    sections: [
+      {
+        title: 'Modalidad y acceso vascular',
+        fields: [
+          { id: 'modalidad_dialisis', type: 'select', label: 'Modalidad', options: ['Hemodiálisis (HD) 3x/sem', 'HD 3x/sem en centro', 'HD domiciliaria', 'DPCA', 'DPA — Diálisis Peritoneal Automatizada'] },
+          { id: 'meses_dialisis', type: 'number', label: 'Meses en diálisis', min: 0, max: 600, step: 1 },
+          { id: 'sesiones_semana', type: 'number', label: 'Sesiones HD/semana', min: 2, max: 7, step: 1 },
+          { id: 'acceso_vascular', type: 'select', label: 'Tipo de acceso', options: ['FAV — Fístula arteriovenosa', 'CVC tunelizado', 'CVC no tunelizado (temporal)', 'Catéter peritoneal'] },
+        ],
+      },
+      {
+        title: 'Adecuación dialítica',
+        fields: [
+          { id: 'ktv', type: 'number', label: 'Kt/V última medición', min: 0.5, max: 3, step: 0.01 },
+          { id: 'urr', type: 'number', label: 'URR (%)', min: 30, max: 100, step: 1 },
+          { id: 'peso_seco', type: 'number', label: 'Peso seco (kg)', min: 30, max: 200, step: 0.5 },
+          { id: 'peso_actual_hd', type: 'number', label: 'Peso actual (kg)', min: 30, max: 200, step: 0.1 },
+          { id: 'ganancia_inter', type: 'number', label: 'Ganancia interdialítica (kg)', min: 0, max: 8, step: 0.1 },
+          { id: 'adecuacion_satisfactoria', type: 'checkbox', label: 'Adecuación dialítica satisfactoria' },
+        ],
+      },
+      {
+        title: 'Laboratorio',
+        fields: [
+          { id: 'hb_hd', type: 'number', label: 'Hb (g/dL)', min: 4, max: 18, step: 0.1 },
+          { id: 'k_predial', type: 'number', label: 'K predialítico (mEq/L)', min: 2, max: 8, step: 0.1 },
+          { id: 'fosforo_hd', type: 'number', label: 'P (mg/dL)', min: 1, max: 15, step: 0.1 },
+          { id: 'pth_hd', type: 'number', label: 'PTHi (pg/mL)', min: 0, max: 2000, step: 5 },
+          { id: 'albumina_hd', type: 'number', label: 'Albúmina (g/dL)', min: 1, max: 5, step: 0.1 },
+          { id: 'ferritina_hd', type: 'number', label: 'Ferritina (μg/L)', min: 0, max: 2000, step: 10 },
+          { id: 'tsat_hd', type: 'number', label: 'TSAT (%)', min: 0, max: 100, step: 1 },
+        ],
+      },
+      {
+        title: 'Complicaciones y trasplante',
+        fields: [
+          { id: 'complicacion_reciente', type: 'select', label: 'Complicación reciente', options: ['Ninguna', 'Peritonitis', 'Infección de acceso', 'Trombosis FAV', 'Hipotensión intradialítica', 'Hospitalización reciente'] },
+          { id: 'en_lista_trasplante', type: 'checkbox', label: 'En lista de espera para trasplante' },
+          { id: 'evaluacion_trasplante_pendiente', type: 'checkbox', label: 'Evaluación para trasplante pendiente' },
+          { id: 'estado_nutricion', type: 'select', label: 'Estado nutricional', options: ['Adecuada — Alb >3.5 g/dL', 'Desnutrición leve — Alb 3.0-3.5 g/dL', 'Desnutrición moderada-severa — Alb <3.0 g/dL'] },
+        ],
+      },
+    ],
+  },
+});
+
+// ── NEFROLOGÍA — Builder Functions ────────────────────────────────────────
+
+function buildErcNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  // Map estadio_g selection to G value
+  const estadio_g_map = {
+    'G1 (≥90)': 'G1',
+    'G2 (60-89)': 'G2',
+    'G3a (45-59)': 'G3a',
+    'G3b (30-44)': 'G3b',
+    'G4 (15-29)': 'G4',
+    'G5 (<15)': 'G5',
+  };
+
+  // Map estadio_a selection to A value
+  const estadio_a_map = {
+    'A1 (<30 mg/g)': 'A1',
+    'A2 (30-300 mg/g)': 'A2',
+    'A3 (>300 mg/g)': 'A3',
+  };
+
+  const g_value = estadio_g_map[v('estadio_g')] || 'G?';
+  const a_value = estadio_a_map[v('estadio_a')] || 'A?';
+  const kdigo_stage = `${g_value}${a_value}`;
+
+  const tfge = n('tfge_erc');
+  const k_level = n('potasio_erc');
+  const hb = n('hb_erc');
+  const pth = n('pth_erc');
+  const albumina = n('albuminuria_mg');
+
+  let estudios = `Creatinina: ${n('creatinina_erc', 'mg/dL')} · TFGe (CKD-EPI): ${tfge} mL/min/1.73m² (estadio ${g_value})\n`;
+  estudios += `Albuminuria (RAC): ${albumina} mg/g (${a_value})\n`;
+  estudios += `BUN: ${n('bun_erc', 'mg/dL')}\n`;
+  estudios += `Electrolitos: K ${k_level} mEq/L · CO3H ${n('bicarbonato_erc', 'mEq/L')} · P ${n('fosforo_erc', 'mg/dL')}\n`;
+  estudios += `PTHi: ${pth} pg/mL\n`;
+  estudios += `Hb: ${hb} g/dL · Ferritina: ${n('ferritina_erc', 'μg/L')} · TSAT: ${n('tsat_erc', '%')}`;
+
+  let impresion = `ERC estadio ${kdigo_stage} (KDIGO). Etiología: ${v('etiologia_erc')}. `;
+  impresion += `TFGe: ${tfge} mL/min/1.73m²/año. `;
+
+  if (k_level > 5.5) {
+    impresion += `Hiperpotasemia: K ${k_level} mEq/L (elevado). `;
+  }
+
+  if (hb < 10) {
+    impresion += `Anemia: Hb ${hb} g/dL (bajo). `;
+  }
+
+  if (pth > 600 && g_value === 'G5') {
+    impresion += `Hiperparatiroidismo secundario: PTHi ${pth} pg/mL (elevado para G5). `;
+  }
+
+  const plan_tsr = v('plan_tsr');
+  impresion += `Plan de TSR: ${plan_tsr}.`;
+
+  return {
+    estudios,
+    impresion,
+  };
+}
+
+function buildDialisisNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const modalidad = v('modalidad_dialisis');
+  const ktv = n('ktv');
+  const urr = n('urr');
+  const ganancia = n('ganancia_inter');
+  const hb = n('hb_hd');
+  const k_pre = n('k_predial');
+  const pth = n('pth_hd');
+  const albumina = n('albumina_hd');
+
+  let estudios = `Modalidad: ${modalidad}\n`;
+  if (modalidad.includes('HD') || modalidad.includes('Hemodiálisis')) {
+    estudios += `Kt/V: ${ktv} (meta ≥1.2/sesión) · URR: ${urr}%\n`;
+  } else {
+    estudios += `Kt/V semanal: ${ktv} (meta ≥1.7)\n`;
+  }
+  estudios += `Peso seco: ${n('peso_seco', 'kg')} · Ganancia interdialítica: ${ganancia} kg\n`;
+  estudios += `Laboratorio: Hb ${hb} g/dL · K predialítico ${k_pre} mEq/L · P ${n('fosforo_hd', 'mg/dL')} · PTHi ${pth} pg/mL · Albúmina ${albumina} g/dL`;
+
+  let impresion = `Paciente en ${modalidad} — ${n('meses_dialisis')} meses en diálisis. `;
+
+  if (ktv >= 1.2 || ktv >= 1.4) {
+    impresion += `Adecuación dialítica: adecuada (Kt/V ${ktv}). `;
+  } else {
+    impresion += `Adecuación dialítica: inadecuada (Kt/V ${ktv} — requiere ajuste). `;
+  }
+
+  if (ganancia > 2) {
+    impresion += `Estado de volumen: sobrecargado (ganancia ${ganancia} kg > 2 kg recomendado). `;
+  } else if (ganancia <= 2) {
+    impresion += `Estado de volumen: euvolémico (ganancia ${ganancia} kg). `;
+  }
+
+  if (hb < 10 || hb > 12) {
+    impresion += `Anemia: inadecuada (Hb ${hb} g/dL). `;
+  } else {
+    impresion += `Anemia: controlada (Hb ${hb} g/dL). `;
+  }
+
+  if (albumina < 3.0) {
+    impresion += `Nutrición: desnutrición moderada-severa (Alb ${albumina} g/dL). `;
+  } else if (albumina < 3.5) {
+    impresion += `Nutrición: desnutrición leve (Alb ${albumina} g/dL). `;
+  } else {
+    impresion += `Nutrición: adecuada (Alb ${albumina} g/dL). `;
+  }
+
+  const complicacion = v('complicacion_reciente');
+  if (complicacion !== 'Ninguna') {
+    impresion += `Complicación activa: ${complicacion}. `;
+  }
+
+  const en_lista = v('en_lista_trasplante');
+  impresion += `Lista de espera para trasplante: ${en_lista ? 'sí' : 'no'}.`;
+
+  return {
+    estudios,
+    impresion,
+  };
+}
+
+Object.assign(WIZARD_BUILDERS, {
+  erc: buildErcNote,
+  dialisis: buildDialisisNote,
+});
+
+['erc', 'dialisis'].forEach((m) => IMPLEMENTED_MODULES.add(m));
+
 </script>
 </body>
 </html>
