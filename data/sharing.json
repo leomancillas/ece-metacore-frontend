@@ -1,1 +1,25 @@
-{"shares":{}}
+{
+  "shares": {
+    "5de672d9-f7c1-4053-bf12-8fff13f31666": {
+      "shared_by": "4c7c3132-c961-4f42-99c9-a6c9b68530c9",
+      "shared_by_name": "Dr. Leonardo Mancillas",
+      "shared_with": [
+        "cfdc75a2-c299-4565-a5a1-854ad7bbc49e"
+      ],
+      "patient_snapshot": {
+        "id": "5de672d9-f7c1-4053-bf12-8fff13f31666",
+        "expediente": "ECE-2026-0047",
+        "nombre": "Sofía",
+        "apellido_paterno": "Ramírez",
+        "apellido_materno": "Vega",
+        "fecha_nacimiento": "1997-08-14T00:00:00.000Z",
+        "sexo": "F",
+        "telefono": "+525512345678",
+        "email": "sofia.ramirez.vega@prueba.mx",
+        "alergias": "",
+        "antecedentes": ""
+      },
+      "updated_at": "2026-04-01T03:23:51.488Z"
+    }
+  }
+}
