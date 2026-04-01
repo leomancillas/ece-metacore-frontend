@@ -7178,6 +7178,1063 @@ Object.assign(WIZARD_BUILDERS, {
 
 ['erc', 'dialisis'].forEach((m) => IMPLEMENTED_MODULES.add(m));
 
+
+// ════════════════════════════════════════════════════════════════════
+// TIER 2 SPECIALTY WIZARDS — Ginecología, Neumología, Gastroenterología
+// ════════════════════════════════════════════════════════════════════
+// ECE META CORE - Módulos de Ginecología
+// Feature: Ginecología (Gineco-Obstetricia, Climaterio, Cáncer de Cérvix)
+
+Object.assign(TEMPLATE_MODULES, {
+  gineco_obst: {
+    label: 'Historia Gineco-Obstétrica',
+    diagnostico: 'Atención ginecológica preventiva / consulta de rutina (Z01.419)',
+    sintomas: 'Historia reproductiva: G__ P__ A__ C__ (gestaciones/partos/abortos/cesáreas). FUR: __ (fecha última regla). Ciclos menstruales: [regulares __ días / irregulares — intervalo: __ días]. Duración sangrado: __ días. Dismenorrea: [no / leve / moderada / severa — uso de AINE: sí/no]. Dispareunia: [no / superficial / profunda]. Flujo vaginal: [normal / leucorrea — características: color/olor/cantidad]. Masa pélvica referida: [no/sí]. Sangrado postcoital: [no/sí]. Sangrado uterino anormal: [no/sí — patrón: __]. Método anticonceptivo actual: [ninguno / ACO __ marca / DIU __ tipo — fecha inserción __ / implante subdérmico / condón / ligadura tubaria / vasectomía de pareja].',
+    exfisica: 'Exploración mamaria: [sin alteraciones / nódulo palpable — localización: cuadrante __ mama D/I, tamaño __ cm, consistencia __, movilidad __, dolor: sí/no / retracción pezón / descarga por pezón — características: __]. Abdomen: [blando, depresible, sin masas / masa palpable __ cm en __]. Exploración pélvica: cérvix [aspecto normal / erosión / lesión visible / leucorrea — características]. Fondo uterino: [AVF/RVF, tamaño __]. Anexos: [libres / tumoración D/I __ cm]. Tono del suelo pélvico: [adecuado / disminuido — grado de cistocele/rectocele: __].',
+    estudios: 'Papanicolau / Citología cervical: fecha __ — resultado: [NILM / ASC-US / LSIL / HSIL / Ca in situ / Carcinoma invasor]. VPH genotipo: [negativo / VPH alto riesgo — tipos: __ / no realizado]. Mastografía: fecha __ — BIRADS __ [0: incompleto / 1: normal / 2: benigno / 3: prob benigno / 4: sospechoso / 5: altamente maligno / 6: Ca conocido]. USG mamario: [no realizado / __]. USG pélvico-transvaginal: endometrio __ mm (lineal en posmenopáusica / fase __ en premenopáusica) · Ovarios: D __ mm I __ mm · Quiste ovárico: [no / sí — simple/complejo, __ mm] · Miomas: [no / sí — subseroso/submucoso/intramural __ mm].',
+    impresion: 'Paciente G__ P__ A__ C__, __ años, __ menarquia, FUR: __. Estado reproductivo: [fértil activa / planificando embarazo / no planifica / posmenopáusica]. Anticoncepción: [adecuada / requiere ajuste / sin método — riesgo de embarazo no planeado]. Hallazgos: [sin alteraciones / Pap anormal — requiere seguimiento / lesión mamaria — requiere estudio / patología uterina: __]. Cribado: [al día / pendiente: Pap __ / mastografía __ / densitometría __].',
+    tx_farmaco: 'Anticoncepción hormonal si indicada: ACO: ___________ (etinilestradiol __ mcg + progestágeno __) — tomar diario a la misma hora. DIU: [Cu-T 380A — no hormonal, duración 10 años / Mirena LNG — 8 años / Kyleena LNG — 5 años]. Implante: Implanon/Nexplanon — 3 años. Ácido fólico 400 mcg/día si planifica embarazo. Tratamiento de infección vaginal si detectada: [Metronidazol __ / Fluconazol __ / Clotrimazol __].',
+    tx_nofarmaco: 'Autoexploración mamaria mensual (informar técnica). Uso de condón para prevención de ITS independiente del método anticonceptivo. Consejería reproductiva / planificación familiar. Vacunación: VPH si elegible (hasta 26a; valorar 27-45a).',
+    seguimiento: 'Cita anual para Pap + exploración mamaria. Mastografía anual ≥40a (o a partir de 35a si AHF de Ca mama). Próximo Pap: __. Renovación anticonceptivo: __. USG pélvico si patología uterina: __ meses.'
+  },
+  climaterio: {
+    label: 'Climaterio / Menopausia',
+    diagnostico: 'Menopausia natural (N95.1) / Síndrome climatérico (N95.1)',
+    sintomas: 'FUM: __ (fecha última menstruación). Tiempo en menopausia: __ meses/años (menopausia natural si ≥12 meses de amenorrea). Síntomas vasomotores: sofocos __ episodios/día, duración __ min, intensidad [leve/moderada/severa], despertares nocturnos: __ veces/noche. Síntomas genitourinarios (GSM): sequedad vaginal [no/sí — dispareunia: sí/no], urgencia urinaria [no/sí], infecciones urinarias recurrentes [no/sí — __ en último año]. Síntomas neurológicos: [insomnio/irritabilidad/ansiedad/niebla mental/palpitaciones]. Cambios físicos: [pérdida de cabello/piel seca/peso/distribución corporal]. Uso previo de TH: [no/sí — tipo/duración/motivo de suspensión].',
+    exfisica: 'Peso: __ kg · IMC: __ kg/m² · TA: __/__ mmHg. Piel: [normal/atrófica]. Mucosa vaginal: [húmeda/atrófica — pH vaginal: __ (normal <4.5; >5.0 atrofia)]. Tono de suelo pélvico: [adecuado/disminuido]. Mama: [sin alteraciones / nódulo — BIRADS __]. Tiroides: [normal/bocio/nódulo].',
+    estudios: 'FSH: __ mUI/mL (≥40 confirma menopausia si clínica + amenorrea ≥12 meses). Estradiol: __ pg/mL (<20 posmenopáusica). TSH: __ (descartar hipotiroidismo como causa de síntomas). Glucosa: __ · Perfil lipídico: CT__ HDL__ LDL__ TG__ mg/dL (riesgo CV posmenopausia aumentado). Densitometría ósea (DXA): columna T-score __ · cadera total T-score __ · [normal ≥-1.0 / osteopenia -1.0 a -2.5 / osteoporosis ≤-2.5]. Mamografía: BIRADS __. Citología cervical: fecha __ resultado __.',
+    impresion: 'Climaterio/menopausia [natural/quirúrgica/prematura (IOF <40a)] — __ años posmenopáusica. Síntomas vasomotores: [ausentes/leves/moderados/severos] — impacto en calidad de vida: [bajo/moderado/alto]. GSM: [presente/ausente]. Riesgo de osteoporosis: T-score columna __ / cadera __ — [normal/osteopenia/osteoporosis]. Riesgo cardiovascular: [bajo/moderado/alto — ASCVD 10a: __%]. Candidata a TH: [sí — ventana terapéutica <60a/menos de 10a posmenopausia, sin contraindicaciones / no — contraindicación: __ / evaluando].',
+    tx_farmaco: 'TH sistémica (si síntomas vasomotores moderados-severos + sin contraindicaciones): [Estradiol transdérmico __ mcg/24h parche + Progesterona micronizada 200 mg/día 12 días/mes (útero íntegro) / Tibolona 2.5 mg/día]. TH local (GSM sin síntomas sistémicos): [Estriol crema 0.1% __ g vaginal __ veces/sem / Óvulo estradiol 10 mcg cada 2 días / Ospemifeno 60 mg/día vo]. No hormonal para sofocos: [Venlafaxina 37.5-75 mg/día / Paroxetina 10-20 mg/día / Gabapentina 300 mg/noche / Fezolinetant 45 mg/día — nuevo bloqueador de NK3R]. Osteoporosis si T-score ≤-2.5: ver módulo de osteoporosis.',
+    tx_nofarmaco: 'Hábitos: ejercicio aeróbico + resistencia (reduce sofocos y protege hueso). Temperatura ambiente fresca, ropa ligera por capas. Reducir cafeína/alcohol/picante (desencadenantes). Dieta mediterránea + calcio 1200 mg/día + vit D 800-1000 UI/día. Técnicas de relajación/mindfulness para insomnio. Lubricante vaginal sin hormonas si rechazo a TH local.',
+    seguimiento: 'Control en 3 meses tras inicio de TH (evaluar eficacia y tolerabilidad). Mamografía anual. Densitometría ósea c/2 años. Revisión anual si en TH: perfil lipídico, TA, síntomas. TH: reevaluar indicación c/1-2 años (mínima dosis efectiva por menor tiempo posible).'
+  },
+  cancer_cervix: {
+    label: 'Prevención Cáncer de Cérvix',
+    diagnostico: 'Cribado de cáncer de cuello uterino (Z12.4) / Displasia cervical (N87.1)',
+    sintomas: 'Motivo: [cribado rutinario / seguimiento de Pap anormal / seguimiento post-colposcopía / seguimiento post-tratamiento (LEEP/criocirugía)]. Síntomas: [asintomática / flujo vaginal anormal — características: __ / sangrado postcoital / sangrado intermenstrual / sangrado posmenopáusico / dolor pélvico]. Antecedente de displasia: [ninguno / NIC1 — año: __ / NIC2 / NIC3 / Ca in situ — tratado: sí/no]. Inicio de vida sexual: __ años. Número de parejas: __. Tabaquismo: [no/sí — paquetes-año: __] (cofactor de progresión).',
+    exfisica: 'Especuloscopia: cérvix [aspecto normal / ectocervix sin lesión / zona de transformación visible / lesión acetoblanca — localización: __ cuadrantes / lesión puntiforme vascular / lesión exofítica / sangrado al contacto]. Colposcopía (si realizada): [satisfactoria: unión escamocolumnar visible / insatisfactoria: no visible]. Zona de transformación: [tipo 1 — ectocervical / tipo 2 — parcialmente endocervical / tipo 3 — completamente endocervical]. Impresión colposcópica: [negativa para NIC / NIC1 / NIC2 / NIC3 / Maligno].',
+    estudios: 'Citología cervical (Pap): fecha __ — Bethesda: [NILM / ASC-US / ASC-H / LSIL / HSIL / Ca escamoso / Adenocarcinoma in situ / Adenocarcinoma]. Prueba VPH-HR: [negativa / positiva — genotipificación: VPH 16: sí/no / VPH 18: sí/no / Otros AR: sí/no]. Colposcopía: fecha __ — biopsia dirigida: [no realizada / realizada]. Histología de biopsia: [NIC1 — condiloma / NIC2 / NIC3 — Ca in situ / Carcinoma invasor estadio __]. Prueba de curación post-tratamiento: Pap + VPH a los __ meses — resultado: [negativo / positivo — persistente].',
+    impresion: 'Cribado cervical: [al día — Pap/VPH negativo fecha: __ / anormal — resultado: __ — manejo: __]. Histología: [NIC1 — manejo expectante/seguimiento / NIC2-3 — tratamiento escisional indicado / Carcinoma invasor — referir oncología ginecológica urgente]. Tratamiento realizado: [LEEP/conización fecha: __ / criocirugía / ninguno]. Estado post-tratamiento: [márgenes libres / márgenes comprometidos — reconización / seguimiento intensificado VPH+Pap c/6m × 2 años]. Vacunación VPH: [completa / incompleta — aplicar / no elegible (>45a no expuesta)].',
+    tx_farmaco: 'Tratamiento de NIC2-3: LEEP (escisión electroquirúrgica con asa) — fecha programada: __. Criocirugía: [indicada si lesión <3 cm, no extensión endocervical]. Conización en frío: si sospecha de adenocarcinoma in situ o márgenes de LEEP comprometidos. NIC1: observación — cita Pap + VPH en 12 meses (regresión espontánea ~60%). Infección: [Metronidazol si BV asociada / Aciclovir si VHS asociado].',
+    tx_nofarmaco: 'Vacuna VPH (si elegible): Gardasil-9 (9-valente): 2 dosis si <15a / 3 dosis si ≥15a — protege VPH 6,11,16,18,31,33,45,52,58. Cesación tabáquica (cofactor de progresión de displasia). Información sobre cribado y seguimiento (adherencia crítica para cura). No necesidad de abstinencia sexual tras LEEP (excepto primeras 4 semanas). Uso de condón no elimina riesgo VPH (contacto piel con piel).',
+    seguimiento: 'NIC1: Pap + VPH HR en 12 meses. Post-LEEP NIC2-3: Pap + VPH HR c/6 meses × 2 años, luego anual × 3 años, si negativo → rutina. VPH 16/18 persistente tras LEEP: repetir colposcopía en 6 meses. Ca invasor: referir a oncología ginecológica, estadificación completa urgente.'
+  }
+});
+
+Object.assign(WIZARD_SCHEMA, {
+  gineco_obst: {
+    title: '🌸 Historia Gineco-Obstétrica',
+    sections: [
+      {
+        name: 'Historia menstrual',
+        fields: [
+          { id: 'menarquia_edad', type: 'number', label: 'Edad de menarquia (años)', min: 8, max: 20 },
+          { id: 'regularidad_ciclos', type: 'select', label: 'Regularidad de ciclos', options: ['Regular', 'Irregular'] },
+          { id: 'duracion_ciclo', type: 'number', label: 'Duración del ciclo (días)', min: 15, max: 60 },
+          { id: 'duracion_sangrado', type: 'number', label: 'Duración del sangrado (días)', min: 1, max: 14 },
+          { id: 'dismenorrea', type: 'select', label: 'Dismenorrea', options: ['Sin dismenorrea', 'Leve', 'Moderada — usa AINE', 'Severa — incapacitante'] },
+          { id: 'sangrado_uterino_anormal', type: 'checkbox', label: 'Sangrado uterino anormal' },
+          { id: 'sangrado_postcoital', type: 'checkbox', label: 'Sangrado postcoital' },
+          { id: 'dispareunia', type: 'checkbox', label: 'Dispareunia' }
+        ]
+      },
+      {
+        name: 'Historia obstétrica',
+        fields: [
+          { id: 'gestaciones', type: 'number', label: 'G — Total de gestaciones', min: 0, max: 20 },
+          { id: 'partos', type: 'number', label: 'P — Partos vaginales', min: 0, max: 15 },
+          { id: 'abortos', type: 'number', label: 'A — Abortos', min: 0, max: 10 },
+          { id: 'cesareas', type: 'number', label: 'C — Cesáreas', min: 0, max: 10 },
+          { id: 'planificacion', type: 'select', label: 'Planificación de embarazo', options: ['Embarazo no planeado activo', 'Sin embarazo buscado', 'Planificando embarazo', 'Menopáusica'] },
+          { id: 'metodo_anticonceptivo', type: 'select', label: 'Método anticonceptivo actual', options: ['Ninguno', 'ACO combinados', 'Solo progestágeno', 'DIU de cobre', 'DIU hormonal', 'Implante', 'Ligadura tubaria', 'Otro'] }
+        ]
+      },
+      {
+        name: 'Cribado mamario',
+        fields: [
+          { id: 'birads', type: 'select', label: 'BIRADS de última mastografía', options: ['No realizada', 'BIRADS 1 — Normal', 'BIRADS 2 — Benigno', 'BIRADS 3 — Prob. benigno', 'BIRADS 4 — Sospechoso', 'BIRADS 5 — Muy sospechoso'] },
+          { id: 'nodulo_palpable', type: 'checkbox', label: 'Nódulo mamario palpable' },
+          { id: 'descarga_pezon', type: 'checkbox', label: 'Descarga por pezón' },
+          { id: 'ahf_cancer_mama', type: 'checkbox', label: 'Antecedente familiar de cáncer de mama' },
+          { id: 'edad_mastografia', type: 'number', label: 'Año de última mastografía', min: 2000, max: 2030 }
+        ]
+      },
+      {
+        name: 'Cribado cervical',
+        fields: [
+          { id: 'resultado_pap', type: 'select', label: 'Resultado del Pap más reciente', options: ['No realizado', 'NILM — Normal', 'ASC-US', 'LSIL', 'HSIL', 'Ca in situ', 'Carcinoma'] },
+          { id: 'vph_resultado', type: 'select', label: 'Resultado VPH', options: ['No realizado', 'Negativo', 'VPH alto riesgo positivo', 'VPH 16/18 positivo'] },
+          { id: 'ano_ultimo_pap', type: 'number', label: 'Año del último Pap', min: 2000, max: 2030 },
+          { id: 'vacuna_vph_aplicada', type: 'checkbox', label: 'Vacuna VPH aplicada' }
+        ]
+      }
+    ]
+  },
+  climaterio: {
+    title: '🌺 Climaterio / Menopausia',
+    sections: [
+      {
+        name: 'Datos menstruales',
+        fields: [
+          { id: 'estado_menopausia', type: 'select', label: 'Estado menopáusico', options: ['Perimenopausia — ciclos irregulares', 'Menopausia natural — ≥12 meses amenorrea', 'Menopausia quirúrgica', 'Insuficiencia ovárica prematura <40a'] },
+          { id: 'anos_posmenopausia', type: 'number', label: 'Años desde menopausia', min: 0, max: 40 },
+          { id: 'edad_fum', type: 'number', label: 'Edad a la menopausia (años)', min: 30, max: 65 },
+          { id: 'menopausia_quirurgica', type: 'checkbox', label: 'Menopausia quirúrgica' }
+        ]
+      },
+      {
+        name: 'Síntomas climatéricos',
+        fields: [
+          { id: 'sofocos_intensidad', type: 'select', label: 'Intensidad de sofocos', options: ['Sin sofocos', 'Leves — <7/día', 'Moderados — 7-14/día', 'Severos — >14/día'] },
+          { id: 'insomnio_climaterico', type: 'checkbox', label: 'Insomnio' },
+          { id: 'sudoración_nocturna', type: 'checkbox', label: 'Sudoración nocturna' },
+          { id: 'irritabilidad_ansiedad', type: 'checkbox', label: 'Irritabilidad / Ansiedad' },
+          { id: 'niebla_mental', type: 'checkbox', label: 'Niebla mental' },
+          { id: 'gsm', type: 'select', label: 'Síntomas genitourinarios (GSM)', options: ['Sin síntomas genitourinarios', 'Sequedad vaginal leve', 'Sequedad + dispareunia', 'Urgencia urinaria + infecciones recurrentes'] },
+          { id: 'score_kupperman', type: 'number', label: 'Índice de Kupperman (estimado)', min: 0, max: 51 }
+        ]
+      },
+      {
+        name: 'Evaluación ósea',
+        fields: [
+          { id: 'tscore_columna', type: 'number', label: 'T-score columna L1-L4', min: -6, max: 3, step: 0.1 },
+          { id: 'tscore_cadera', type: 'number', label: 'T-score cadera total', min: -6, max: 3, step: 0.1 },
+          { id: 'dxa_resultado', type: 'select', label: 'Resultado DXA', options: ['No realizada', 'Normal T-score ≥-1.0', 'Osteopenia T-score -1.0 a -2.5', 'Osteoporosis T-score ≤-2.5'] },
+          { id: 'fractura_previa_baja_energia', type: 'checkbox', label: 'Fractura previa por baja energía' }
+        ]
+      },
+      {
+        name: 'TH y contraindicaciones',
+        fields: [
+          { id: 'th_actual', type: 'select', label: 'Terapia hormonal actual', options: ['Sin TH', 'TH sistémica estrogénica', 'TH combinada E+P', 'Tibolona', 'TH local vaginal', 'No hormonal — venlafaxina/otro'] },
+          { id: 'contraindicacion_th', type: 'checkbox', label: 'Contraindicación para TH sistémica' },
+          { id: 'ca_mama_antecedente', type: 'checkbox', label: 'Antecedente de cáncer de mama' },
+          { id: 'trombosis_previa', type: 'checkbox', label: 'Antecedente de trombosis' },
+          { id: 'hepatopatia_activa', type: 'checkbox', label: 'Hepatopatía activa' },
+          { id: 'candidata_th', type: 'select', label: 'Candidata a TH', options: ['Candidata — ventana terapéutica abierta', 'No candidata', 'Evaluando'] }
+        ]
+      }
+    ]
+  },
+  cancer_cervix: {
+    title: '🎗️ Prevención Cáncer de Cérvix',
+    sections: [
+      {
+        name: 'Antecedentes cervicales',
+        fields: [
+          { id: 'histologia_previa', type: 'select', label: 'Histología previa', options: ['Sin antecedentes', 'NIC1 — Condiloma', 'NIC2', 'NIC3 — CIS', 'Carcinoma escamoso', 'Adenocarcinoma in situ', 'Sin biopsia previa'] },
+          { id: 'tratamiento_previo', type: 'select', label: 'Tratamiento cervical previo', options: ['Ninguno', 'LEEP', 'Conización en frío', 'Criocirugía', 'Radioterapia'] },
+          { id: 'tabaquismo_cerv', type: 'checkbox', label: 'Tabaquismo actual' },
+          { id: 'vih_positiva', type: 'checkbox', label: 'VIH positiva' }
+        ]
+      },
+      {
+        name: 'Citología actual',
+        fields: [
+          { id: 'resultado_citologia', type: 'select', label: 'Resultado de citología', options: ['NILM — Normal', 'ASC-US', 'ASC-H', 'LSIL', 'HSIL', 'Ca escamoso', 'Adenocarcinoma'] },
+          { id: 'vph_actual', type: 'select', label: 'Resultado VPH actual', options: ['Negativa', 'VPH alto riesgo otros', 'VPH 16 positivo', 'VPH 18 positivo', 'VPH 16 y 18 positivos', 'No realizada'] },
+          { id: 'ano_pap_actual', type: 'number', label: 'Año de la citología actual', min: 2020, max: 2030 },
+          { id: 'pap_pendiente', type: 'checkbox', label: 'Pap pendiente de realización' }
+        ]
+      },
+      {
+        name: 'Colposcopía',
+        fields: [
+          { id: 'resultado_colposcopia', type: 'select', label: 'Resultado de colposcopía', options: ['No realizada', 'Negativa para NIC', 'NIC1', 'NIC2', 'NIC3', 'Maligno', 'Insatisfactoria'] },
+          { id: 'zt_tipo', type: 'select', label: 'Tipo de zona de transformación', options: ['No aplica', 'ZT Tipo 1 — ectocervical', 'ZT Tipo 2 — parcial endocervical', 'ZT Tipo 3 — endocervical'] },
+          { id: 'biopsia_tomada', type: 'checkbox', label: 'Biopsia tomada' },
+          { id: 'margenes_comprometidos', type: 'checkbox', label: 'Márgenes comprometidos' }
+        ]
+      },
+      {
+        name: 'Vacunación y plan',
+        fields: [
+          { id: 'vacuna_vph_estado', type: 'select', label: 'Estado de vacunación VPH', options: ['No vacunada', 'Vacunación incompleta', 'Vacunación completa', 'No elegible — >45a'] },
+          { id: 'plan_manejo', type: 'select', label: 'Plan de manejo', options: ['Seguimiento rutinario — Pap anual', 'Seguimiento por ASC-US + VPH neg — 1 año', 'Colposcopía programada', 'LEEP programado', 'Post-LEEP en seguimiento', 'Referir oncología ginecológica'] }
+        ]
+      }
+    ]
+  }
+});
+
+function buildGinecoObstNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const g = n('gestaciones');
+  const p = n('partos');
+  const a = n('abortos');
+  const c = n('cesareas');
+  const menarquia = n('menarquia_edad');
+  const regularidad = v('regularidad_ciclos');
+  const duracion_ciclo = n('duracion_ciclo');
+  const duracion_sangrado = n('duracion_sangrado');
+  const dismenorrea = v('dismenorrea');
+  const dispareunia = v('dispareunia');
+  const sangrado_uta = v('sangrado_uterino_anormal');
+  const sangrado_pc = v('sangrado_postcoital');
+  const metodo = v('metodo_anticonceptivo');
+  const planificacion = v('planificacion');
+  const birads = v('birads');
+  const nodulo = v('nodulo_palpable');
+  const descarga = v('descarga_pezon');
+  const ahf_mama = v('ahf_cancer_mama');
+  const resultado_pap = v('resultado_pap');
+  const vph_resultado = v('vph_resultado');
+  const pap_year = n('ano_ultimo_pap');
+  const vacuna_vph = v('vacuna_vph_aplicada');
+
+  let sintomas_text = `Historia reproductiva: G${g} P${p} A${a} C${c}. Ciclos ${regularidad ? regularidad.toLowerCase() : 'no especificado'}`;
+  if (duracion_ciclo) sintomas_text += `, duración ${duracion_ciclo} días`;
+  sintomas_text += `. Sangrado: ${duracion_sangrado || '__'} días. Dismenorrea: ${dismenorrea || 'no especificada'}`;
+  if (dispareunia) sintomas_text += `. Dispareunia presente`;
+  if (sangrado_uta) sintomas_text += `. Sangrado uterino anormal: sí`;
+  if (sangrado_pc) sintomas_text += `. Sangrado postcoital: sí`;
+  sintomas_text += `. Anticoncepción: ${metodo || 'no especificada'}. Planificación: ${planificacion || 'no aclarada'}`;
+
+  let impresion_text = `Paciente G${g} P${p} A${a} C${c}, menarquia a los ${menarquia || '__'} años. `;
+  impresion_text += `Estado reproductivo: ${planificacion || 'sin especificar'}. `;
+  impresion_text += `Anticoncepción: ${metodo || 'sin método'}. `;
+  impresion_text += `Cribado cervical: resultado Pap = ${resultado_pap || 'no realizado'}, VPH = ${vph_resultado || 'no realizado'} (${pap_year || '__'}). `;
+
+  let flags_cervical = [];
+  if (resultado_pap && (resultado_pap.includes('HSIL') || resultado_pap.includes('Ca'))) {
+    flags_cervical.push('ALERTA: Pap anormal —requiere seguimiento/colposcopía');
+  }
+  if (vph_resultado && vph_resultado.includes('16/18')) {
+    flags_cervical.push('ALERTA: VPH 16/18 positivo');
+  }
+
+  impresion_text += `Cribado mamario: BIRADS ${birads || 'no especificado'}`;
+  if (nodulo) impresion_text += ` — nódulo palpable detectado`;
+  if (birads && (birads.includes('4') || birads.includes('5'))) {
+    flags_cervical.push('ALERTA: BIRADS ≥4 — requiere estudio adicional');
+  }
+  if (ahf_mama) impresion_text += ` — Antecedente familiar de Ca mama`;
+
+  impresion_text += `. Cribado: ${flags_cervical.length === 0 ? 'al día' : 'pendiente de seguimiento'}`;
+  if (flags_cervical.length > 0) {
+    impresion_text += ` [${flags_cervical.join(' | ')}]`;
+  }
+
+  return {
+    sintomas: sintomas_text,
+    impresion: impresion_text
+  };
+}
+
+function buildClimaterioNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const estado_meno = v('estado_menopausia');
+  const anos_post = n('anos_posmenopausia');
+  const edad_fum = n('edad_fum');
+  const sofocos = v('sofocos_intensidad');
+  const insomnio = v('insomnio_climaterico');
+  const sudoracion = v('sudoración_nocturna');
+  const irritabilidad = v('irritabilidad_ansiedad');
+  const niebla = v('niebla_mental');
+  const gsm = v('gsm');
+  const kupperman = n('score_kupperman');
+  const tscore_col = n('tscore_columna');
+  const tscore_cad = n('tscore_cadera');
+  const dxa = v('dxa_resultado');
+  const fractura = v('fractura_previa_baja_energia');
+  const th_actual = v('th_actual');
+  const candidata = v('candidata_th');
+  const contraind = v('contraindicacion_th');
+  const ca_mama = v('ca_mama_antecedente');
+  const trombosis = v('trombosis_previa');
+
+  let sintomas_text = `FUM a los ${edad_fum || '__'} años. ${estado_meno || 'Sin especificar estado menopáusico'}`;
+  if (anos_post) sintomas_text += `, ${anos_post} años posmenopáusica`;
+  sintomas_text += `. Síntomas vasomotores: ${sofocos || 'no especificados'}`;
+
+  let sintomas_neuro = [];
+  if (insomnio) sintomas_neuro.push('insomnio');
+  if (sudoracion) sintomas_neuro.push('sudoración nocturna');
+  if (irritabilidad) sintomas_neuro.push('irritabilidad/ansiedad');
+  if (niebla) sintomas_neuro.push('niebla mental');
+  if (sintomas_neuro.length > 0) {
+    sintomas_text += `. Síntomas neuropsíquicos: ${sintomas_neuro.join(', ')}`;
+  }
+  sintomas_text += `. Síntomas genitourinarios: ${gsm || 'no especificados'}`;
+  if (kupperman) sintomas_text += `. Kupperman: ${kupperman}`;
+  sintomas_text += `. TH actual: ${th_actual || 'sin TH'}`;
+
+  let impresion_text = `${estado_meno || 'Menopausia'} (${anos_post ? anos_post + ' años posmenopáusica' : 'recientemente'})`;
+  impresion_text += `. Síntomas vasomotores: ${sofocos || 'no especificados'}. `;
+  impresion_text += `Síntomas genitourinarios: ${gsm || 'ausentes/no evaluados'}. `;
+
+  impresion_text += `Riesgo óseo: T-score columna ${tscore_col || '__'}, cadera ${tscore_cad || '__'} — `;
+  let clasificacion_osa = 'no determinada';
+  if (dxa) clasificacion_osa = dxa;
+  else if (tscore_col !== undefined && tscore_col <= -2.5) clasificacion_osa = 'osteoporosis';
+  else if (tscore_col !== undefined && tscore_col >= -1.0) clasificacion_osa = 'normal';
+  else if (tscore_col !== undefined) clasificacion_osa = 'osteopenia';
+  impresion_text += `${clasificacion_osa}`;
+
+  if (fractura) impresion_text += ` — Antecedente de fractura previa por baja energía`;
+  if (tscore_col !== undefined && tscore_col <= -2.5) {
+    impresion_text += ` — ALERTA: Considerar módulo de osteoporosis`;
+  }
+
+  impresion_text += `. Contraindicaciones TH: `;
+  let contrainds = [];
+  if (ca_mama) contrainds.push('Ca mama previo');
+  if (trombosis) contrainds.push('trombosis previa');
+  if (contraind) contrainds.push('otras contraindicaciones');
+  impresion_text += contrainds.length > 0 ? contrainds.join(', ') : 'ninguna identificada';
+  impresion_text += `. Candidata a TH: ${candidata || 'por evaluar'}`;
+
+  return {
+    sintomas: sintomas_text,
+    impresion: impresion_text
+  };
+}
+
+function buildCancerCervixNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const histologia = v('histologia_previa');
+  const tratamiento = v('tratamiento_previo');
+  const tabaquismo = v('tabaquismo_cerv');
+  const vih = v('vih_positiva');
+  const resultado_cito = v('resultado_citologia');
+  const vph_actual = v('vph_actual');
+  const ano_pap = n('ano_pap_actual');
+  const pap_pend = v('pap_pendiente');
+  const colpo = v('resultado_colposcopia');
+  const zt = v('zt_tipo');
+  const biopsia = v('biopsia_tomada');
+  const margenes = v('margenes_comprometidos');
+  const vacuna = v('vacuna_vph_estado');
+  const plan = v('plan_manejo');
+
+  let sintomas_text = `Histología previa: ${histologia || 'sin antecedentes'}`;
+  if (tratamiento && tratamiento !== 'Ninguno') {
+    sintomas_text += `. Tratamiento previo: ${tratamiento}`;
+  }
+  sintomas_text += `. Factores de riesgo: `;
+  let riesgos = [];
+  if (tabaquismo) riesgos.push('tabaquismo activo');
+  if (vih) riesgos.push('VIH+');
+  sintomas_text += riesgos.length > 0 ? riesgos.join(', ') : 'no identificados';
+  sintomas_text += `. Citología (${ano_pap || '__'}): ${resultado_cito || 'no realizada'}`;
+  if (pap_pend) sintomas_text += ` — PENDIENTE de realización`;
+
+  let impresion_text = `Cribado cervical: `;
+  let urgencia_flags = [];
+
+  impresion_text += `Citología = ${resultado_cito || 'no realizada'}, VPH = ${vph_actual || 'no realizado'}`;
+
+  if (resultado_cito && (resultado_cito.includes('HSIL') || resultado_cito.includes('Ca') || resultado_cito.includes('Adenocarcinoma'))) {
+    urgencia_flags.push('ALERTA: Resultado citológico anormal — requiere colposcopía/evaluación inmediata');
+  }
+
+  if (vph_actual && (vph_actual.includes('16') || vph_actual.includes('18'))) {
+    urgencia_flags.push('ALERTA: VPH 16/18 positivo — manejo especial requerido');
+  }
+
+  impresion_text += `. Colposcopía: ${colpo || 'no realizada'}`;
+  if (colpo && (colpo.includes('NIC2') || colpo.includes('NIC3') || colpo.includes('Maligno'))) {
+    urgencia_flags.push('ALERTA: NIC2/3 o maligno — requiere tratamiento escisional/referencias');
+  }
+  if (colpo === 'Maligno') {
+    urgencia_flags.push('ALERTA URGENTE: Maligno — referir oncología ginecológica STAT');
+  }
+
+  impresion_text += `, ZT ${zt || 'no especificada'}`;
+  if (biopsia) impresion_text += `, biopsia realizada`;
+  if (margenes) impresion_text += ` — márgenes comprometidos, reconización recomendada`;
+
+  impresion_text += `. Histología: ${histologia || 'sin antecedentes'}, tratamiento: ${tratamiento || 'ninguno'}`;
+  impresion_text += `. Vacunación VPH: ${vacuna || 'no especificada'}. Plan: ${plan || 'por definir'}`;
+
+  if (urgencia_flags.length > 0) {
+    impresion_text += ` [${urgencia_flags.join(' | ')}]`;
+  }
+
+  return {
+    sintomas: sintomas_text,
+    impresion: impresion_text
+  };
+}
+
+Object.assign(WIZARD_BUILDERS, {
+  gineco_obst: buildGinecoObstNote,
+  climaterio: buildClimaterioNote,
+  cancer_cervix: buildCancerCervixNote
+});
+
+['gineco_obst', 'climaterio', 'cancer_cervix'].forEach(m => IMPLEMENTED_MODULES.add(m));
+
+// ECE META CORE - Módulos de Neumología
+// feature_neumologia.js
+// Incluye: Asma Bronquial, Fibrosis Pulmonar / EPI, Síndrome de Apnea-Sueño
+
+Object.assign(TEMPLATE_MODULES, {
+  asma: {
+    label: 'Asma Bronquial',
+    diagnostico: 'Asma bronquial (J45.909)',
+    sintomas: 'Síntomas típicos de asma: disnea episódica, sibilancias, tos (predominio nocturno/matutino), opresión torácica. Frecuencia de síntomas diurnos: intermitente (<2 días/semana) / persistente leve (≥2 días/semana pero no diario) / persistente moderada (diario) / persistente grave (continuo). Síntomas nocturnos: ninguno / <1 vez/mes / 3-4 veces/mes / >1 vez/semana / frecuentes con limitación de actividad. Uso de SABA de rescate (salbutamol): más de 2 veces/semana indica problema de control. Limitación de actividad física presente o ausente con grado asociado. Exacerbaciones en último año: número de episodios leves, moderados y severos con eventos de hospitalización. Alérgenos identificados/desencadenantes: ácaros, polvo, pelo de mascota, moho, pólenes, humo de tabaco, AINE, ejercicio, RGE, cambio de temperatura, estrés. Uso de ICS actual: si o no con evaluación de adherencia (buena/regular/mala).',
+    exfisica: 'FR: respiraciones por minuto. SaO2: porcentaje de saturación basal. FC: frecuencia cardíaca en latidos por minuto. Auscultación: murmullo vesicular conservado sin sibilancias en reposo / sibilancias espiratorias difusas / sibilancias con roncus / tórax silente (crisis grave). Tiempo espiratorio: normal o prolongado. Uso de músculos accesorios: ausente o presente (indica crisis moderada-severa). Rinitis alérgica asociada: ausente o presente con mucosa nasal normal, pálida, eritematosa o con pólipos. Dermatitis atópica: presente o ausente.',
+    estudios: 'Espirometría basal: FVC en litros y porcentaje del predicho, FEV1 en litros y porcentaje del predicho, cociente FEV1/FVC. Prueba broncodilatadora con salbutamol 400 mcg: ΔFEV1 en litros y porcentaje (reversibilidad significativa si ≥200 mL Y ≥12%). PEF: litros por minuto con porcentaje del teórico. Variabilidad PEF domiciliaria: porcentaje (variabilidad diurna >10% apoya diagnóstico). FeNO (óxido nítrico exhalado): ppb (>25 ppb indica inflamación eosinofílica). Prueba de metacolina: CP20 en mg/mL (HBR si <4 mg/mL). IgE total en UI/mL, eosinófilos en células/μL (>300 sugiere fenotipo T2-alto). Alérgenos específicos: resultados de prueba cutánea o IgE específica. Radiografía/TAC tórax: normal, hiperinsuflación o hallazgos específicos.',
+    impresion: 'Asma clasificada por frecuencia: intermitente / persistente leve / persistente moderada / persistente grave según GINA Estadio (1-5). Control: bien controlada (ACQ/ACT en meta) / parcialmente controlada / no controlada. Fenotipo: alérgica / no alérgica / eosinofílica T2-alto / neutrofílica / mixta. FEV1 actual como porcentaje del predicho. Reversibilidad: presente / ausente / no evaluada. Exacerbaciones en último año con riesgo futuro (bajo/moderado/alto) según número de episodios graves. Comorbilidades: rinitis alérgica / rinosinusitis crónica / ERGE / obesidad / apnea del sueño / depresión/ansiedad.',
+    tx_farmaco: 'GINA Estadio 1: SABA según necesidad o ICS dosis baja con formoterol según necesidad. Estadio 2: ICS dosis baja diario (budesonida 200 mcg / fluticasona 100 mcg / beclometasona 100 mcg) más SABA de rescate. Estadio 3: ICS dosis baja más LABA (budesonida/formoterol 160/4.5 mcg o fluticasona/salmeterol 100/50 mcg). Estadio 4: ICS dosis media-alta más LABA con o sin LAMA (tiotropio). Estadio 5: adición de biológico si T2-alto (Dupilumab 300 mg SC cada 2 semanas / Mepolizumab 100 mg SC cada 4 semanas / Benralizumab 30 mg SC cada 4 semanas por 3 dosis, luego cada 8 semanas). OCS solo para exacerbaciones agudas. Montelukast 10 mg en la noche: útil en asma inducida por ejercicio o con rinitis asociada.',
+    tx_nofarmaco: 'Control ambiental: fundas antiácaros en colchón y almohadas, evitar exposición a tabaco, mascotas si hay alergia, control de moho. Inmunoterapia alergénica subcutánea o sublingual si fenotipo alérgico (referir a alergólogo). Ejercicio físico adaptado con precalentamiento para evitar broncoespasmo inducido. Vacunación: influenza anual y neumococo. Plan de acción escrito con zonas verde/amarilla/roja según PEF y síntomas. Revisión de técnica inhalatoria en cada consulta.',
+    seguimiento: 'ACT o ACQ en cada consulta para cuantificar control. Espirometría cada 6-12 meses. FeNO si hay ajuste de biológico. PEF domiciliario en asma moderada-grave. Derivar a neumólogo/alergólogo si asma grave o fenotipo T2-alto con indicación de biológico.'
+  },
+
+  fibrosis_pulmonar: {
+    label: 'Fibrosis Pulmonar / EPI',
+    diagnostico: 'Fibrosis pulmonar idiopática (J84.112) / Enfermedad pulmonar intersticial (J84.9)',
+    sintomas: 'Disnea progresiva de esfuerzo: duración en meses o años, actualmente clasificada como grado NYHA/mMRC. Tos seca crónica: presente o ausente, con duración en meses y frecuencia de episodios diarios. Evolución: lenta progresiva o exacerbación aguda en fecha específica. Antecedentes de exposición: ninguno / asbestosis / sílice / polvo orgánico con hipersensibilidad pulmonar / medicamentos específicos (amiodarona, metotrexate, nitrofurantoína, bleomicina) / radioterapia torácica previa. Enfermedades autoinmunes asociadas: artritis reumatoide, lupus eritematoso sistémico, esclerodermia, síndrome de Sjögren, miositis con manifestaciones articulares, cutáneas, mucosas o disfagia. Tabaquismo en fibrosis pulmonar relacionada: presente o ausente con número de paquetes-año.',
+    exfisica: 'SaO2 basal en porcentaje, SaO2 mínima post-ejercicio en test de 6 minutos (desaturación significativa si caída ≥4%). FR en respiraciones por minuto, FC en latidos por minuto. Estertores tipo velcro bibasales: ausentes o presentes hasta nivel específico en bases. Acropaquia (dedos hipocráticos): presente o ausente. Signos de hipertensión pulmonar: P2 aumentado, heave del ventrículo derecho, soplo de insuficiencia tricuspídea, ingurgitación yugular. Articulaciones: sin hallazgos o artritis en número específico de articulaciones con distribución. Piel: normal o con esclerodermia, rash, calcinosis.',
+    estudios: 'TAC de alta resolución torácica: patrón UIP (honeycombing con bronquiectasias de tracción bibasales) / UIP probable / NINE (vidrio deslustrado con reticulación) / otra EPI específica. Distribución: predominio basal/periférico (sugiere FPI) / peribroncovascular (sarcoidosis) / difusa (NINE). Espirometría: FVC en litros y porcentaje, FEV1 en litros y porcentaje, cociente FEV1/FVC (patrón restrictivo si FVC<80% con FEV1/FVC normal). DLCO como porcentaje del predicho (disminuida indica afección vascular; <40% severidad grave). Test de caminata 6 minutos: distancia en metros, predicho en metros, SaO2 mínima en porcentaje, presencia o ausencia de desaturación ≥4%. NT-proBNP en pg/mL. Ecocardiograma: PSAP en mmHg (HTP si >40 mmHg).',
+    impresion: 'Tipo de EPI: fibrosis pulmonar idiopática / NINE / hipersensibilidad pulmonar / sarcoidosis / EPI asociada a enfermedad del tejido conectivo / neumonía intersticial organizada criptogénica / desquamación intersticial / infiltración linfocitaria con patrón TAAR documentado. Severidad en FPI según clasificación GAP: GAP I leve (FVC>75%) / GAP II moderada (FVC 50-75%) / GAP III grave (FVC<50%). FVC actual como porcentaje del predicho con estabilidad o progresión (caída >10% en 6 meses). DLCO como porcentaje del predicho. Necesidad de oxigenoterapia: no indicada / nocturna / deambulación / 24 horas. Hipertensión pulmonar secundaria: ausente o presente con PSAP específico. Candidato a trasplante pulmonar: sí con referencia / no aún / en evaluación / en lista de espera.',
+    tx_farmaco: 'FPI: antifibróticos - Nintedanib 150 mg vía oral cada 12 horas con alimentos (vigilar diarrea, náusea, hepatotoxicidad con ALT cada 3 meses) / Pirfenidona 2403 mg/día en 3 tomas (vigilar fotosensibilidad, náusea, escalar en 2 semanas). NINE/EPI asociada a ETC: inmunosupresor - Prednisona a dosis de 0.5 mg/kg con tapering en semanas específicas más Micofenolato 1.5-3 g/día / Azatioprina 2-3 mg/kg/día. HTP secundaria: Sildenafil 20 mg tres veces al día si PSAP>35 mmHg (usar con precaución, no aprobado en FPI). Oxigenoterapia domiciliaria: flujo en L/min si SaO2<88% en reposo o <90% en esfuerzo.',
+    tx_nofarmaco: 'Cesación tabáquica (factor de riesgo y progresión). Vacunación: influenza anual más neumococo. Rehabilitación pulmonar (mejora disnea y calidad de vida). Evaluación temprana para programa de trasplante pulmonar (FVC<70% o caída progresiva). Soporte nutricional si hay pérdida de peso. Oxigenoterapia en viajes aéreos (PaO2 desciende por altitud >3000 m). Cuidados paliativos para sintomatología en estadios avanzados.',
+    seguimiento: 'Espirometría más DLCO cada 3-6 meses (progresión si FVC cae ≥10% o DLCO cae ≥15%). Test de caminata 6 minutos cada 6 meses. TAC tórax anual. ALT/AST cada 3 meses si antifibrótico en uso. Ecocardiograma anual para monitorear HTP. NT-proBNP si sospecha de HTP o descompensación ventricular derecha.'
+  },
+
+  sas: {
+    label: 'Sínd. Apnea-Sueño',
+    diagnostico: 'Síndrome de apnea obstructiva del sueño (G47.33)',
+    sintomas: 'Síntomas nocturnos: ronquido presente o ausente con intensidad leve/moderado/severo (escuchado a través de la pared). Apneas presenciadas por la pareja: presente o ausente con frecuencia de eventos por noche. Episodios de ahogo o despertar brusco: presente o ausente con frecuencia semanal. Nicturia: número de veces por noche (secundaria a SAS). Bruxismo: presente o ausente. Síntomas diurnos: somnolencia diurna excesiva cuantificada por Escala de Epworth (patológico si ≥10). Fatiga crónica: presente o ausente. Cefalea matutina: presente o ausente. Deterioro cognitivo o dificultad de concentración: presente o ausente. Impacto en calidad de vida y relaciones por ronquido/somnolencia: presente o ausente. Complicaciones conocidas: hipertensión arterial nocturna / fibrilación auricular / diabetes mellitus / depresión / accidentes de tráfico con número de eventos.',
+    exfisica: 'IMC en kg/m² (obesidad y riesgo si >30). Circunferencia de cuello en cm (riesgo si varón >43 cm o mujer >40 cm). TA en mmHg. Vía aérea superior: clase de Mallampati I/II/III/IV. Tonsilas: grado 0-4. Paladar blando: normal o elongado con úvula grande. Desviación septal: presente o ausente. Micrognatia o retrognatia: presente o ausente. Congestión nasal: presente o ausente.',
+    estudios: 'Polisomnografía o poligrafía domiciliaria: IAH en eventos por hora (normal <5 / SAOS leve 5-15 / moderado 15-30 / grave >30). SaO2 mínima en porcentaje, tiempo con SaO2 <90% (T90 como porcentaje del tiempo total, hipoxemia si >10%). Índice de microdespertares por hora. Predominio posicional: ausente o presente con síntomas peor en decúbito supino. Componente central: porcentaje de apneas (<20% predominio obstructivo / >50% predominio central o mixto). Escala de Epworth: puntuación sobre 24. Test de latencia de sueño (MSLT) si narcolepsia sospechada: latencia en minutos.',
+    impresion: 'SAOS clasificado por severidad: leve (IAH 5-15) / moderado (IAH 15-30) / grave (IAH >30) con IAH específico en eventos por hora. SaO2 mínima en porcentaje. Fenotipo: anatómico (Mallampati alto/obesidad) / baja capacidad muscular / umbral de arousal bajo / loop gain alto. Somnolencia: Escala de Epworth con puntuación normal/leve/moderada/severa. Indicación de CPAP: urgente (IAH>30 o hipoxemia o somnolencia severa) / electiva (IAH 15-30 o sintomático) / sin indicación actual (IAH<15 asintomático). Adherencia actual a CPAP: sin CPAP / buena ≥4 horas noche / insuficiente <4 horas noche con causa específica. Comorbilidades relacionadas: hipertensión arterial / fibrilación auricular / cardiopatía isquémica / diabetes mellitus tipo 2 / obesidad / depresión / hipertensión pulmonar.',
+    tx_farmaco: 'CPAP: presión fija en cmH2O / AutoCPAP con rango específico en cmH2O (presión P95 de titulación). Mascarilla: nasal / oronasal / nasal pillow. IAH residual bajo CPAP en eventos por hora (meta <5). BiPAP S/T: si SAOS central >50% o hipoventilación con IPAP / EPAP en cmH2O específicos. Dispositivo de avance mandibular: si SAOS leve-moderado con rechazo de CPAP. Acetazolamida 125-250 mg en la noche: SAOS de altura o de predominio central. Medicamentos para somnolencia residual si IAH controlado: Solriamfetol 75 mg en la mañana / Pitolisant 4.5-18 mg en la mañana.',
+    tx_nofarmaco: 'Pérdida de peso (reducción de IMC 5% reduce IAH aproximadamente 30%). Posición lateral obligatoria si SAOS posicional (almohada de posición). Higiene del sueño: horario regular, no alcohol ≥4 horas antes de dormir (empeora SAS), no medicamentos hipnóticos (supresores de la respiración). Cirugía ORL (UPPP o maxilofacial) si fracaso de CPAP y dispositivo mandibular con anatomía corregible. Evaluación ORL: amígdalas grandes o desviación septal con valoración de cirugía. Revisión de medicamentos que empeoran SAS: opioides, benzodiacepinas.',
+    seguimiento: 'Descarga de datos CPAP en cada consulta: IAH residual, horas de uso, fugas, presión promedio. Meta: IAH residual <5 eventos/hora y uso ≥4 horas noche ≥70% de los días. Repetir polisomnografía si: pérdida de peso significativa (>10%) / cambio de síntomas / sospecha de componente central. Escala de Epworth en cada visita. Si IAH residual >10 bajo CPAP: revisar fugas, posición mascarilla, presión y componente central.'
+  }
+});
+
+Object.assign(WIZARD_SCHEMA, {
+  asma: {
+    title: '🌬️ Asma Bronquial',
+    sections: [
+      {
+        name: 'Control y síntomas',
+        fields: [
+          { id: 'control_asma', type: 'select', label: 'Control actual del asma', options: ['Bien controlada', 'Parcialmente controlada', 'No controlada'] },
+          { id: 'frecuencia_sintomas', type: 'select', label: 'Frecuencia de síntomas diurnos', options: ['Intermitente — <2 días/semana', 'Persistente leve — ≥2 días/semana', 'Persistente moderada — diario', 'Persistente grave — continuo'] },
+          { id: 'rescate_semana', type: 'number', label: 'Usos de SABA de rescate (veces/semana)', min: 0, max: 30 },
+          { id: 'exacerbaciones_asma', type: 'number', label: 'Exacerbaciones en último año', min: 0, max: 20 },
+          { id: 'limitacion_actividad_asma', type: 'checkbox', label: 'Limitación de actividad física' },
+          { id: 'sintomas_nocturnos_asma', type: 'checkbox', label: 'Síntomas nocturnos presentes' },
+          { id: 'hospitalizacion_asma_año', type: 'checkbox', label: 'Hospitalización por asma en último año' }
+        ]
+      },
+      {
+        name: 'Espirometría y marcadores',
+        fields: [
+          { id: 'fev1_asma', type: 'number', label: 'FEV1 (% del predicho)', min: 20, max: 130 },
+          { id: 'fev1_fvc_asma', type: 'number', label: 'FEV1/FVC', min: 0.3, max: 1.0, step: 0.01 },
+          { id: 'delta_fev1_pct', type: 'number', label: 'Reversibilidad ΔFEV1 (%)', min: 0, max: 100 },
+          { id: 'reversibilidad_positiva', type: 'checkbox', label: 'Reversibilidad positiva (≥12% Y ≥200 mL)' },
+          { id: 'feno', type: 'number', label: 'FeNO (ppb)', min: 0, max: 300 },
+          { id: 'eosinofilos_asma', type: 'number', label: 'Eosinófilos (células/μL)', min: 0, max: 5000 }
+        ]
+      },
+      {
+        name: 'Fenotipo y desencadenantes',
+        fields: [
+          { id: 'fenotipo_asma', type: 'select', label: 'Fenotipo de asma', options: ['Alérgica T2', 'No alérgica', 'Eosinofílica T2-alto', 'Neutrofílica', 'Mixta'] },
+          { id: 'desencadenantes', type: 'checkbox-group', label: 'Desencadenantes identificados', options: [
+            { id: 'dest_acaros', label: 'Ácaros' },
+            { id: 'dest_mascota', label: 'Mascotas' },
+            { id: 'dest_polenes', label: 'Pólenes' },
+            { id: 'dest_tabaco', label: 'Humo de tabaco' },
+            { id: 'dest_ejercicio', label: 'Ejercicio' },
+            { id: 'dest_aine', label: 'AINE' },
+            { id: 'dest_rge', label: 'ERGE' }
+          ]},
+          { id: 'rinitis_alergica_asma', type: 'checkbox', label: 'Rinitis alérgica asociada' },
+          { id: 'dermatitis_atopica', type: 'checkbox', label: 'Dermatitis atópica' }
+        ]
+      },
+      {
+        name: 'Tratamiento actual',
+        fields: [
+          { id: 'gina_estadio', type: 'select', label: 'Estadio GINA', options: ['GINA 1', 'GINA 2', 'GINA 3', 'GINA 4', 'GINA 5'] },
+          { id: 'dispositivo_ics', type: 'select', label: 'Dispositivo ICS', options: ['Sin ICS', 'MDI — cartucho presurizado', 'DPI — polvo seco', 'Nebulizador'] },
+          { id: 'laba_actual', type: 'checkbox', label: 'En uso de LABA (agonista β2 de acción prolongada)' },
+          { id: 'biologico_actual', type: 'checkbox', label: 'En uso de biológico', dependsOn: 'fenotipo_asma' },
+          { id: 'biologico_tipo', type: 'select', label: 'Tipo de biológico', options: ['No aplica', 'Dupilumab', 'Mepolizumab', 'Benralizumab', 'Omalizumab'], dependsOn: 'biologico_actual' }
+        ]
+      }
+    ]
+  },
+
+  fibrosis_pulmonar: {
+    title: '🫁 Fibrosis Pulmonar / EPI',
+    sections: [
+      {
+        name: 'Tipo y etiología',
+        fields: [
+          { id: 'tipo_epi', type: 'select', label: 'Tipo de EPI', options: [
+            'FPI — Fibrosis Pulmonar Idiopática',
+            'NINE — No Específica',
+            'HP — Hipersensibilidad',
+            'Sarcoidosis',
+            'EPI-ETC — Asociada a ETC',
+            'COP — Org. Criptogénica',
+            'DIP',
+            'Otra'
+          ]},
+          { id: 'exposicion_causal', type: 'select', label: 'Exposición causal', options: [
+            'Ninguna',
+            'Asbestosis',
+            'Sílice',
+            'Polvo orgánico',
+            'Medicamentos',
+            'Radioterapia',
+            'No determinada'
+          ]},
+          { id: 'etc_asociada', type: 'checkbox', label: 'ETC asociada (AR/LES/esclerodermia/miositis)' },
+          { id: 'tabaquismo_epi', type: 'checkbox', label: 'Tabaquismo activo o antecedente' }
+        ]
+      },
+      {
+        name: 'Función pulmonar',
+        fields: [
+          { id: 'fvc_epi', type: 'number', label: 'FVC (% del predicho)', min: 20, max: 130 },
+          { id: 'dlco_epi', type: 'number', label: 'DLCO (% del predicho)', min: 10, max: 130 },
+          { id: 'sao2_basal_epi', type: 'number', label: 'SaO2 basal (%)', min: 70, max: 100 },
+          { id: 'sao2_esfuerzo', type: 'number', label: 'SaO2 mínima en test 6 min (%)', min: 60, max: 100 },
+          { id: 'distancia_6min', type: 'number', label: 'Distancia test 6 min (metros)', min: 0, max: 800 },
+          { id: 'desaturacion_esfuerzo', type: 'checkbox', label: 'Desaturación ≥4% en esfuerzo' }
+        ]
+      },
+      {
+        name: 'TAAR y evaluación',
+        fields: [
+          { id: 'patron_taar', type: 'select', label: 'Patrón TAAR', options: ['UIP — probable FPI', 'UIP probable', 'NINE', 'Otra'] },
+          { id: 'gap_score', type: 'select', label: 'Puntuación GAP', options: ['GAP I — FVC>75%', 'GAP II — FVC 50-75%', 'GAP III — FVC<50%'] },
+          { id: 'htp_ecocardiograma', type: 'checkbox', label: 'HTP en ecocardiograma (PSAP>40 mmHg)' },
+          { id: 'psap_eco', type: 'number', label: 'PSAP ecocardiograma (mmHg)', min: 20, max: 100 },
+          { id: 'progresion_fvc', type: 'checkbox', label: 'Caída FVC ≥10% en 6 meses' }
+        ]
+      },
+      {
+        name: 'Tratamiento y trasplante',
+        fields: [
+          { id: 'tratamiento_epi', type: 'select', label: 'Tratamiento actual', options: [
+            'Sin tratamiento',
+            'Nintedanib',
+            'Pirfenidona',
+            'Inmunosupresor — prednisona+MMF',
+            'Combinado'
+          ]},
+          { id: 'oxigenoterapia_epi', type: 'checkbox', label: 'En oxigenoterapia domiciliaria' },
+          { id: 'en_evaluacion_trasplante', type: 'checkbox', label: 'En evaluación para trasplante pulmonar' },
+          { id: 'en_lista_trasplante', type: 'checkbox', label: 'En lista de espera para trasplante' },
+          { id: 'estadio_trasplante', type: 'select', label: 'Estado trasplante', options: [
+            'No candidato',
+            'En evaluación',
+            'En lista activa',
+            'Post-trasplante'
+          ]}
+        ]
+      }
+    ]
+  },
+
+  sas: {
+    title: '😴 Sínd. Apnea-Sueño',
+    sections: [
+      {
+        name: 'Síntomas y Epworth',
+        fields: [
+          { id: 'ronquido_intensidad', type: 'select', label: 'Intensidad del ronquido', options: [
+            'Sin ronquido',
+            'Leve',
+            'Moderado',
+            'Severo — audible desde otra habitación'
+          ]},
+          { id: 'apneas_presenciadas', type: 'checkbox', label: 'Apneas presenciadas por la pareja' },
+          { id: 'ahogos_nocturnos', type: 'checkbox', label: 'Episodios de ahogo/despertar brusco' },
+          { id: 'nicturia_sas', type: 'checkbox', label: 'Nicturia (>1 vez/noche)' },
+          { id: 'cefalea_matutina', type: 'checkbox', label: 'Cefalea matutina' },
+          { id: 'deterioro_cognitivo_sas', type: 'checkbox', label: 'Deterioro cognitivo/concentración' },
+          { id: 'epworth', type: 'number', label: 'Escala de Epworth (0-24)', min: 0, max: 24 },
+          { id: 'somnolencia_grado', type: 'select', label: 'Grado de somnolencia', options: [
+            'Normal <10',
+            'Leve 10-12',
+            'Moderada 13-15',
+            'Severa ≥16'
+          ]}
+        ]
+      },
+      {
+        name: 'Exploración física',
+        fields: [
+          { id: 'imc_sas', type: 'number', label: 'IMC (kg/m²)', min: 15, max: 70, step: 0.1 },
+          { id: 'cuello_cm', type: 'number', label: 'Circunferencia de cuello (cm)', min: 25, max: 60 },
+          { id: 'mallampati', type: 'select', label: 'Clase de Mallampati', options: ['Clase I', 'Clase II', 'Clase III', 'Clase IV'] },
+          { id: 'micrognatia_retrognatia', type: 'checkbox', label: 'Micrognatia o retrognatia' },
+          { id: 'congestion_nasal_sas', type: 'checkbox', label: 'Congestión nasal' },
+          { id: 'tonsilas_grandes', type: 'checkbox', label: 'Amígdalas grado 3-4' }
+        ]
+      },
+      {
+        name: 'Estudio del sueño',
+        fields: [
+          { id: 'iah', type: 'number', label: 'IAH (eventos/hora)', min: 0, max: 150, step: 0.1 },
+          { id: 'sao2_minima_sas', type: 'number', label: 'SaO2 mínima (%)', min: 50, max: 100 },
+          { id: 't90', type: 'number', label: 'Tiempo SaO2 <90% (%)', min: 0, max: 100, step: 0.1 },
+          { id: 'severidad_sas', type: 'select', label: 'Severidad SAOS', options: [
+            'Normal — IAH<5',
+            'Leve — IAH 5-15',
+            'Moderado — IAH 15-30',
+            'Grave — IAH>30'
+          ]},
+          { id: 'saos_posicional', type: 'checkbox', label: 'SAOS posicional (peor en decúbito supino)' },
+          { id: 'componente_central_sas', type: 'checkbox', label: 'Componente central >20%' }
+        ]
+      },
+      {
+        name: 'Tratamiento CPAP',
+        fields: [
+          { id: 'tratamiento_sas', type: 'select', label: 'Tratamiento actual', options: [
+            'Sin tratamiento',
+            'CPAP indicado, no iniciado',
+            'CPAP activo',
+            'BiPAP',
+            'Dispositivo mandibular',
+            'Cirugía realizada'
+          ]},
+          { id: 'iah_residual', type: 'number', label: 'IAH residual bajo CPAP (eventos/hora)', min: 0, max: 100, step: 0.1, dependsOn: 'tratamiento_sas' },
+          { id: 'horas_cpap', type: 'number', label: 'Horas de uso CPAP/noche', min: 0, max: 12, step: 0.5, dependsOn: 'tratamiento_sas' },
+          { id: 'adherencia_cpap_adecuada', type: 'checkbox', label: 'Adherencia CPAP adecuada (≥4h/noche ≥70% días)', dependsOn: 'tratamiento_sas' },
+          { id: 'presion_cpap_tipo', type: 'select', label: 'Tipo de presión de aire', options: [
+            'CPAP fija',
+            'AutoCPAP',
+            'BiPAP S',
+            'BiPAP ST',
+            'ASV'
+          ], dependsOn: 'tratamiento_sas' }
+        ]
+      }
+    ]
+  }
+});
+
+// Funciones constructoras de notas
+
+function buildAsmaNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const control = v('control_asma') || 'No especificado';
+  const frecuencia = v('frecuencia_sintomas') || 'No evaluada';
+  const rescate = n('rescate_semana', 'veces/semana');
+  const exacerbaciones = n('exacerbaciones_asma');
+  const fev1 = n('fev1_asma', '%');
+  const reversibilidad = v('reversibilidad_positiva') ? 'Sí' : 'No evaluada';
+  const feno = n('feno', 'ppb');
+  const eosinofilos = n('eosinofilos_asma', 'células/μL');
+  const fenotipo = v('fenotipo_asma') || 'No determinado';
+  const estadio = v('gina_estadio') || 'Por evaluar';
+
+  return {
+    sintomas: `Control actual: ${control}. Frecuencia de síntomas: ${frecuencia}. Uso de SABA de rescate: ${rescate}. Exacerbaciones en último año: ${exacerbaciones}. Limitación de actividad: ${v('limitacion_actividad_asma') ? 'Sí' : 'No'}. Síntomas nocturnos: ${v('sintomas_nocturnos_asma') ? 'Presentes' : 'Ausentes'}. Hospitalización en último año: ${v('hospitalizacion_asma_año') ? 'Sí' : 'No'}.`,
+
+    impresion: `Asma bronquial ${frecuencia} (${estadio}), control actual ${control}. FEV1: ${fev1} del predicho. Reversibilidad broncodilatadora: ${reversibilidad}. FeNO: ${feno} ${feno > '25' ? '(elevado — inflamación eosinofílica)' : '(normal)'}. Eosinófilos: ${eosinofilos} ${eosinofilos > '300' ? '(fenotipo T2-alto)' : ''}. Fenotipo: ${fenotipo}. Desencadenantes identificados según evaluación. Exacerbaciones documentadas: ${exacerbaciones}. Plan de manejo según estadio GINA con revisión de técnica inhalatoria y adherencia.`
+  };
+}
+
+function buildFibrosisPulmonarNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const tipo = v('tipo_epi') || 'No determinado';
+  const fvc = n('fvc_epi', '%');
+  const dlco = n('dlco_epi', '%');
+  const sao2_basal = n('sao2_basal_epi', '%');
+  const sao2_esfuerzo = n('sao2_esfuerzo', '%');
+  const gap = v('gap_score') || 'No calculado';
+  const htp = v('htp_ecocardiograma') ? `Sí, PSAP ${n('psap_eco', 'mmHg')}` : 'No documentada';
+  const tratamiento = v('tratamiento_epi') || 'Sin tratamiento';
+  const trasplante = v('estadio_trasplante') || 'No evaluado';
+
+  return {
+    sintomas: `Enfermedad pulmonar intersticial tipo ${tipo}. Disnea de esfuerzo presente. Tos seca crónica: ${v('etc_asociada') ? 'sí, con ETC asociada' : 'evaluada'}. Exposición causal: ${v('exposicion_causal')}. Antecedentes de tabaquismo: ${v('tabaquismo_epi') ? 'Sí' : 'No'}. Desaturación en esfuerzo: ${v('desaturacion_esfuerzo') ? 'Sí, ≥4%' : 'No documentada'}.`,
+
+    impresion: `${tipo} según patrón TAAR documentado. FVC: ${fvc} del predicho. DLCO: ${dlco} del predicho ${dlco < '40' ? '(severamente disminuida)' : ''}. Clasificación GAP: ${gap}. SaO2 basal: ${sao2_basal}, desaturación mínima en esfuerzo: ${sao2_esfuerzo}. Hipertensión pulmonar: ${htp}. Progresión documentada: ${v('progresion_fvc') ? 'Caída FVC ≥10% en 6 meses' : 'Función estable o no evaluada en serie'}. Tratamiento actual: ${tratamiento}. Oxigenoterapia: ${v('oxigenoterapia_epi') ? 'Indicada' : 'No indicada'}. Estado trasplante pulmonar: ${trasplante}. Seguimiento con espirometría y DLCO cada 3-6 meses.`
+  };
+}
+
+function buildSasNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const ronquido = v('ronquido_intensidad') || 'No evaluado';
+  const epworth = n('epworth');
+  const imc = n('imc_sas', 'kg/m²');
+  const mallampati = v('mallampati') || 'No evaluado';
+  const iah = n('iah', 'eventos/hora');
+  const sao2_min = n('sao2_minima_sas', '%');
+  const severidad = v('severidad_sas') || 'No determinada';
+  const tratamiento = v('tratamiento_sas') || 'Sin tratamiento';
+  const iah_residual = n('iah_residual', 'eventos/hora');
+  const horas_uso = n('horas_cpap', 'h/noche');
+
+  return {
+    sintomas: `Ronquido: ${ronquido}. Apneas presenciadas: ${v('apneas_presenciadas') ? 'Sí' : 'No'}. Episodios de ahogo: ${v('ahogos_nocturnos') ? 'Sí' : 'No'}. Nicturia: ${v('nicturia_sas') ? 'Presente' : 'Ausente'}. Cefalea matutina: ${v('cefalea_matutina') ? 'Sí' : 'No'}. Deterioro cognitivo: ${v('deterioro_cognitivo_sas') ? 'Presente' : 'Ausente'}. Escala de Epworth: ${epworth}/24 (${v('somnolencia_grado')}).`,
+
+    impresion: `Síndrome de apnea obstructiva del sueño ${severidad} según polisomnografía. IAH: ${iah}. SaO2 mínima: ${sao2_min}. Hipoxemia (T90): ${n('t90', '%')} del tiempo. Fenotipo: ${v('mallampati')} Mallampati, IMC ${imc} ${imc > '30' ? '(obesidad)' : '(normal)'}. ${v('saos_posicional') ? 'SAOS posicional presente.' : 'No predominio posicional.'}${v('componente_central_sas') ? ' Componente central >20%.' : ''} Somnolencia: Epworth ${epworth}. Tratamiento: ${tratamiento}. ${tratamiento.includes('CPAP') ? `IAH residual: ${iah_residual}, uso: ${horas_uso}, adherencia: ${v('adherencia_cpap_adecuada') ? 'Adecuada' : 'Insuficiente'}` : ''}. Recomendaciones: control ambiental, higiene del sueño, evaluación de comorbilidades y seguimiento clínico regular.`
+  };
+}
+
+Object.assign(WIZARD_BUILDERS, {
+  asma: buildAsmaNote,
+  fibrosis_pulmonar: buildFibrosisPulmonarNote,
+  sas: buildSasNote
+});
+
+// Marcar módulos como implementados
+['asma', 'fibrosis_pulmonar', 'sas'].forEach(m => IMPLEMENTED_MODULES.add(m));
+
+// ============================================================================
+// MÓDULOS DE ESPECIALIDAD: GASTROENTEROLOGÍA
+// ECE META CORE - Sistema de Historia Clínica Electrónica
+// Módulos: Reflujo/ERGE, Cirrosis Hepática, Enfermedad Inflamatoria Intestinal
+// ============================================================================
+
+Object.assign(TEMPLATE_MODULES, {
+  reflujo_gerd: {
+    label: 'Reflujo / ERGE',
+    diagnostico: 'Enfermedad por reflujo gastroesofágico sin esofagitis (K21.0) / con esofagitis (K21.0)',
+    sintomas: 'Síntomas típicos: pirosis (frecuencia, intensidad). Regurgitación ácida. Síntomas atípicos: tos crónica nocturna, disfonía matutina, dolor torácico no cardíaco, globo faríngeo, erosión dental, sibilancias. Síntomas de alarma: disfagia, odinofagia, pérdida de peso, hemorragia digestiva, anemia. Factores desencadenantes: comidas abundantes/grasas, café, alcohol, posturas, decúbito postprandial, tabaco, medicamentos (AINE/AAS). Tratamiento actual: IBP/H2RA, duración, respuesta.',
+    exfisica: 'Dolor epigástrico: intensidad. IMC. Orofaringe: erosión dental. Laringe posterior: eritema aritenoides. Auscultación cardíaca normal (descartar cardiopatía).',
+    estudios: 'EDA: Los Ángeles (grados A-D), Esófago de Barrett (segmento, displasia), Hernia hiatal, Gastropatía, H. pylori. pH-metría 24h: índice DeMeester, tiempo pH<4. Impedancia-pH.',
+    impresion: 'ERGE no erosiva/erosiva (grado), Esófago de Barrett (displasia), H. pylori status, Hernia hiatal, Respuesta al tratamiento (completa/parcial/refractaria).',
+    tx_farmaco: 'IBP (Omeprazol/Pantoprazol/Rabeprazol/Esomeprazol/Lansoprazol) 30-60 min ANTES del desayuno. Erradicación H. pylori si positivo. Antiácidos rescate. Procinético (Domperidona). Baclofen para ERGE refractaria. Algínico + antiácido en embarazo.',
+    tx_nofarmaco: 'Elevar cabecera 15-20 cm. Evitar comidas 3h antes de acostarse. Reducir: grasas/fritas, café, alcohol, chocolate, menta, cítricos. Pérdida de peso si IMC>25. Cesación tabáquica. No ropa apretada en abdomen.',
+    seguimiento: 'Control síntomas 4-8 semanas. Respuesta completa: IBP 8 semanas, evaluar reducción. ERGE crónica: IBP dosis mínima efectiva. EDA vigilancia según Barrett (c/3-5 años sin displasia; c/6 meses displasia leve; displasia severa: mucosectomía). Urgencia si síntomas de alarma.'
+  },
+  cirrosis: {
+    label: 'Cirrosis Hepática',
+    diagnostico: 'Cirrosis hepática (K74.60) / Cirrosis alcohólica (K70.30)',
+    sintomas: 'Etiología: alcohólica, VHC, VHB, MAFLD-MASLD, autoinmune, CBP, CEP, Wilson, hemocromatosis, criptogénica. Consumo alcohol activo/abstinencia. Hemorragia variceal previa (banding/escleroterapia/TIPS). Ascitis (episodios, paracentesis, PBE). Encefalopatía hepática (grados, episodios, precipitante). PBE previa. SHR previo. CHC diagnosticado (tratamiento).',
+    exfisica: 'Ictericia: escleróticas. Asterixis: grado. Encefalopatía West Haven (0-4). Spider naevi: número. Eritema palmar. Ginecomastia. Atrofia muscular/sarcopenia. Ascitis (leve/moderada/tensa): matidez, onda. Edema MMII fovea. Circulación colateral visible. Esplenomegalia: tamaño. IMC.',
+    estudios: 'Hepático: AST, ALT, FA, GGT, Bilirrubina (total/directa), Albúmina, TP, INR. Hemograma: Hb, Leucocitos, Plaquetas. Creatinina, Na, K, Urea. AFP. USG hepático Doppler: nodularidad, esplenomegalia, ascitis, diámetro VP, trombosis portal. FIBROSCAN/elastografía: kPa. Gastroscopía: varices esofágicas (grado, puntos rojos), varices gástricas.',
+    impresion: 'Cirrosis compensada/descompensada (ascitis/encefalopatía/hemorragia/PBE/ictericia). Etiología. Child-Pugh (A/B/C): puntos. MELD-Na: score (mortalidad 90d). Varices: sin/pequeñas/grandes con puntos rojos; profilaxis. Vigilancia CHC: al día/atrasada/con CHC. Candidato trasplante.',
+    tx_farmaco: 'Cirrosis compensada: tratar etiología (abstinencia/antivirales/corticoides). Profilaxis varices (grado 2-3): Propranolol 20-40 mg c/12h o Carvedilol 6.25 mg/día → FC meta 55-60. Ascitis: Espironolactona 100-400 mg/día ± Furosemida 40 mg/día (ratio 2.5:1). Paracentesis + Albúmina IV. SBP profilaxis: Norfloxacino 400 mg/día. Encefalopatía: Lactulosa 20-30 mL c/8h + Rifaximina 550 mg c/12h. MELD≥15: evaluar trasplante.',
+    tx_nofarmaco: 'Abstinencia alcohol absoluta. Dieta: Na<2 g/día si ascitis, proteína 1.2-1.5 g/kg/día. Evitar AINE, sedantes, hipnóticos. Vacunas: HAV+HBV, influenza, neumococo. Revisión medicamentos hepatotóxicos. Vigilancia CHC: USG+AFP c/6 meses.',
+    seguimiento: 'Child-Pugh y MELD en cada visita. Paracentesis diagnóstica si nueva ascitis. Gastroscopía c/1-2 años (sin varices) o c/1 año (varices pequeñas). Espironolactona: K+ en 1 semana. USG+AFP c/6 meses. Hospitalización urgente si: hemorragia/encefalopatía 3-4/peritonitis/SHR/hipotensión.'
+  },
+  eii_crohn_colitis: {
+    label: 'EII / Crohn-Colitis',
+    diagnostico: 'Enfermedad de Crohn (K50.90) / Colitis Ulcerosa (K51.90)',
+    sintomas: 'Tipo EII: Crohn/Colitis Ulcerosa/No clasificada. Diarrea: evacuaciones/día, moco, sangre, nocturna. Urgencia y tenesmo. Dolor abdominal: localización (FID-EC típico/periumbilical/generalizado), intensidad 0-10. Pérdida de peso: kg en meses. Manifestaciones extraintestinales: artritis (periférica/axial), eritema nodoso, pioderma gangrenoso, uveítis, colangitis. Fiebre: temperatura. Estado actual: remisión/actividad leve/moderada/severa.',
+    exfisica: 'Peso, IMC, TA, FC. Dolor palpación: no/FID-EC/difuso/peritonismo. Masa palpable FID: absceso/plastrón. Peristaltismo: normal/aumentado/ausente. Región perianal: normal/fístula (orificio externo)/absceso/estenosis. Artritis periférica: articulaciones. Piel: eritema nodoso/pioderma. Ojos: uveítis activa.',
+    estudios: 'Laboratorio: Hb, Leucocitos, Plaquetas, PCR, VSG, Albúmina, Fe, TIBC, Ferritina. Calprotectina fecal: μg/g (remisión <150; moderada >150; severa >600). Colonoscopía: fecha, extensión (EC: ileocólica/colónica/ileal; CU: E1/E2/E3), actividad (SES-CD/Mayo/UCEIS). TAC/RMN enterografía: complicaciones, estenosis, fístula, absceso. Biopsias: granulomas (EC), abscesos crípticos (CU), displasia. TPMT/NUDT15 antes tiopurinas.',
+    impresion: 'Tipo EII en remisión/actividad (leve/moderada/severa). Fenotipo EC Montréal: L-B-p. Fenotipo CU Montréal: E1-E2-E3. Complicaciones: estenosis/fístula/absceso/displasia/megacolon tóxico. Respuesta tratamiento: remisión/pérdida respuesta/no respondedor/corticodependiente/corticorresistente. Necesidad escalar tratamiento.',
+    tx_farmaco: 'Inducción: Prednisona 40-60 mg/día VO → tapering 8-12 sem (o Budesonida 9 mg/día si EC ileocecal leve-moderada). Anti-TNF: Infliximab 5 mg/kg IV (sem 0-2-6 → c/8 sem) o Adalimumab 160 mg sem 0, 80 mg sem 2 → 40 mg c/2 sem. Anti-integrinas: Vedolizumab 300 mg IV (sem 0-2-6 → c/8 sem). Anti-IL12/23: Ustekinumab 520 mg IV → 90 mg SC c/8 sem. JAK (CU): Tofacitinib 10 mg c/12h × 8 sem → 5 mg c/12h. Mantenimiento: Azatioprina 2-2.5 mg/kg/día o 6-MP 1-1.5 mg/kg/día. Mesalazina (CU): 3-4.8 g/día inducción, 2.4 g/día mantenimiento.',
+    tx_nofarmaco: 'Dieta: fibra soluble en remisión, baja en fibra en actividad, dieta elemental/polimérica en EC activa. Fe IV si Hb<10+ferropenia. Folato si metotrexate. Vit B12 si EC ileal extensa/resección. Ca+Vit D si corticoides prolongados. Suspender AINE. Apoyo psicológico. Vacunación pre-biológico: VHB, influenza, neumococo, VPH, herpes zóster.',
+    seguimiento: 'Calprotectina fecal c/3 meses en actividad. Colonoscopía c/1-2 años si CU pancolitis (vigilancia displasia). RMN enterografía c/1-2 años si EC complicada. Niveles biológico+anticuerpos anti-fármaco si pérdida respuesta. Lab c/3 meses: hemograma, PCR, función hepática, albúmina. DEXA si corticoides prolongados. Dermatología/dermoscopia si anti-TNF.'
+  }
+});
+
+Object.assign(WIZARD_SCHEMA, {
+  reflujo_gerd: {
+    title: '🔥 Reflujo / ERGE',
+    sections: [
+      {
+        id: 'sintomas_frecuencia_gerd',
+        label: 'Síntomas y Frecuencia',
+        fields: [
+          { id: 'frecuencia_pirosis', type: 'select', label: 'Frecuencia de pirosis', options: ['Ocasional <1 vez/sem', 'Leve 1-2 días/sem', 'Moderada 3-4 días/sem', 'Severa ≥5 días/sem', 'Diaria con impacto nocturno'] },
+          { id: 'regurgitacion_gerd', type: 'checkbox', label: 'Regurgitación ácida' },
+          { id: 'tos_cronica_gerd', type: 'checkbox', label: 'Tos crónica nocturna' },
+          { id: 'disfonia_matutina', type: 'checkbox', label: 'Disfonía matutina' },
+          { id: 'dolor_toracico_gerd', type: 'checkbox', label: 'Dolor torácico no cardíaco' },
+          { id: 'globo_faringeo', type: 'checkbox', label: 'Globo faríngeo' },
+          { id: 'sintomas_alarma_gerd', type: 'checkbox-group', label: 'Síntomas de alarma', options: [
+            { id: 'disfagia_gerd', label: 'Disfagia' },
+            { id: 'perdida_peso_gerd', label: 'Pérdida de peso' },
+            { id: 'hemorragia_gerd', label: 'Hemorragia digestiva' },
+            { id: 'odinofagia_gerd', label: 'Odinofagia' }
+          ]}
+        ]
+      },
+      {
+        id: 'endoscopia_estudios_gerd',
+        label: 'Endoscopía y Estudios',
+        fields: [
+          { id: 'resultado_eda', type: 'select', label: 'Resultado EDA', options: ['Sin EDA', 'Normal', 'ERGE no erosiva', 'Los Ángeles A', 'Los Ángeles B', 'Los Ángeles C', 'Los Ángeles D'] },
+          { id: 'barrett_gerd', type: 'select', label: 'Esófago de Barrett', options: ['Sin Barrett', 'Barrett segmento corto sin displasia', 'Barrett largo sin displasia', 'Barrett + displasia leve', 'Barrett + displasia severa', 'No evaluado'] },
+          { id: 'hp_resultado', type: 'select', label: 'H. pylori resultado', options: ['No evaluado', 'H. pylori negativo', 'H. pylori positivo', 'H. pylori erradicado'] },
+          { id: 'hernia_hiatal_gerd', type: 'checkbox', label: 'Hernia hiatal' }
+        ]
+      },
+      {
+        id: 'tratamiento_actual_gerd',
+        label: 'Tratamiento Actual',
+        fields: [
+          { id: 'ibp_dosis', type: 'select', label: 'Inhibidor de bomba de protones (IBP)', options: ['Sin IBP', 'Dosis estándar diario', 'Dosis doble', 'IBP según necesidad', 'H2RA', 'Sin tratamiento'] },
+          { id: 'respuesta_ibp', type: 'select', label: 'Respuesta a IBP', options: ['No evaluada', 'Respuesta completa', 'Respuesta parcial', 'Refractaria — sin respuesta'] },
+          { id: 'meses_ibp', type: 'number', label: 'Meses de tratamiento con IBP', min: 0, max: 120 },
+          { id: 'ph_metria_realizada', type: 'checkbox', label: 'pH-metría realizada' }
+        ]
+      },
+      {
+        id: 'factores_riesgo_gerd',
+        label: 'Factores de Riesgo',
+        fields: [
+          { id: 'obesidad_gerd', type: 'checkbox', label: 'Obesidad (IMC >25)' },
+          { id: 'tabaquismo_gerd', type: 'checkbox', label: 'Tabaquismo activo' },
+          { id: 'alcohol_gerd', type: 'checkbox', label: 'Consumo de alcohol' },
+          { id: 'aine_uso_gerd', type: 'checkbox', label: 'Uso de AINE/AAS' },
+          { id: 'hernia_tamaño', type: 'select', label: 'Tamaño de hernia hiatal', options: ['No aplica', '<3 cm', '3-5 cm', '>5 cm'] }
+        ]
+      }
+    ]
+  },
+  cirrosis: {
+    title: '🟡 Cirrosis Hepática',
+    sections: [
+      {
+        id: 'etiologia_estadio_cirrosis',
+        label: 'Etiología y Estadio',
+        fields: [
+          { id: 'etiologia_cirrosis', type: 'select', label: 'Etiología', options: ['Alcohólica', 'VHC — Hepatitis C', 'VHB — Hepatitis B', 'MAFLD/MASLD', 'Autoinmune', 'CBP — Colangitis Biliar Primaria', 'Criptogénica', 'Otra'] },
+          { id: 'child_pugh', type: 'select', label: 'Clasificación Child-Pugh', options: ['Child-Pugh A (5-6 pts)', 'Child-Pugh B (7-9 pts)', 'Child-Pugh C (10-15 pts)'] },
+          { id: 'meld_na', type: 'number', label: 'MELD-Na', min: 6, max: 40 },
+          { id: 'alcohol_activo', type: 'checkbox', label: 'Consumo de alcohol activo' }
+        ]
+      },
+      {
+        id: 'complicaciones_cirrosis',
+        label: 'Complicaciones Actuales',
+        fields: [
+          { id: 'ascitis_actual', type: 'checkbox', label: 'Ascitis actual' },
+          { id: 'encefalopatia_actual', type: 'checkbox', label: 'Encefalopatía hepática actual' },
+          { id: 'varices_conocidas', type: 'checkbox', label: 'Varices esofágicas conocidas' },
+          { id: 'pbe_previa', type: 'checkbox', label: 'Peritonitis bacteriana espontánea previa' },
+          { id: 'shr_previo', type: 'checkbox', label: 'Síndrome hepatorrenal previo' },
+          { id: 'chc_diagnosticado', type: 'checkbox', label: 'Carcinoma hepatocelular diagnosticado' },
+          { id: 'encefalopatia_grado', type: 'select', label: 'Grado de encefalopatía (West Haven)', options: ['Sin EH', 'EH Grado 1 — subclínica', 'EH Grado 2 — letargia', 'EH Grado 3 — estupor', 'EH Grado 4 — coma'] },
+          { id: 'ascitis_grado', type: 'select', label: 'Grado de ascitis', options: ['Sin ascitis', 'Ascitis leve', 'Ascitis moderada', 'Ascitis tensa', 'Ascitis refractaria'] }
+        ]
+      },
+      {
+        id: 'laboratorio_cirrosis',
+        label: 'Laboratorio',
+        fields: [
+          { id: 'bilirrubina_total', type: 'number', label: 'Bilirrubina total (mg/dL)', min: 0, max: 30, step: 0.1 },
+          { id: 'albumina_cirrosis', type: 'number', label: 'Albúmina (g/dL)', min: 1, max: 5, step: 0.1 },
+          { id: 'inr_cirrosis', type: 'number', label: 'INR', min: 0.5, max: 10, step: 0.1 },
+          { id: 'plaquetas_cirrosis', type: 'number', label: 'Plaquetas (×10³/μL)', min: 0, max: 500, step: 1 },
+          { id: 'creatinina_cirrosis', type: 'number', label: 'Creatinina (mg/dL)', min: 0.1, max: 10, step: 0.1 },
+          { id: 'sodio_cirrosis', type: 'number', label: 'Sodio (Na mEq/L)', min: 110, max: 150, step: 1 },
+          { id: 'hiponatremia_cirrosis', type: 'checkbox', label: 'Hiponatremia (Na <130 mEq/L)' }
+        ]
+      },
+      {
+        id: 'vigilancia_trasplante_cirrosis',
+        label: 'Vigilancia y Trasplante',
+        fields: [
+          { id: 'varices_grado', type: 'select', label: 'Grado de varices esofágicas', options: ['Sin varices', 'Varices grado 1', 'Varices grado 2', 'Varices grado 3 + puntos rojos'] },
+          { id: 'betabloqueador_varices', type: 'checkbox', label: 'En profilaxis con betabloqueador' },
+          { id: 'vigilancia_chc_al_dia', type: 'checkbox', label: 'Vigilancia CHC al día (USG + AFP c/6m)' },
+          { id: 'en_lista_trasplante_hepatico', type: 'checkbox', label: 'En lista de trasplante hepático' },
+          { id: 'estadio_trasplante_h', type: 'select', label: 'Estadio de trasplante hepático', options: ['No candidato', 'En evaluación', 'En lista activa — MELD≥15', 'Post-trasplante'] }
+        ]
+      }
+    ]
+  },
+  eii_crohn_colitis: {
+    title: '🔬 EII / Crohn-Colitis',
+    sections: [
+      {
+        id: 'tipo_actividad_eii',
+        label: 'Tipo y Actividad',
+        fields: [
+          { id: 'tipo_eii', type: 'select', label: 'Tipo de EII', options: ['Enfermedad de Crohn', 'Colitis Ulcerosa', 'EII No Clasificada'] },
+          { id: 'actividad_eii', type: 'select', label: 'Grado de actividad actual', options: ['Remisión', 'Actividad leve', 'Actividad moderada', 'Actividad severa'] },
+          { id: 'extension_eii', type: 'select', label: 'Extensión/fenotipo', options: ['EC L1 — Ileal', 'EC L2 — Colónica', 'EC L3 — Ileocólica', 'CU E1 — Proctitis', 'CU E2 — Colitis izquierda', 'CU E3 — Pancolitis'] },
+          { id: 'sangrado_rectal_eii', type: 'checkbox', label: 'Sangrado rectal' },
+          { id: 'fiebre_eii', type: 'checkbox', label: 'Fiebre actual' }
+        ]
+      },
+      {
+        id: 'sintomas_actuales_eii',
+        label: 'Síntomas Actuales',
+        fields: [
+          { id: 'evacuaciones_dia', type: 'number', label: 'Evacuaciones por día', min: 0, max: 30 },
+          { id: 'sangre_heces_eii', type: 'checkbox', label: 'Sangre en heces' },
+          { id: 'dolor_abdominal_eii', type: 'checkbox', label: 'Dolor abdominal' },
+          { id: 'tenesmo_urgencia', type: 'checkbox', label: 'Tenesmo y urgencia' },
+          { id: 'perdida_peso_eii', type: 'checkbox', label: 'Pérdida de peso' },
+          { id: 'calprotectina', type: 'number', label: 'Calprotectina fecal (μg/g)', min: 0, max: 5000 },
+          { id: 'perianal_activo', type: 'checkbox', label: 'Enfermedad perianal activa (fístula/absceso)' }
+        ]
+      },
+      {
+        id: 'laboratorio_endoscopia_eii',
+        label: 'Laboratorio y Endoscopía',
+        fields: [
+          { id: 'pcr_eii', type: 'number', label: 'PCR (mg/L)', min: 0, max: 500, step: 0.1 },
+          { id: 'albumina_eii', type: 'number', label: 'Albúmina (g/dL)', min: 1, max: 5, step: 0.1 },
+          { id: 'hb_eii', type: 'number', label: 'Hemoglobina (g/dL)', min: 4, max: 18, step: 0.1 },
+          { id: 'ultima_colonoscopia', type: 'select', label: 'Último resultado endoscópico', options: ['No realizada', 'Remisión endoscópica', 'Actividad leve', 'Actividad moderada', 'Actividad severa', 'Complicación — estenosis/fístula'] },
+          { id: 'displasia_detectada', type: 'checkbox', label: 'Displasia detectada en biopsia' },
+          { id: 'granulomas_biopsia', type: 'checkbox', label: 'Granulomas en biopsia (EC)' }
+        ]
+      },
+      {
+        id: 'tratamiento_actual_eii',
+        label: 'Tratamiento Actual',
+        fields: [
+          { id: 'linea_tratamiento', type: 'select', label: 'Línea de tratamiento', options: ['Sin tratamiento', 'Mesalazina 5-ASA', 'Azatioprina/6-MP', 'Biológico anti-TNF', 'Vedolizumab', 'Ustekinumab', 'JAK inhibidor', 'Combinado biológico+tiopurina'] },
+          { id: 'respuesta_tratamiento', type: 'select', label: 'Respuesta a tratamiento actual', options: ['Remisión mantenida', 'Respuesta parcial', 'Pérdida de respuesta', 'No respondedor primario', 'Corticodependiente'] },
+          { id: 'corticoide_activo', type: 'checkbox', label: 'En tratamiento con corticoides actualmente' },
+          { id: 'hospitalizacion_eii_reciente', type: 'checkbox', label: 'Hospitalización por EII en últimos 12 meses' }
+        ]
+      }
+    ]
+  }
+});
+
+// ============================================================================
+// CONSTRUCTORES DE NOTAS CLÍNICAS
+// ============================================================================
+
+function buildReflujoGerdNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const sintomas = [
+    'Pirosis: ' + (v('frecuencia_pirosis') || 'no evaluada'),
+    v('regurgitacion_gerd') ? '+ Regurgitación ácida' : '',
+    v('tos_cronica_gerd') ? '+ Tos crónica nocturna' : '',
+    v('disfonia_matutina') ? '+ Disfonía matutina' : '',
+    v('dolor_toracico_gerd') ? '+ Dolor torácico no cardíaco' : '',
+    v('globo_faringeo') ? '+ Globo faríngeo' : ''
+  ].filter(s => s).join('. ');
+
+  const alarma = [];
+  ['disfagia_gerd', 'perdida_peso_gerd', 'hemorragia_gerd', 'odinofagia_gerd'].forEach(f => {
+    if (v(f)) alarma.push(f.replace('_gerd', '').replace(/_/g, ' '));
+  });
+  const alarmaText = alarma.length > 0 ? '\n⚠ SÍNTOMAS DE ALARMA: ' + alarma.join(', ') : '';
+
+  const impresion = [
+    'ERGE: ' + (v('resultado_eda') || 'no evaluada'),
+    'Barrett: ' + (v('barrett_gerd') || 'no evaluado'),
+    'H. pylori: ' + (v('hp_resultado') || 'no evaluado'),
+    'Tratamiento actual: ' + (v('ibp_dosis') || 'sin tratamiento'),
+    'Respuesta: ' + (v('respuesta_ibp') || 'no evaluada')
+  ].filter(s => s).join(' | ');
+
+  return {
+    sintomas: sintomas + alarmaText,
+    impresion: impresion
+  };
+}
+
+function buildCirrosisNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const childPugh = v('child_pugh') || 'no clasificado';
+  const meldNa = n('meld_na') || 'no calculado';
+  const etiologia = v('etiologia_cirrosis') || 'no especificada';
+
+  const complicaciones = [];
+  if (v('ascitis_actual')) complicaciones.push('Ascitis (' + (v('ascitis_grado') || 'grado no especificado') + ')');
+  if (v('encefalopatia_actual')) complicaciones.push('Encefalopatía (' + (v('encefalopatia_grado') || 'grado no especificado') + ')');
+  if (v('varices_conocidas')) complicaciones.push('Varices ' + (v('varices_grado') || 'no graduadas'));
+  if (v('pbe_previa')) complicaciones.push('PBE previa');
+  if (v('chc_diagnosticado')) complicaciones.push('CHC');
+  const compText = complicaciones.length > 0 ? '\nComplicaciones actuales: ' + complicaciones.join(' | ') : '';
+
+  const laboratorio = [
+    'Bil: ' + n('bilirrubina_total') + ' mg/dL',
+    'Alb: ' + n('albumina_cirrosis') + ' g/dL',
+    'INR: ' + n('inr_cirrosis'),
+    'Plaq: ' + n('plaquetas_cirrosis') + ' ×10³',
+    'Na: ' + n('sodio_cirrosis') + ' mEq/L'
+  ].filter(s => s).join(' | ');
+
+  const impresion = [
+    'Cirrosis ' + etiologia,
+    childPugh,
+    'MELD-Na: ' + meldNa,
+    compText,
+    'Laboratorio: ' + laboratorio,
+    'Trasplante: ' + (v('en_lista_trasplante_hepatico') ? 'EN LISTA' : v('estadio_trasplante_h') || 'no evaluado')
+  ].filter(s => s).join('\n');
+
+  return {
+    sintomas: 'Etiología: ' + etiologia + (v('alcohol_activo') ? ' | CONSUMO ACTIVO DE ALCOHOL' : ''),
+    impresion: impresion
+  };
+}
+
+function buildEiiCrohnColitisNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const tipo = v('tipo_eii') || 'no especificado';
+  const actividad = v('actividad_eii') || 'no evaluada';
+  const extension = v('extension_eii') || 'no especificada';
+
+  const sintomas = [
+    tipo + ' en ' + actividad.toLowerCase(),
+    'Extensión: ' + extension.toLowerCase(),
+    'Evacuaciones/día: ' + n('evacuaciones_dia'),
+    v('sangre_heces_eii') ? '+ Hematoquecia' : '',
+    v('dolor_abdominal_eii') ? '+ Dolor abdominal' : '',
+    v('tenesmo_urgencia') ? '+ Tenesmo' : '',
+    v('fiebre_eii') ? '+ Fiebre' : '',
+    v('perianal_activo') ? '⚠ ENFERMEDAD PERIANAL ACTIVA' : ''
+  ].filter(s => s).join(' | ');
+
+  const laboratorio = [
+    'Hb: ' + n('hb_eii') + ' g/dL',
+    'PCR: ' + n('pcr_eii') + ' mg/L',
+    'Alb: ' + n('albumina_eii') + ' g/dL',
+    'Calprotectina: ' + n('calprotectina') + ' μg/g'
+  ].filter(s => s).join(' | ');
+
+  let calprotFlag = '';
+  const calpro = n('calprotectina');
+  if (calpro > 600) calprotFlag = ' ⚠ SEVERA';
+  else if (calpro > 150) calprotFlag = ' (moderada)';
+
+  const impresion = [
+    tipo + ' - ' + extension.toLowerCase() + ' - ' + actividad.toLowerCase() + calprotFlag,
+    'Laboratorio: ' + laboratorio,
+    'Endoscopía: ' + (v('ultima_colonoscopia') || 'no realizada'),
+    'Tratamiento: ' + (v('linea_tratamiento') || 'sin tratamiento'),
+    'Respuesta: ' + (v('respuesta_tratamiento') || 'no evaluada'),
+    v('corticoide_activo') ? '⚠ EN CORTICOIDES' : '',
+    v('displasia_detectada') ? '⚠ DISPLASIA DETECTADA' : '',
+    v('hospitalizacion_eii_reciente') ? '⚠ HOSPITALIZACIÓN RECIENTE' : ''
+  ].filter(s => s).join('\n');
+
+  return {
+    sintomas: sintomas,
+    impresion: impresion
+  };
+}
+
+Object.assign(WIZARD_BUILDERS, {
+  reflujo_gerd: buildReflujoGerdNote,
+  cirrosis: buildCirrosisNote,
+  eii_crohn_colitis: buildEiiCrohnColitisNote
+});
+
+['reflujo_gerd', 'cirrosis', 'eii_crohn_colitis'].forEach(m => IMPLEMENTED_MODULES.add(m));
+
 </script>
 </body>
 </html>
