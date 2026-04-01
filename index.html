@@ -325,12 +325,31 @@
     .reminders-panel { animation: slideInReminder 0.25s ease; }
     .reminders-panel summary::-webkit-details-marker { display:none; }
     .reminders-panel[open] summary { border-bottom-color: #e2e8f0 !important; }
-    /* ── Drug lookup panel ── */
-    .rx-drug-lookup { background:#f0fff4;border:1px solid #9ae6b4;border-radius:8px;padding:10px 14px;margin-top:8px; }
-    .rx-drug-lookup input { background:white;border:1px solid #9ae6b4;border-radius:6px;padding:6px 10px;font-size:0.85rem;width:100%;outline:none; }
-    .rx-drug-instr { margin-top:8px;background:white;border:1px solid #c6f6d5;border-radius:6px;padding:10px;font-size:0.8rem;color:#2d3748;white-space:pre-wrap;line-height:1.5;display:none; }
-    .rx-drug-instr.visible { display:block; }
-    .rx-drug-instr .rx-instr-drug { font-weight:700;color:#276749;margin-bottom:4px;font-size:0.82rem; }
+    /* ── Drug autocomplete / builder panel ── */
+    .rx-drug-builder { background:#f0fff4;border:1px solid #9ae6b4;border-radius:10px;padding:10px 14px;margin-top:8px; }
+    .rx-drug-builder-title { font-size:0.78rem;font-weight:700;color:#276749;margin-bottom:7px;display:flex;align-items:center;gap:6px; }
+    .rx-ac-wrap { position:relative; }
+    .rx-ac-input { background:white;border:1.5px solid #9ae6b4;border-radius:7px;padding:7px 12px;font-size:0.88rem;width:100%;outline:none;box-sizing:border-box;transition:border-color 0.15s; }
+    .rx-ac-input:focus { border-color:#38a169; }
+    .rx-ac-dropdown { position:absolute;top:calc(100% + 2px);left:0;right:0;background:white;border:1.5px solid #9ae6b4;border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,0.13);z-index:9999;max-height:220px;overflow-y:auto;display:none; }
+    .rx-ac-dropdown.open { display:block; }
+    .rx-ac-item { padding:7px 12px;cursor:pointer;font-size:0.84rem;border-bottom:1px solid #f0fff4;display:flex;justify-content:space-between;align-items:center;gap:8px; }
+    .rx-ac-item:hover,.rx-ac-item.sel { background:#f0fff4; }
+    .rx-ac-item-name { font-weight:600;color:#276749;flex:1; }
+    .rx-ac-item-brand { font-size:0.75rem;color:#718096; }
+    .rx-ac-item-cat { font-size:0.7rem;background:#e6fffa;color:#234e52;padding:1px 6px;border-radius:10px;flex-shrink:0; }
+    .rx-drug-form { display:none;margin-top:8px;background:white;border:1px solid #c6f6d5;border-radius:8px;padding:10px 12px; }
+    .rx-drug-form.visible { display:block; }
+    .rx-drug-form-grid { display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px; }
+    .rx-drug-form label { font-size:0.72rem;font-weight:700;color:#276749;display:block;margin-bottom:3px; }
+    .rx-drug-form select,.rx-drug-form input[type=text],.rx-drug-form input[type=number] { width:100%;border:1px solid #9ae6b4;border-radius:6px;padding:5px 8px;font-size:0.82rem;box-sizing:border-box;background:white;outline:none; }
+    .rx-drug-preview { font-size:0.78rem;color:#276749;background:#f0fff4;border-radius:5px;padding:5px 8px;margin-bottom:7px;display:none;font-style:italic;border-left:3px solid #38a169; }
+    .rx-drug-preview.visible { display:block; }
+    .rx-add-btn { background:linear-gradient(135deg,#276749,#2f855a);color:white;border:none;border-radius:7px;padding:7px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;width:100%;transition:opacity 0.15s; }
+    .rx-add-btn:hover { opacity:0.88; }
+    /* legacy lookup kept hidden */
+    .rx-drug-lookup { display:none; }
+    .rx-drug-instr { display:none; }
 </style>
 </head>
 <body>
@@ -883,9 +902,69 @@
       </div>
       <div id="rxTemplateList" style="display:flex;flex-wrap:wrap;gap:6px;min-height:28px"></div>
     </div>
-    <div class="rx-drug-lookup">
-      <div style="font-size:0.78rem;font-weight:700;color:#276749;margin-bottom:6px">💊 Buscar instrucciones de medicamento</div>
-      <input id="rx_lookup_input" placeholder="Escribe el nombre del medicamento..." oninput="rxLookupDrug(this.value)" autocomplete="off">
+    <!-- Drug autocomplete builder -->
+    <div class="rx-drug-builder">
+      <div class="rx-drug-builder-title">💊 Agregar medicamento de la base de datos mexicana <span style="font-weight:400;color:#4a7c59">(569 fármacos)</span></div>
+      <div class="rx-ac-wrap">
+        <input class="rx-ac-input" id="rxAcInput" placeholder="🔍 Buscar por nombre genérico o marca comercial..." autocomplete="off"
+          oninput="rxAcSearch(this.value)" onkeydown="rxAcKeyNav(event)">
+        <div class="rx-ac-dropdown" id="rxAcDropdown"></div>
+      </div>
+      <div class="rx-drug-form" id="rxDrugForm">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span id="rxFormDrugName" style="font-weight:700;color:#276749;font-size:0.9rem"></span>
+          <button onclick="rxClearForm()" style="background:none;border:none;color:#a0aec0;cursor:pointer;font-size:0.8rem">✕ Cambiar</button>
+        </div>
+        <div class="rx-drug-form-grid">
+          <div><label>Concentración</label><select id="rxFormConc"></select></div>
+          <div><label>Dosis</label><input type="number" id="rxFormDose" placeholder="1" min="0.1" step="0.1" oninput="rxUpdatePreview()"></div>
+          <div><label>Vía</label><select id="rxFormRoute" onchange="rxUpdatePreview()">
+            <option value="VO">VO (oral)</option>
+            <option value="IV">IV</option>
+            <option value="IM">IM</option>
+            <option value="SC">SC</option>
+            <option value="SL">SL (sublingual)</option>
+            <option value="Tópico">Tópico</option>
+            <option value="Inhalado">Inhalado</option>
+            <option value="Rectal">Rectal</option>
+            <option value="Ótico">Ótico</option>
+            <option value="Oftálmico">Oftálmico</option>
+            <option value="Vaginal">Vaginal</option>
+          </select></div>
+          <div><label>Frecuencia</label><select id="rxFormFreq" onchange="rxUpdatePreview()">
+            <option value="c/24h">c/24h (cada día)</option>
+            <option value="c/12h" selected>c/12h (cada 12h)</option>
+            <option value="c/8h">c/8h (cada 8h)</option>
+            <option value="c/6h">c/6h (cada 6h)</option>
+            <option value="c/4h">c/4h (cada 4h)</option>
+            <option value="c/72h">c/72h (cada 3 días)</option>
+            <option value="c/semana">1 vez/semana</option>
+            <option value="c/mes">1 vez/mes</option>
+            <option value="PRN">PRN (si necesario)</option>
+          </select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:110px 1fr;gap:8px;margin-bottom:8px">
+          <div><label>Duración</label>
+            <div style="display:flex;gap:4px;align-items:center">
+              <input type="number" id="rxFormDurNum" placeholder="30" min="1" style="width:55px;border:1px solid #9ae6b4;border-radius:6px;padding:5px 6px;font-size:0.82rem;outline:none" oninput="rxUpdatePreview()">
+              <select id="rxFormDurUnit" onchange="rxUpdatePreview()" style="border:1px solid #9ae6b4;border-radius:6px;padding:5px 4px;font-size:0.8rem;outline:none">
+                <option value="días">días</option>
+                <option value="semanas">sem</option>
+                <option value="meses">mes</option>
+              </select>
+            </div>
+          </div>
+          <div><label>Indicaciones adicionales (opcional)</label>
+            <input type="text" id="rxFormExtra" placeholder="con alimentos, en ayuno, antes de dormir..." oninput="rxUpdatePreview()" style="border:1px solid #9ae6b4;border-radius:6px;padding:5px 8px;font-size:0.82rem;width:100%;outline:none">
+          </div>
+        </div>
+        <div class="rx-drug-preview" id="rxDrugPreview"></div>
+        <button class="rx-add-btn" onclick="rxAddDrugLine()">➕ Agregar a la receta</button>
+      </div>
+    </div>
+    <!-- legacy lookup hidden -->
+    <div class="rx-drug-lookup" style="display:none">
+      <input id="rx_lookup_input" autocomplete="off">
       <div id="rx_lookup_result" class="rx-drug-instr"></div>
     </div>
     <div class="form-group">
@@ -5312,15 +5391,148 @@ function getRxInstructions(name) {
   return { key, instr };
 }
 
-function rxLookupDrug(val) {
-  const result = document.getElementById('rx_lookup_result');
-  if (!result) return;
-  if (!val || val.length < 3) { result.classList.remove('visible'); result.innerHTML = ''; return; }
-  const match = getRxInstructions(val);
-  if (!match) { result.classList.remove('visible'); result.innerHTML = ''; return; }
-  result.innerHTML = '<div class="rx-instr-drug">💊 ' + match.key.charAt(0).toUpperCase() + match.key.slice(1) + '</div>' + match.instr.replace(/\n/g,'<br>');
-  result.classList.add('visible');
+// Legacy stub — kept for safety
+function rxLookupDrug(val) {}
+
+// ══════════════════════════════════════════════════════════════
+// 💊 DRUG AUTOCOMPLETE — MEX_DRUGS DATABASE
+// ══════════════════════════════════════════════════════════════
+let _rxAcResults = [];
+let _rxAcIdx = -1;
+let _rxAcSelected = null; // selected drug object
+
+function rxAcSearch(val) {
+  const dd = document.getElementById('rxAcDropdown');
+  if (!dd) return;
+  if (!val || val.length < 2) { dd.classList.remove('open'); dd.innerHTML = ''; _rxAcResults = []; return; }
+  const q = val.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const matches = (typeof MEX_DRUGS !== 'undefined' ? MEX_DRUGS : []).filter(d => {
+    const name = (d.n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const brand = (d.b||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    return name.includes(q) || brand.includes(q);
+  }).slice(0, 12);
+  _rxAcResults = matches;
+  _rxAcIdx = -1;
+  if (!matches.length) { dd.classList.remove('open'); dd.innerHTML = '<div style="padding:10px 12px;font-size:0.82rem;color:#718096">Sin resultados para "'+val+'"</div>'; dd.classList.add('open'); return; }
+  dd.innerHTML = matches.map((d, i) =>
+    `<div class="rx-ac-item" data-idx="${i}" onmousedown="rxAcSelect(${i})">
+      <span class="rx-ac-item-name">${d.n}</span>
+      <span class="rx-ac-item-brand">${d.b}</span>
+      <span class="rx-ac-item-cat">${d.t}</span>
+    </div>`
+  ).join('');
+  dd.classList.add('open');
 }
+
+function rxAcKeyNav(e) {
+  const dd = document.getElementById('rxAcDropdown');
+  if (!dd || !dd.classList.contains('open')) return;
+  if (e.key === 'ArrowDown') { e.preventDefault(); _rxAcIdx = Math.min(_rxAcIdx+1, _rxAcResults.length-1); rxAcHighlight(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); _rxAcIdx = Math.max(_rxAcIdx-1, 0); rxAcHighlight(); }
+  else if (e.key === 'Enter') { e.preventDefault(); if (_rxAcIdx >= 0) rxAcSelect(_rxAcIdx); }
+  else if (e.key === 'Escape') { dd.classList.remove('open'); }
+}
+
+function rxAcHighlight() {
+  const dd = document.getElementById('rxAcDropdown');
+  if (!dd) return;
+  dd.querySelectorAll('.rx-ac-item').forEach((el,i) => el.classList.toggle('sel', i===_rxAcIdx));
+  const sel = dd.querySelector('.rx-ac-item.sel');
+  if (sel) sel.scrollIntoView({block:'nearest'});
+}
+
+function rxAcSelect(idx) {
+  const drug = _rxAcResults[idx];
+  if (!drug) return;
+  _rxAcSelected = drug;
+  const dd = document.getElementById('rxAcDropdown');
+  if (dd) dd.classList.remove('open');
+  const inp = document.getElementById('rxAcInput');
+  if (inp) inp.value = drug.n + (drug.b ? ' (' + drug.b + ')' : '');
+
+  // populate form
+  const nameEl = document.getElementById('rxFormDrugName');
+  if (nameEl) nameEl.innerHTML = '💊 ' + drug.n + (drug.b ? ' <span style="font-weight:400;color:#718096;font-size:0.8rem">· ' + drug.b + '</span>' : '');
+  const concSel = document.getElementById('rxFormConc');
+  if (concSel) {
+    const concs = drug.c || ['Sin especificar'];
+    concSel.innerHTML = concs.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+  const form = document.getElementById('rxDrugForm');
+  if (form) form.classList.add('visible');
+  // Set sensible defaults
+  const doseInp = document.getElementById('rxFormDose');
+  if (doseInp && !doseInp.value) doseInp.value = '1';
+  rxUpdatePreview();
+  // scroll form into view
+  setTimeout(() => { if (form) form.scrollIntoView({behavior:'smooth',block:'nearest'}); }, 80);
+}
+
+function rxClearForm() {
+  _rxAcSelected = null;
+  const inp = document.getElementById('rxAcInput');
+  if (inp) { inp.value = ''; inp.focus(); }
+  const form = document.getElementById('rxDrugForm');
+  if (form) form.classList.remove('visible');
+  const dd = document.getElementById('rxAcDropdown');
+  if (dd) { dd.classList.remove('open'); dd.innerHTML = ''; }
+  const prev = document.getElementById('rxDrugPreview');
+  if (prev) { prev.classList.remove('visible'); prev.innerHTML = ''; }
+}
+
+function rxUpdatePreview() {
+  const prev = document.getElementById('rxDrugPreview');
+  if (!prev || !_rxAcSelected) return;
+  const line = rxBuildLine();
+  if (line) { prev.innerHTML = '📋 ' + line; prev.classList.add('visible'); }
+  else { prev.classList.remove('visible'); }
+}
+
+function rxBuildLine() {
+  if (!_rxAcSelected) return '';
+  const drug = _rxAcSelected;
+  const conc = (document.getElementById('rxFormConc')?.value || '').trim();
+  const dose = (document.getElementById('rxFormDose')?.value || '1').trim();
+  const route = (document.getElementById('rxFormRoute')?.value || 'VO').trim();
+  const freq = (document.getElementById('rxFormFreq')?.value || 'c/12h').trim();
+  const durNum = (document.getElementById('rxFormDurNum')?.value || '').trim();
+  const durUnit = (document.getElementById('rxFormDurUnit')?.value || 'días').trim();
+  const extra = (document.getElementById('rxFormExtra')?.value || '').trim();
+
+  const formaMap = {tab:'tabletas',cap:'cápsulas',sol:'solución',amp:'ampolleta',crm:'crema',inh:'inhalador',susp:'suspensión',gts:'gotas',ovl:'óvulos',jar:'jarabe',iny:'inyectable',gel:'gel',ung:'ungüento',spr:'spray',parche:'parche'};
+  const forma = formaMap[drug.f] || drug.f || '';
+  let line = `${drug.n} ${conc} ${forma}`.trim();
+  if (dose !== '1' || true) line += `, ${dose} ${forma === 'tabletas' ? 'tableta' : forma === 'cápsulas' ? 'cápsula' : 'dosis'}`;
+  line += ` ${route} ${freq}`;
+  if (durNum) line += ` × ${durNum} ${durUnit}`;
+  if (extra) line += ` (${extra})`;
+  return line;
+}
+
+function rxAddDrugLine() {
+  const line = rxBuildLine();
+  if (!line) { alert('Selecciona un medicamento primero.'); return; }
+  const ta = document.getElementById('rx_medicamentos');
+  if (!ta) return;
+  const current = ta.value.trim();
+  // Count existing lines to number new one
+  const lineCount = current ? current.split('\n').filter(l => l.trim()).length + 1 : 1;
+  const newLine = lineCount + '. ' + line;
+  ta.value = current ? current + '\n' + newLine : newLine;
+  // visual flash on textarea
+  ta.style.borderColor = '#38a169';
+  setTimeout(() => { ta.style.borderColor = ''; }, 800);
+  // clear form for next drug
+  rxClearForm();
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.rx-ac-wrap')) {
+    const dd = document.getElementById('rxAcDropdown');
+    if (dd) dd.classList.remove('open');
+  }
+});
 
 // ══════════════════════════════════════════════════════════════
 // 🔔 RECORDATORIOS PREVENTIVOS
@@ -11539,6 +11751,584 @@ Object.assign(WIZARD_BUILDERS, {
 });
 
 ['pediatria_general', 'neonato', 'pediatria_infecciosa'].forEach(m => IMPLEMENTED_MODULES.add(m));
+
+// ══════════════════════════════════════════════════════════════
+// 💊 BASE DE DATOS DE MEDICAMENTOS APROBADOS EN MÉXICO (MEX_DRUGS)
+// 569 principios activos — Generada de COFEPRIS / IMSS Cuadro Básico
+// Campos: n=genérico, b=marca MX, c=concentraciones, f=forma, t=categoría
+// ══════════════════════════════════════════════════════════════
+const MEX_DRUGS = [
+{ n: "Metformina", b: "Glucofage", c: ["500mg","850mg","1000mg"], f: "tab", t: "Antidiabético" },
+{ n: "Glibenclamida", b: "Daonil", c: ["2.5mg","5mg"], f: "tab", t: "Antidiabético" },
+{ n: "Glipizida", b: "Glucotrol", c: ["5mg","10mg"], f: "tab", t: "Antidiabético" },
+{ n: "Glimepirida", b: "Amaryl", c: ["1mg","2mg","4mg"], f: "tab", t: "Antidiabético" },
+{ n: "Acarbosa", b: "Glucobay", c: ["50mg","100mg"], f: "tab", t: "Antidiabético" },
+{ n: "Sitagliptina", b: "Januvia", c: ["100mg"], f: "tab", t: "Antidiabético" },
+{ n: "Vildagliptina", b: "Galvus", c: ["50mg"], f: "tab", t: "Antidiabético" },
+{ n: "Saxagliptina", b: "Onglyza", c: ["2.5mg","5mg"], f: "tab", t: "Antidiabético" },
+{ n: "Alogliptina", b: "Nesina", c: ["12.5mg","25mg"], f: "tab", t: "Antidiabético" },
+{ n: "Dapagliflozina", b: "Forxiga", c: ["5mg","10mg"], f: "tab", t: "Antidiabético" },
+{ n: "Empagliflozina", b: "Jardiance", c: ["10mg","25mg"], f: "tab", t: "Antidiabético" },
+{ n: "Canagliflozina", b: "Invokana", c: ["100mg","300mg"], f: "tab", t: "Antidiabético" },
+{ n: "Pioglitazona", b: "Actos", c: ["15mg","30mg","45mg"], f: "tab", t: "Antidiabético" },
+{ n: "Rosiglitazona", b: "Avandia", c: ["4mg","8mg"], f: "tab", t: "Antidiabético" },
+{ n: "Insulina humana NPH", b: "Humulin", c: ["100UI/mL"], f: "amp", t: "Insulina" },
+{ n: "Insulina regular", b: "Actrapid", c: ["100UI/mL"], f: "amp", t: "Insulina" },
+{ n: "Insulina glargina", b: "Lantus", c: ["100UI/mL"], f: "amp", t: "Insulina" },
+{ n: "Insulina detemir", b: "Levemir", c: ["100UI/mL"], f: "amp", t: "Insulina" },
+{ n: "Insulina lispro", b: "Humalog", c: ["100UI/mL"], f: "amp", t: "Insulina" },
+{ n: "Insulina aspart", b: "NovoLog", c: ["100UI/mL"], f: "amp", t: "Insulina" },
+{ n: "Insulina glulisina", b: "Apidra", c: ["100UI/mL"], f: "amp", t: "Insulina" },
+{ n: "Insulina degludec", b: "Tresiba", c: ["100UI/mL"], f: "amp", t: "Insulina" },
+{ n: "Insulina 70/30", b: "Mixtard", c: ["100UI/mL"], f: "amp", t: "Insulina" },
+{ n: "Levotiroxina", b: "Synthroid", c: ["25mcg","50mcg","75mcg","100mcg","125mcg","150mcg","200mcg"], f: "tab", t: "Tiroidea" },
+{ n: "Liotironina", b: "Cynomel", c: ["5mcg","25mcg","50mcg"], f: "tab", t: "Tiroidea" },
+{ n: "Metimazol", b: "Tapazol", c: ["5mg","10mg"], f: "tab", t: "Tiroidea" },
+{ n: "Propiltiouracilo", b: "PTU", c: ["50mg","100mg"], f: "tab", t: "Tiroidea" },
+{ n: "Yodo radioactivo", b: "I-131", c: ["mCi"], f: "sol", t: "Tiroidea" },
+{ n: "Hidrocortisona", b: "Cortef", c: ["5mg","10mg","20mg"], f: "tab", t: "Glucocorticoide" },
+{ n: "Prednisona", b: "Rayos", c: ["5mg","10mg","50mg"], f: "tab", t: "Glucocorticoide" },
+{ n: "Prednisolona", b: "Prelone", c: ["5mg","20mg"], f: "tab", t: "Glucocorticoide" },
+{ n: "Metilprednisolona", b: "Medrol", c: ["4mg","8mg","16mg","32mg"], f: "tab", t: "Glucocorticoide" },
+{ n: "Dexametasona", b: "Decadron", c: ["0.5mg","0.75mg","4mg"], f: "tab", t: "Glucocorticoide" },
+{ n: "Betametasona", b: "Celestamine", c: ["0.5mg"], f: "tab", t: "Glucocorticoide" },
+{ n: "Triamcinolona", b: "Aristospan", c: ["2mg","4mg","8mg"], f: "tab", t: "Glucocorticoide" },
+{ n: "Budesonida", b: "Pulmicort", c: ["0.125mg","0.25mg","0.5mg"], f: "inh", t: "Glucocorticoide" },
+{ n: "Fludrocortisona", b: "Florinef", c: ["0.1mg"], f: "tab", t: "Glucocorticoide" },
+{ n: "Somatropina", b: "Humatrope", c: ["5UI","10UI","15UI"], f: "amp", t: "Hormona" },
+{ n: "Alendronato", b: "Fosamax", c: ["70mg"], f: "tab", t: "Osteoporosis" },
+{ n: "Risedronato", b: "Actonel", c: ["35mg"], f: "tab", t: "Osteoporosis" },
+{ n: "Ibandronato", b: "Boniva", c: ["150mg"], f: "tab", t: "Osteoporosis" },
+{ n: "Zoledronato", b: "Aclasta", c: ["5mg/100mL"], f: "sol", t: "Osteoporosis" },
+{ n: "Raloxifeno", b: "Evista", c: ["60mg"], f: "tab", t: "Osteoporosis" },
+{ n: "Denosumab", b: "Prolia", c: ["60mg"], f: "amp", t: "Osteoporosis" },
+{ n: "Teriparatida", b: "Forteo", c: ["250mcg/mL"], f: "amp", t: "Osteoporosis" },
+{ n: "Calcitonina", b: "Miacalcic", c: ["100UI/mL"], f: "amp", t: "Osteoporosis" },
+{ n: "Calcio carbonato", b: "Calcitrol", c: ["500mg","1000mg"], f: "tab", t: "Suplemento" },
+{ n: "Vitamina D3", b: "Vidabol", c: ["400UI","1000UI","2000UI"], f: "cap", t: "Suplemento" },
+{ n: "Vitamina D2", b: "Ergocalciferol", c: ["1000UI"], f: "sol", t: "Suplemento" },
+{ n: "Sulfato de magnesio", b: "Magnesol", c: ["500mg","1000mg"], f: "tab", t: "Suplemento" },
+{ n: "Captopril", b: "Capoten", c: ["12.5mg","25mg","50mg"], f: "tab", t: "IECA" },
+{ n: "Enalapril", b: "Innovace", c: ["2.5mg","5mg","10mg","20mg"], f: "tab", t: "IECA" },
+{ n: "Lisinopril", b: "Zestril", c: ["5mg","10mg","20mg"], f: "tab", t: "IECA" },
+{ n: "Ramipril", b: "Tritace", c: ["1.25mg","2.5mg","5mg"], f: "cap", t: "IECA" },
+{ n: "Benazepril", b: "Lotensin", c: ["5mg","10mg","20mg"], f: "tab", t: "IECA" },
+{ n: "Fosinopril", b: "Monopril", c: ["10mg","20mg"], f: "tab", t: "IECA" },
+{ n: "Quinapril", b: "Accupril", c: ["5mg","10mg","20mg"], f: "tab", t: "IECA" },
+{ n: "Perindopril", b: "Aceon", c: ["4mg","8mg"], f: "tab", t: "IECA" },
+{ n: "Trandolapril", b: "Mavik", c: ["1mg","2mg","4mg"], f: "tab", t: "IECA" },
+{ n: "Losartán", b: "Cozaar", c: ["25mg","50mg","100mg"], f: "tab", t: "ARA2" },
+{ n: "Valsartán", b: "Diovan", c: ["40mg","80mg","160mg","320mg"], f: "tab", t: "ARA2" },
+{ n: "Irbesartán", b: "Avapro", c: ["75mg","150mg","300mg"], f: "tab", t: "ARA2" },
+{ n: "Candesartán", b: "Atacand", c: ["4mg","8mg","16mg","32mg"], f: "tab", t: "ARA2" },
+{ n: "Olmesartán", b: "Benicar", c: ["20mg","40mg"], f: "tab", t: "ARA2" },
+{ n: "Telmisartán", b: "Micardis", c: ["20mg","40mg","80mg"], f: "tab", t: "ARA2" },
+{ n: "Azilsartán", b: "Edarbi", c: ["40mg","80mg"], f: "tab", t: "ARA2" },
+{ n: "Metoprolol", b: "Lopressor", c: ["25mg","50mg","100mg"], f: "tab", t: "Betabloqueador" },
+{ n: "Atenolol", b: "Tenormin", c: ["25mg","50mg","100mg"], f: "tab", t: "Betabloqueador" },
+{ n: "Propranolol", b: "Inderal", c: ["10mg","20mg","40mg","80mg"], f: "tab", t: "Betabloqueador" },
+{ n: "Carvedilol", b: "Coreg", c: ["3.125mg","6.25mg","12.5mg","25mg"], f: "tab", t: "Betabloqueador" },
+{ n: "Bisoprolol", b: "Monoprol", c: ["2.5mg","5mg","10mg"], f: "tab", t: "Betabloqueador" },
+{ n: "Nebivolol", b: "Bystolic", c: ["5mg","10mg"], f: "tab", t: "Betabloqueador" },
+{ n: "Labetalol", b: "Trandate", c: ["100mg","200mg","400mg"], f: "tab", t: "Betabloqueador" },
+{ n: "Sotalol", b: "Sotacor", c: ["80mg","120mg","160mg"], f: "tab", t: "Betabloqueador" },
+{ n: "Amlodipino", b: "Norvasc", c: ["2.5mg","5mg","10mg"], f: "tab", t: "Calcioantagonista" },
+{ n: "Nifedipino", b: "Adalat", c: ["10mg","20mg","30mg"], f: "cap", t: "Calcioantagonista" },
+{ n: "Felodipino", b: "Plendil", c: ["2.5mg","5mg","10mg"], f: "tab", t: "Calcioantagonista" },
+{ n: "Diltiazem", b: "Cardizem", c: ["30mg","60mg","90mg","120mg"], f: "tab", t: "Calcioantagonista" },
+{ n: "Verapamilo", b: "Isoptin", c: ["40mg","80mg","120mg"], f: "tab", t: "Calcioantagonista" },
+{ n: "Lercanidipino", b: "Zanidip", c: ["10mg","20mg"], f: "tab", t: "Calcioantagonista" },
+{ n: "Nimodipino", b: "Nimotop", c: ["30mg"], f: "cap", t: "Calcioantagonista" },
+{ n: "Hidroclorotiazida", b: "Esidrix", c: ["25mg","50mg"], f: "tab", t: "Diurético" },
+{ n: "Furosemida", b: "Lasix", c: ["20mg","40mg","80mg"], f: "tab", t: "Diurético" },
+{ n: "Espironolactona", b: "Aldactone", c: ["25mg","50mg","100mg"], f: "tab", t: "Diurético" },
+{ n: "Torasemida", b: "Demadex", c: ["5mg","10mg","20mg"], f: "tab", t: "Diurético" },
+{ n: "Clortalidona", b: "Thalitone", c: ["25mg","50mg"], f: "tab", t: "Diurético" },
+{ n: "Indapamida", b: "Lozol", c: ["1.25mg","2.5mg"], f: "tab", t: "Diurético" },
+{ n: "Amilorida", b: "Midamor", c: ["5mg"], f: "tab", t: "Diurético" },
+{ n: "Acetazolamida", b: "Diamox", c: ["250mg","500mg"], f: "tab", t: "Diurético" },
+{ n: "Manitol", b: "Osmitrol", c: ["20%"], f: "sol", t: "Diurético" },
+{ n: "Amiodarona", b: "Cordarone", c: ["100mg","200mg"], f: "tab", t: "Antiarrítmico" },
+{ n: "Digoxina", b: "Lanoxin", c: ["0.125mg","0.25mg","0.5mg"], f: "tab", t: "Antiarrítmico" },
+{ n: "Adenosina", b: "Adenocard", c: ["6mg/2mL"], f: "amp", t: "Antiarrítmico" },
+{ n: "Lidocaína", b: "Xylocaína", c: ["100mg/5mL"], f: "amp", t: "Antiarrítmico" },
+{ n: "Flecainida", b: "Tambocor", c: ["50mg","100mg"], f: "tab", t: "Antiarrítmico" },
+{ n: "Propafenona", b: "Rytmonorm", c: ["150mg","300mg"], f: "tab", t: "Antiarrítmico" },
+{ n: "Atorvastatina", b: "Lipitor", c: ["10mg","20mg","40mg","80mg"], f: "tab", t: "Estatina" },
+{ n: "Rosuvastatina", b: "Crestor", c: ["5mg","10mg","20mg","40mg"], f: "tab", t: "Estatina" },
+{ n: "Simvastatina", b: "Zocor", c: ["10mg","20mg","40mg"], f: "tab", t: "Estatina" },
+{ n: "Pravastatina", b: "Pravachol", c: ["10mg","20mg","40mg"], f: "tab", t: "Estatina" },
+{ n: "Lovastatina", b: "Mevacor", c: ["10mg","20mg","40mg"], f: "tab", t: "Estatina" },
+{ n: "Fluvastatina", b: "Lescol", c: ["20mg","40mg"], f: "cap", t: "Estatina" },
+{ n: "Pitavastatina", b: "Livalo", c: ["1mg","2mg","4mg"], f: "tab", t: "Estatina" },
+{ n: "Ácido acetilsalicílico", b: "Aspirin", c: ["100mg","325mg","500mg"], f: "tab", t: "Antiagregante" },
+{ n: "Clopidogrel", b: "Plavix", c: ["75mg"], f: "tab", t: "Antiagregante" },
+{ n: "Ticagrelor", b: "Brilinta", c: ["60mg","90mg"], f: "tab", t: "Antiagregante" },
+{ n: "Prasugrel", b: "Effient", c: ["5mg","10mg"], f: "tab", t: "Antiagregante" },
+{ n: "Dipiridamol", b: "Persantine", c: ["25mg","50mg"], f: "tab", t: "Antiagregante" },
+{ n: "Warfarina", b: "Coumadin", c: ["1mg","2.5mg","5mg","10mg"], f: "tab", t: "Anticoagulante" },
+{ n: "Heparina", b: "Heparin", c: ["5000UI/mL","10000UI/mL"], f: "amp", t: "Anticoagulante" },
+{ n: "Enoxaparina", b: "Lovenox", c: ["20mg","40mg","60mg","80mg","100mg","120mg","150mg"], f: "amp", t: "Anticoagulante" },
+{ n: "Dabigatrán", b: "Pradaxa", c: ["75mg","110mg","150mg"], f: "cap", t: "Anticoagulante" },
+{ n: "Rivaroxabán", b: "Xarelto", c: ["10mg","15mg","20mg"], f: "tab", t: "Anticoagulante" },
+{ n: "Apixabán", b: "Eliquis", c: ["2.5mg","5mg"], f: "tab", t: "Anticoagulante" },
+{ n: "Fondaparinux", b: "Arixtra", c: ["2.5mg","5mg","7.5mg","10mg"], f: "amp", t: "Anticoagulante" },
+{ n: "Nitroglicerina", b: "Nitroderm", c: ["0.3mg","0.6mg","1mg"], f: "tab", t: "Nitrato" },
+{ n: "Isosorbida dinitrato", b: "Isordil", c: ["5mg","10mg","20mg"], f: "tab", t: "Nitrato" },
+{ n: "Isosorbida mononitrato", b: "Monoket", c: ["20mg","40mg","60mg"], f: "tab", t: "Nitrato" },
+{ n: "Ivabradina", b: "Corlanor", c: ["5mg","7.5mg"], f: "tab", t: "Cronotrópico" },
+{ n: "Sacubitril/valsartán", b: "Entresto", c: ["24/26mg","49/51mg","97/103mg"], f: "tab", t: "IECA/ARA2" },
+{ n: "Ezetimiba", b: "Zetia", c: ["10mg"], f: "tab", t: "Hipolipemiante" },
+{ n: "Fenofibrato", b: "Tricor", c: ["48mg","145mg"], f: "cap", t: "Fibrato" },
+{ n: "Gemfibrozilo", b: "Lopid", c: ["300mg","600mg"], f: "tab", t: "Fibrato" },
+{ n: "Omega-3", b: "Omacor", c: ["1000mg"], f: "cap", t: "Hipolipemiante" },
+{ n: "Amoxicilina", b: "Amoxil", c: ["250mg", "500mg"], f: "cap", t: "Penicilina" },
+{ n: "Amoxicilina-clavulanato", b: "Augmentine", c: ["500/125mg", "875/125mg"], f: "tab", t: "Penicilina+inhibidor" },
+{ n: "Ampicilina", b: "Ampicilina", c: ["250mg", "500mg"], f: "cap", t: "Penicilina" },
+{ n: "Dicloxacilina", b: "Dicloxacilina", c: ["250mg", "500mg"], f: "cap", t: "Penicilina" },
+{ n: "Nafcilina", b: "Nafcilina", c: ["500mg"], f: "cap", t: "Penicilina" },
+{ n: "Piperacilina-tazobactam", b: "Tazocin", c: ["2.25g", "4.5g"], f: "amp", t: "Penicilina+inhibidor" },
+{ n: "Cefalexina", b: "Cefalexina", c: ["250mg", "500mg"], f: "cap", t: "Cefalosporina" },
+{ n: "Cefadroxilo", b: "Cefadroxilo", c: ["500mg", "1g"], f: "cap", t: "Cefalosporina" },
+{ n: "Cefuroxima axetilo", b: "Cefuroxima", c: ["250mg", "500mg"], f: "tab", t: "Cefalosporina" },
+{ n: "Ceftriaxona", b: "Ceftriaxona", c: ["500mg", "1g", "2g"], f: "amp", t: "Cefalosporina" },
+{ n: "Cefotaxima", b: "Cefotaxima", c: ["500mg", "1g", "2g"], f: "amp", t: "Cefalosporina" },
+{ n: "Cefixima", b: "Suprax", c: ["200mg", "400mg"], f: "tab", t: "Cefalosporina" },
+{ n: "Ceftazidima", b: "Fortam", c: ["500mg", "1g", "2g"], f: "amp", t: "Cefalosporina" },
+{ n: "Cefepima", b: "Maxipime", c: ["500mg", "1g", "2g"], f: "amp", t: "Cefalosporina" },
+{ n: "Ceftarolina", b: "Ceftarolina", c: ["600mg"], f: "amp", t: "Cefalosporina" },
+{ n: "Azitromicina", b: "Zithromax", c: ["250mg", "500mg"], f: "tab", t: "Macrólido" },
+{ n: "Claritromicina", b: "Klacid", c: ["250mg", "500mg"], f: "tab", t: "Macrólido" },
+{ n: "Eritromicina", b: "Eritromicina", c: ["250mg", "500mg"], f: "tab", t: "Macrólido" },
+{ n: "Roxitromicina", b: "Rulid", c: ["150mg"], f: "tab", t: "Macrólido" },
+{ n: "Ciprofloxacino", b: "Cipro", c: ["250mg", "500mg", "750mg"], f: "tab", t: "Fluoroquinolona" },
+{ n: "Levofloxacino", b: "Tavanic", c: ["250mg", "500mg", "750mg"], f: "tab", t: "Fluoroquinolona" },
+{ n: "Moxifloxacino", b: "Avelox", c: ["400mg"], f: "tab", t: "Fluoroquinolona" },
+{ n: "Norfloxacino", b: "Noroxin", c: ["400mg"], f: "tab", t: "Fluoroquinolona" },
+{ n: "Metronidazol", b: "Flagyl", c: ["250mg", "500mg"], f: "tab", t: "Antiparasitario" },
+{ n: "Tinidazol", b: "Tinidazol", c: ["500mg"], f: "tab", t: "Antiparasitario" },
+{ n: "Secnidazol", b: "Secnizole", c: ["500mg"], f: "tab", t: "Antiparasitario" },
+{ n: "Gentamicina", b: "Gentamicina", c: ["40mg", "80mg"], f: "amp", t: "Aminoglucósido" },
+{ n: "Amikacina", b: "Amikacina", c: ["250mg", "500mg"], f: "amp", t: "Aminoglucósido" },
+{ n: "Tobramicina", b: "Tobramicina", c: ["40mg", "80mg"], f: "amp", t: "Aminoglucósido" },
+{ n: "Imipenem-cilastatina", b: "Tienam", c: ["250/250mg", "500/500mg"], f: "amp", t: "Carbapenem" },
+{ n: "Meropenem", b: "Meronem", c: ["250mg", "500mg", "1g"], f: "amp", t: "Carbapenem" },
+{ n: "Ertapenem", b: "Invanz", c: ["1g"], f: "amp", t: "Carbapenem" },
+{ n: "Vancomicina", b: "Vancocin", c: ["250mg", "500mg", "1g"], f: "cap", t: "Glucopéptido" },
+{ n: "Teicoplanina", b: "Targocid", c: ["400mg"], f: "amp", t: "Glucopéptido" },
+{ n: "Clindamicina", b: "Dalacin", c: ["300mg", "450mg"], f: "cap", t: "Lincosamida" },
+{ n: "Trimetoprim-sulfametoxazol", b: "Bactrim", c: ["400/80mg", "800/160mg"], f: "tab", t: "Sulfonamida" },
+{ n: "Doxiciclina", b: "Vibramicina", c: ["100mg"], f: "cap", t: "Tetraciclina" },
+{ n: "Minociclina", b: "Minociclina", c: ["50mg", "100mg"], f: "cap", t: "Tetraciclina" },
+{ n: "Nitrofurantoína", b: "Macrodantina", c: ["100mg"], f: "cap", t: "Nitrofurano" },
+{ n: "Fosfomicina", b: "Monurol", c: ["3g"], f: "pol", t: "Fosfónico" },
+{ n: "Linezolid", b: "Zyvox", c: ["600mg"], f: "tab", t: "Oxazolidinona" },
+{ n: "Colistina", b: "Colistina", c: ["1MIU", "2MIU"], f: "amp", t: "Polipéptido" },
+{ n: "Fluconazol", b: "Diflucan", c: ["100mg", "150mg", "200mg"], f: "cap", t: "Antifúngico azol" },
+{ n: "Itraconazol", b: "Sporanox", c: ["100mg"], f: "cap", t: "Antifúngico azol" },
+{ n: "Voriconazol", b: "Vfend", c: ["50mg", "200mg"], f: "tab", t: "Antifúngico azol" },
+{ n: "Anfotericina B", b: "Fungizone", c: ["50mg"], f: "amp", t: "Polieno" },
+{ n: "Nistatina", b: "Nistatina", c: ["100000UI"], f: "susp", t: "Polieno" },
+{ n: "Terbinafina", b: "Lamisil", c: ["250mg"], f: "tab", t: "Alilamina" },
+{ n: "Ketoconazol", b: "Nizoral", c: ["200mg"], f: "tab", t: "Antifúngico azol" },
+{ n: "Caspofungina", b: "Cancidas", c: ["50mg", "70mg"], f: "amp", t: "Equinocandina" },
+{ n: "Aciclovir", b: "Zovirax", c: ["200mg", "400mg", "800mg"], f: "tab", t: "Antiviral nucleósido" },
+{ n: "Valaciclovir", b: "Valtrex", c: ["500mg", "1g"], f: "tab", t: "Antiviral nucleósido" },
+{ n: "Oseltamivir", b: "Tamiflu", c: ["75mg"], f: "cap", t: "Antiviral neuramidasa" },
+{ n: "Ganciclovir", b: "Cymevene", c: ["500mg"], f: "cap", t: "Antiviral nucleósido" },
+{ n: "Valganciclovir", b: "Valcyte", c: ["450mg"], f: "tab", t: "Antiviral nucleósido" },
+{ n: "Albendazol", b: "Zentel", c: ["200mg"], f: "tab", t: "Antihelmíntico" },
+{ n: "Mebendazol", b: "Mebendazol", c: ["100mg", "500mg"], f: "tab", t: "Antihelmíntico" },
+{ n: "Ivermectina", b: "Stromectol", c: ["3mg", "6mg"], f: "tab", t: "Antihelmíntico" },
+{ n: "Prazicuantel", b: "Biltricide", c: ["600mg"], f: "tab", t: "Antihelmíntico" },
+{ n: "Cloroquina", b: "Aralen", c: ["150mg", "300mg"], f: "tab", t: "Antimalarial" },
+{ n: "Mefloquina", b: "Lariam", c: ["250mg"], f: "tab", t: "Antimalarial" },
+{ n: "Tenofovir", b: "Viread", c: ["300mg"], f: "tab", t: "Antirretroviral NRTI" },
+{ n: "Emtricitabina", b: "Emtriva", c: ["200mg"], f: "cap", t: "Antirretroviral NRTI" },
+{ n: "Efavirenz", b: "Sustiva", c: ["50mg", "200mg", "600mg"], f: "cap", t: "Antirretroviral NNRTI" },
+{ n: "Lopinavir/ritonavir", b: "Kaletra", c: ["200/50mg"], f: "tab", t: "Antirretroviral IP" },
+{ n: "Atazanavir", b: "Reyataz", c: ["300mg"], f: "cap", t: "Antirretroviral IP" },
+{ n: "Dolutegravir", b: "Tivicay", c: ["50mg"], f: "tab", t: "Antirretroviral INSTI" },
+{ n: "Raltegravir", b: "Isentress", c: ["400mg"], f: "tab", t: "Antirretroviral INSTI" },
+{ n: "Omeprazol", b: "Prilosec", c: ["20mg", "40mg"], f: "cap", t: "IBP" },
+{ n: "Pantoprazol", b: "Pantocid", c: ["40mg"], f: "tab", t: "IBP" },
+{ n: "Esomeprazol", b: "Nexium", c: ["20mg", "40mg"], f: "cap", t: "IBP" },
+{ n: "Lansoprazol", b: "Prevacid", c: ["30mg"], f: "cap", t: "IBP" },
+{ n: "Rabeprazol", b: "Rabeprazol", c: ["20mg"], f: "tab", t: "IBP" },
+{ n: "Dexlansoprazol", b: "Dexilant", c: ["30mg", "60mg"], f: "cap", t: "IBP" },
+{ n: "Famotidina", b: "Pepcid", c: ["20mg", "40mg"], f: "tab", t: "H2RA" },
+{ n: "Cimetidina", b: "Tagamet", c: ["200mg", "400mg"], f: "tab", t: "H2RA" },
+{ n: "Sucralfato", b: "Sucralfato", c: ["1g"], f: "tab", t: "Protector mucoso" },
+{ n: "Hidróxido de aluminio", b: "Gelusil", c: ["400mg"], f: "susp", t: "Antiácido" },
+{ n: "Bismuto subsalicilato", b: "Bismol", c: ["262mg"], f: "tab", t: "Protector mucoso" },
+{ n: "Magaldrato", b: "Magaldrato", c: ["800mg"], f: "tab", t: "Antiácido" },
+{ n: "Metoclopramida", b: "Plasil", c: ["10mg"], f: "tab", t: "Procinético" },
+{ n: "Domperidona", b: "Motilium", c: ["10mg"], f: "tab", t: "Procinético" },
+{ n: "Cisaprida", b: "Prepulsid", c: ["10mg"], f: "tab", t: "Procinético" },
+{ n: "Trimebutina", b: "Polybutin", c: ["200mg"], f: "tab", t: "Espasmolítico" },
+{ n: "Cinitaprida", b: "Cinitaprida", c: ["1mg"], f: "tab", t: "Procinético" },
+{ n: "Butilhioscina", b: "Buscapina", c: ["10mg"], f: "tab", t: "Anticolinérgico" },
+{ n: "Mebeverina", b: "Duspatalin", c: ["135mg"], f: "cap", t: "Espasmolítico" },
+{ n: "Pinaverío", b: "Pinaverío", c: ["50mg"], f: "cap", t: "Espasmolítico" },
+{ n: "Loperamida", b: "Imodium", c: ["2mg"], f: "tab", t: "Antidiarreico" },
+{ n: "Colestiramina", b: "Questran", c: ["4g"], f: "pol", t: "Secuestrante" },
+{ n: "Racecadotrilo", b: "Gasterodine", c: ["10mg"], f: "cap", t: "Antidiarreico" },
+{ n: "Polietilenglicol", b: "GoLYTELY", c: ["4L"], f: "sol", t: "Laxante osmótico" },
+{ n: "Lactulosa", b: "Importal", c: ["667mg/mL"], f: "sol", t: "Laxante osmótico" },
+{ n: "Bisacodilo", b: "Dulcolax", c: ["5mg"], f: "tab", t: "Laxante estimulante" },
+{ n: "Senósidos", b: "Senna", c: ["8.6mg"], f: "tab", t: "Laxante estimulante" },
+{ n: "Citrato de magnesio", b: "Magnesio", c: ["240mL"], f: "sol", t: "Laxante osmótico" },
+{ n: "Psyllium", b: "Fibra", c: ["5.8g"], f: "pol", t: "Laxante fibra" },
+{ n: "Docusato", b: "Colace", c: ["100mg"], f: "cap", t: "Emoliente" },
+{ n: "Mesalazina", b: "Pentasa", c: ["250mg", "500mg"], f: "tab", t: "Antiinflamatorio intestinal" },
+{ n: "Sulfasalazina", b: "Azulfidine", c: ["500mg"], f: "tab", t: "Antiinflamatorio intestinal" },
+{ n: "Budesonida rectal", b: "Budesonida", c: ["2mg"], f: "enema", t: "Corticosteroide" },
+{ n: "Alginato de sodio", b: "Gaviscon", c: ["500mg"], f: "tab", t: "Antireflujo" },
+{ n: "Pancreatina", b: "Pancreatin", c: ["8000UI"], f: "cap", t: "Enzima digestiva" },
+{ n: "Lipasa", b: "Lipasa", c: ["10000UI"], f: "cap", t: "Enzima digestiva" },
+{ n: "Salbutamol", b: "Ventolin", c: ["100mcg", "200mcg"], f: "inh", t: "SABA" },
+{ n: "Terbutalina", b: "Bricanyl", c: ["2.5mg", "5mg"], f: "tab", t: "SABA" },
+{ n: "Fenoterol", b: "Berotec", c: ["100mcg"], f: "inh", t: "SABA" },
+{ n: "Salmeterol", b: "Serevent", c: ["25mcg", "50mcg"], f: "inh", t: "LABA" },
+{ n: "Formoterol", b: "Oxis", c: ["4.5mcg", "9mcg"], f: "inh", t: "LABA" },
+{ n: "Indacaterol", b: "Onbrez", c: ["75mcg", "150mcg"], f: "inh", t: "LABA" },
+{ n: "Vilanterol", b: "Vilanterol", c: ["25mcg"], f: "inh", t: "LABA" },
+{ n: "Ipratropio", b: "Atrovent", c: ["20mcg", "40mcg"], f: "inh", t: "Anticolinérgico" },
+{ n: "Tiotropio", b: "Spiriva", c: ["18mcg"], f: "inh", t: "Anticolinérgico LAMA" },
+{ n: "Umeclidinio", b: "Incruse", c: ["62.5mcg"], f: "inh", t: "Anticolinérgico LAMA" },
+{ n: "Glicopirronio", b: "Seebri", c: ["44mcg"], f: "inh", t: "Anticolinérgico LAMA" },
+{ n: "Aclidinio", b: "Tudorza", c: ["400mcg"], f: "inh", t: "Anticolinérgico LAMA" },
+{ n: "Fluticasona/salmeterol", b: "Seretide", c: ["25/125mcg", "25/250mcg"], f: "inh", t: "ICS+LABA" },
+{ n: "Budesonida/formoterol", b: "Symbicort", c: ["80/4.5mcg", "160/4.5mcg"], f: "inh", t: "ICS+LABA" },
+{ n: "Beclometasona/formoterol", b: "Foster", c: ["100/6mcg"], f: "inh", t: "ICS+LABA" },
+{ n: "Beclometasona", b: "Becotide", c: ["50mcg", "100mcg"], f: "inh", t: "ICS" },
+{ n: "Fluticasona propionato", b: "Flovent", c: ["44mcg", "110mcg", "220mcg"], f: "inh", t: "ICS" },
+{ n: "Budesonida", b: "Pulmicort", c: ["200mcg"], f: "inh", t: "ICS" },
+{ n: "Ciclesonida", b: "Alvesco", c: ["80mcg", "160mcg"], f: "inh", t: "ICS" },
+{ n: "Mometasona", b: "Asmanex", c: ["110mcg", "220mcg"], f: "inh", t: "ICS" },
+{ n: "Prednisona", b: "Deltasone", c: ["5mg", "10mg", "50mg"], f: "tab", t: "Corticosteroide oral" },
+{ n: "Metilprednisolona", b: "Medrol", c: ["4mg", "16mg", "500mg"], f: "tab", t: "Corticosteroide" },
+{ n: "Teofilina", b: "Teotard", c: ["100mg", "200mg"], f: "tab", t: "Metilxantina" },
+{ n: "Aminofilina", b: "Aminofilina", c: ["100mg", "200mg"], f: "tab", t: "Metilxantina" },
+{ n: "Montelukast", b: "Singulair", c: ["4mg", "5mg", "10mg"], f: "tab", t: "Antileucotriene" },
+{ n: "Zafirlukast", b: "Accolate", c: ["20mg"], f: "tab", t: "Antileucotriene" },
+{ n: "Codeína", b: "Codeína", c: ["15mg", "30mg"], f: "tab", t: "Antitusivo" },
+{ n: "Dextrometorfano", b: "Robitussin", c: ["10mg", "15mg"], f: "sol", t: "Antitusivo" },
+{ n: "Guaifenesina", b: "Guaifenesin", c: ["100mg", "200mg"], f: "sol", t: "Expectorante" },
+{ n: "Ambroxol", b: "Mucosolvan", c: ["30mg"], f: "tab", t: "Mucolítico" },
+{ n: "Bromhexina", b: "Bisolvon", c: ["4mg", "8mg"], f: "tab", t: "Mucolítico" },
+{ n: "Acetilcisteína", b: "Fluimucil", c: ["200mg"], f: "sol", t: "Mucolítico" },
+{ n: "Erdosteína", b: "Erdotin", c: ["75mg"], f: "cap", t: "Mucolítico" },
+{ n: "Pirfenidona", b: "Esbriet", c: ["267mg"], f: "cap", t: "Antifibrótico" },
+{ n: "Nintedanib", b: "Vargatef", c: ["100mg", "150mg"], f: "cap", t: "Antifibrótico" },
+{ n: "Mepolizumab", b: "Nucala", c: ["100mg"], f: "amp", t: "Anti-IL5" },
+{ n: "Fluoxetina", b: "Prozac", c: ["20mg", "40mg"], f: "cap", t: "ISRS" },
+{ n: "Sertralina", b: "Zoloft", c: ["50mg", "100mg"], f: "tab", t: "ISRS" },
+{ n: "Paroxetina", b: "Paxil", c: ["20mg", "30mg", "40mg"], f: "tab", t: "ISRS" },
+{ n: "Escitalopram", b: "Lexapro", c: ["10mg", "20mg"], f: "tab", t: "ISRS" },
+{ n: "Citalopram", b: "Celex", c: ["20mg", "40mg"], f: "tab", t: "ISRS" },
+{ n: "Fluvoxamina", b: "Luvox", c: ["50mg", "100mg"], f: "tab", t: "ISRS" },
+{ n: "Venlafaxina", b: "Efexor", c: ["37.5mg", "75mg", "150mg"], f: "cap", t: "IRSN" },
+{ n: "Desvenlafaxina", b: "Pristiq", c: ["50mg", "100mg"], f: "tab", t: "IRSN" },
+{ n: "Duloxetina", b: "Cymbalta", c: ["30mg", "60mg"], f: "cap", t: "IRSN" },
+{ n: "Milnacipran", b: "Savella", c: ["12.5mg", "25mg", "50mg"], f: "tab", t: "IRSN" },
+{ n: "Amitriptilina", b: "Tryptanol", c: ["10mg", "25mg", "50mg", "75mg"], f: "tab", t: "Tricíclico" },
+{ n: "Imipramina", b: "Tofranil", c: ["10mg", "25mg", "50mg"], f: "tab", t: "Tricíclico" },
+{ n: "Nortriptilina", b: "Pamelor", c: ["10mg", "25mg", "50mg"], f: "tab", t: "Tricíclico" },
+{ n: "Clomipramina", b: "Anafranil", c: ["25mg", "50mg", "75mg"], f: "tab", t: "Tricíclico" },
+{ n: "Desipramina", b: "Norpramin", c: ["25mg", "50mg"], f: "tab", t: "Tricíclico" },
+{ n: "Fenelzina", b: "Nardil", c: ["15mg"], f: "tab", t: "IMAO" },
+{ n: "Tranilcipromina", b: "Parnate", c: ["10mg"], f: "tab", t: "IMAO" },
+{ n: "Bupropión", b: "Wellbutrin", c: ["75mg", "150mg", "300mg"], f: "tab", t: "Atípico" },
+{ n: "Mirtazapina", b: "Remeron", c: ["15mg", "30mg", "45mg"], f: "tab", t: "Atípico" },
+{ n: "Trazodona", b: "Desyrel", c: ["50mg", "100mg", "150mg"], f: "tab", t: "Atípico" },
+{ n: "Vortioxetina", b: "Brintellix", c: ["5mg", "10mg", "20mg"], f: "tab", t: "Atípico" },
+{ n: "Agomelatina", b: "Valdoxan", c: ["25mg"], f: "tab", t: "Atípico" },
+{ n: "Haloperidol", b: "Haloperidol", c: ["1mg", "2mg", "5mg", "10mg"], f: "tab", t: "Antipsicótico típico" },
+{ n: "Clorpromazina", b: "Thorazine", c: ["25mg", "50mg", "100mg"], f: "tab", t: "Antipsicótico típico" },
+{ n: "Tioridazina", b: "Mellaril", c: ["10mg", "25mg", "50mg", "100mg"], f: "tab", t: "Antipsicótico típico" },
+{ n: "Trifluoperazina", b: "Stelazine", c: ["1mg", "2mg", "5mg"], f: "tab", t: "Antipsicótico típico" },
+{ n: "Perfenazina", b: "Trilafon", c: ["2mg", "4mg", "8mg"], f: "tab", t: "Antipsicótico típico" },
+{ n: "Risperidona", b: "Risperdal", c: ["0.5mg", "1mg", "2mg", "3mg", "4mg", "6mg"], f: "tab", t: "Antipsicótico atípico" },
+{ n: "Olanzapina", b: "Zyprexa", c: ["5mg", "7.5mg", "10mg", "15mg", "20mg"], f: "tab", t: "Antipsicótico atípico" },
+{ n: "Quetiapina", b: "Seroquel", c: ["25mg", "50mg", "100mg", "200mg", "300mg"], f: "tab", t: "Antipsicótico atípico" },
+{ n: "Aripiprazol", b: "Abilify", c: ["2mg", "5mg", "10mg", "15mg", "20mg", "30mg"], f: "tab", t: "Antipsicótico atípico" },
+{ n: "Clozapina", b: "Clozapina", c: ["25mg", "50mg", "100mg"], f: "tab", t: "Antipsicótico atípico" },
+{ n: "Ziprasidona", b: "Geodon", c: ["20mg", "40mg", "60mg", "80mg"], f: "cap", t: "Antipsicótico atípico" },
+{ n: "Paliperidona", b: "Invega", c: ["3mg", "6mg", "9mg"], f: "tab", t: "Antipsicótico atípico" },
+{ n: "Asenapina", b: "Saphris", c: ["5mg", "10mg"], f: "tab", t: "Antipsicótico atípico" },
+{ n: "Lurasidona", b: "Latuda", c: ["20mg", "40mg", "80mg"], f: "tab", t: "Antipsicótico atípico" },
+{ n: "Litio carbonato", b: "Lithiofor", c: ["300mg", "600mg"], f: "tab", t: "Estabilizador" },
+{ n: "Valproato sódico", b: "Depakote", c: ["250mg", "500mg"], f: "tab", t: "Estabilizador" },
+{ n: "Carbamacepina", b: "Tegretol", c: ["200mg", "400mg"], f: "tab", t: "Estabilizador" },
+{ n: "Lamotrigina", b: "Lamictal", c: ["25mg", "100mg", "150mg", "200mg"], f: "tab", t: "Estabilizador" },
+{ n: "Oxcarbacepina", b: "Trileptal", c: ["150mg", "300mg", "600mg"], f: "tab", t: "Estabilizador" },
+{ n: "Diazepam", b: "Valium", c: ["2mg", "5mg", "10mg"], f: "tab", t: "Ansiolítico BZD" },
+{ n: "Clonazepam", b: "Rivotril", c: ["0.5mg", "1mg", "2mg"], f: "tab", t: "Ansiolítico BZD" },
+{ n: "Alprazolam", b: "Xanax", c: ["0.25mg", "0.5mg", "1mg", "2mg"], f: "tab", t: "Ansiolítico BZD" },
+{ n: "Lorazepam", b: "Ativan", c: ["0.5mg", "1mg", "2mg"], f: "tab", t: "Ansiolítico BZD" },
+{ n: "Bromazepam", b: "Lexotanil", c: ["1.5mg", "3mg", "6mg"], f: "tab", t: "Ansiolítico BZD" },
+{ n: "Clobazam", b: "Onfi", c: ["10mg", "20mg"], f: "tab", t: "Ansiolítico BZD" },
+{ n: "Midazolam", b: "Dormicum", c: ["7.5mg", "15mg"], f: "tab", t: "Hipnótico BZD" },
+{ n: "Triazolam", b: "Halcion", c: ["0.125mg", "0.25mg"], f: "tab", t: "Hipnótico BZD" },
+{ n: "Nitrazepam", b: "Mogadon", c: ["5mg", "10mg"], f: "tab", t: "Hipnótico BZD" },
+{ n: "Zolpidem", b: "Ambien", c: ["5mg", "10mg"], f: "tab", t: "Hipnótico no-BZD" },
+{ n: "Zopiclona", b: "Imovane", c: ["3.75mg", "7.5mg"], f: "tab", t: "Hipnótico no-BZD" },
+{ n: "Eszopiclona", b: "Lunesta", c: ["1mg", "2mg", "3mg"], f: "tab", t: "Hipnótico no-BZD" },
+{ n: "Melatonina", b: "Melatonina", c: ["0.3mg", "1mg", "3mg", "5mg", "10mg"], f: "tab", t: "Hipnótico natural" },
+{ n: "Buspirona", b: "Buspar", c: ["5mg", "10mg"], f: "tab", t: "Ansiolítico" },
+{ n: "Hidroxizina", b: "Atarax", c: ["10mg", "25mg", "50mg"], f: "tab", t: "Ansiolítico" },
+{ n: "Metilfenidato", b: "Ritalin", c: ["5mg", "10mg", "20mg"], f: "tab", t: "Psicoestimulante" },
+{ n: "Anfetamina", b: "Anfetamina", c: ["5mg", "10mg"], f: "tab", t: "Psicoestimulante" },
+{ n: "Donepezilo", b: "Aricept", c: ["5mg", "10mg"], f: "tab", t: "Antidemencia" },
+{ n: "Rivastigmina", b: "Exelon", c: ["1.5mg", "3mg", "4.5mg", "6mg"], f: "cap", t: "Antidemencia" },
+{ n: "Galantamina", b: "Razadyne", c: ["4mg", "8mg", "12mg"], f: "tab", t: "Antidemencia" },
+{ n: "Memantina", b: "Namenda", c: ["5mg", "10mg", "20mg"], f: "tab", t: "Antidemencia" },
+{ n: "Fenitoína", b: "Epanutin", c: ["100mg"], f: "cap", t: "Antiepiléptico" },
+{ n: "Fenobarbital", b: "Luminal", c: ["15mg", "30mg", "60mg", "100mg"], f: "tab", t: "Antiepiléptico" },
+{ n: "Ácido valproico", b: "Depakine", c: ["200mg", "250mg", "500mg"], f: "tab", t: "Antiepiléptico" },
+{ n: "Levetiracetam", b: "Keppra", c: ["250mg", "500mg", "750mg", "1000mg"], f: "tab", t: "Antiepiléptico" },
+{ n: "Topiramato", b: "Topamax", c: ["15mg", "25mg", "50mg", "100mg", "200mg"], f: "cap", t: "Antiepiléptico" },
+{ n: "Gabapentina", b: "Neurontin", c: ["300mg", "400mg", "600mg", "800mg"], f: "cap", t: "Antiepiléptico" },
+{ n: "Pregabalina", b: "Lyrica", c: ["25mg", "50mg", "75mg", "100mg", "150mg", "200mg", "300mg"], f: "cap", t: "Antiepiléptico" },
+{ n: "Vigabatrina", b: "Sabril", c: ["500mg"], f: "tab", t: "Antiepiléptico" },
+{ n: "Zonisamida", b: "Zonegran", c: ["25mg", "50mg", "100mg"], f: "cap", t: "Antiepiléptico" },
+{ n: "Lacosamida", b: "Vimpat", c: ["50mg", "100mg", "150mg", "200mg"], f: "tab", t: "Antiepiléptico" },
+{ n: "Perampanel", b: "Fycompa", c: ["2mg", "4mg", "6mg", "8mg", "10mg", "12mg"], f: "tab", t: "Antiepiléptico" },
+{ n: "Sumatriptán", b: "Imigran", c: ["20mg", "50mg", "100mg"], f: "tab", t: "Antimigrañoso agudo" },
+{ n: "Rizatriptán", b: "Maxalt", c: ["5mg", "10mg"], f: "tab", t: "Antimigrañoso agudo" },
+{ n: "Eletriptán", b: "Relpax", c: ["20mg", "40mg"], f: "tab", t: "Antimigrañoso agudo" },
+{ n: "Naratriptán", b: "Amerge", c: ["1mg", "2.5mg"], f: "tab", t: "Antimigrañoso agudo" },
+{ n: "Ergotamina", b: "Cafergot", c: ["1mg"], f: "tab", t: "Antimigrañoso agudo" },
+{ n: "Metoclopramida", b: "Plasil", c: ["10mg"], f: "tab", t: "Coadyuvante migraña" },
+{ n: "Propranolol", b: "Inderal", c: ["10mg", "20mg", "40mg", "80mg"], f: "tab", t: "Antimigrañoso preventivo" },
+{ n: "Flunarizina", b: "Flunarizina", c: ["5mg", "10mg"], f: "cap", t: "Antimigrañoso preventivo" },
+{ n: "Candesartán", b: "Atacand", c: ["4mg", "8mg", "16mg", "32mg"], f: "tab", t: "Antimigrañoso preventivo" },
+{ n: "Toxina botulínica", b: "Botox", c: ["50U", "100U"], f: "inj", t: "Antimigrañoso preventivo" },
+{ n: "Levodopa/carbidopa", b: "Sinemet", c: ["100/25mg", "250/25mg"], f: "tab", t: "Parkinson" },
+{ n: "Pramipexol", b: "Mirapex", c: ["0.125mg", "0.25mg", "0.5mg", "1mg", "1.5mg"], f: "tab", t: "Parkinson" },
+{ n: "Ropinirol", b: "Requip", c: ["0.25mg", "0.5mg", "1mg", "2mg", "3mg", "4mg", "5mg"], f: "tab", t: "Parkinson" },
+{ n: "Rotigotina", b: "Neupro", c: ["2mg", "4mg", "6mg", "8mg"], f: "par", t: "Parkinson" },
+{ n: "Entacapona", b: "Comtan", c: ["200mg"], f: "tab", t: "Parkinson" },
+{ n: "Rasagilina", b: "Azilect", c: ["0.5mg", "1mg"], f: "tab", t: "Parkinson" },
+{ n: "Selegilina", b: "Eldepryl", c: ["5mg"], f: "tab", t: "Parkinson" },
+{ n: "Amantadina", b: "Symmetrel", c: ["100mg"], f: "cap", t: "Parkinson" },
+{ n: "Benzatropina", b: "Cogentin", c: ["0.5mg", "1mg", "2mg"], f: "tab", t: "Parkinson" },
+{ n: "Interferón beta-1a", b: "Avonex", c: ["30µg"], f: "inj", t: "Esclerosis múltiple" },
+{ n: "Interferón beta-1b", b: "Betaseron", c: ["0.25mg"], f: "inj", t: "Esclerosis múltiple" },
+{ n: "Acetato de glatiramer", b: "Copaxone", c: ["20mg", "40mg"], f: "inj", t: "Esclerosis múltiple" },
+{ n: "Natalizumab", b: "Tysabri", c: ["300mg"], f: "inj", t: "Esclerosis múltiple" },
+{ n: "Fingolimod", b: "Gilenya", c: ["0.5mg"], f: "cap", t: "Esclerosis múltiple" },
+{ n: "Dimetilfumarato", b: "Tecfidera", c: ["120mg", "240mg"], f: "cap", t: "Esclerosis múltiple" },
+{ n: "Ciclobenzaprina", b: "Flexeril", c: ["5mg", "10mg"], f: "tab", t: "Relajante muscular" },
+{ n: "Baclofeno", b: "Lioresal", c: ["10mg", "20mg"], f: "tab", t: "Relajante muscular" },
+{ n: "Tizanidina", b: "Zanaflex", c: ["2mg", "4mg", "6mg"], f: "tab", t: "Relajante muscular" },
+{ n: "Metocarbamol", b: "Robaxin", c: ["500mg", "750mg"], f: "tab", t: "Relajante muscular" },
+{ n: "Carisoprodol", b: "Soma", c: ["250mg", "350mg"], f: "tab", t: "Relajante muscular" },
+{ n: "Dantrolen", b: "Dantrium", c: ["25mg", "50mg", "100mg"], f: "cap", t: "Relajante muscular" },
+{ n: "Orfenadrina", b: "Norgesic", c: ["35mg"], f: "tab", t: "Relajante muscular" },
+{ n: "Betahistina", b: "Betaserc", c: ["8mg", "16mg"], f: "tab", t: "Vértigo" },
+{ n: "Dimenhidrinato", b: "Vomidine", c: ["50mg"], f: "tab", t: "Vértigo" },
+{ n: "Cinnarizina", b: "Stugeron", c: ["25mg", "75mg"], f: "cap", t: "Vértigo" },
+{ n: "Sulpiride", b: "Sulpiride", c: ["50mg", "200mg"], f: "tab", t: "Vértigo" },
+{ n: "Piracetam", b: "Nootropyl", c: ["800mg", "1200mg"], f: "tab", t: "Nootropo" },
+{ n: "Nimodipino", b: "Nimotop", c: ["30mg"], f: "cap", t: "Vasoactivo" },
+{ n: "Vinpocetina", b: "Vinpocetina", c: ["5mg", "10mg"], f: "tab", t: "Vasoactivo" },
+{ n: "Ginkgo biloba", b: "Ginkgo", c: ["40mg", "80mg"], f: "tab", t: "Vasoactivo" },
+{ n: "Ibuprofeno", b: "Actron", c: ["200mg", "400mg", "600mg", "800mg"], f: "tab", t: "AINE" },
+{ n: "Naproxeno", b: "Naprosyn", c: ["250mg", "375mg", "500mg"], f: "tab", t: "AINE" },
+{ n: "Diclofenaco", b: "Voltaren", c: ["25mg", "50mg", "75mg"], f: "tab", t: "AINE" },
+{ n: "Ketorolaco", b: "Toradol", c: ["10mg", "30mg"], f: "tab", t: "AINE" },
+{ n: "Indometacina", b: "Indocin", c: ["25mg", "50mg"], f: "cap", t: "AINE" },
+{ n: "Piroxicam", b: "Feldene", c: ["10mg", "20mg"], f: "cap", t: "AINE" },
+{ n: "Meloxicam", b: "Mobicox", c: ["7.5mg", "15mg"], f: "tab", t: "AINE" },
+{ n: "Celecoxib", b: "Celebrex", c: ["100mg", "200mg", "400mg"], f: "cap", t: "AINE" },
+{ n: "Etoricoxib", b: "Arcoxia", c: ["30mg", "60mg", "90mg", "120mg"], f: "tab", t: "AINE" },
+{ n: "Nimesulida", b: "Nimesulida", c: ["100mg"], f: "tab", t: "AINE" },
+{ n: "Paracetamol", b: "Tafirol", c: ["500mg", "750mg", "1000mg"], f: "tab", t: "Analgésico" },
+{ n: "Metamizol", b: "Nolotil", c: ["500mg", "575mg"], f: "tab", t: "Analgésico" },
+{ n: "Tramadol", b: "Ultram", c: ["50mg", "100mg", "200mg"], f: "tab", t: "Analgésico opiáceo" },
+{ n: "Codeína", b: "Codeína", c: ["30mg", "60mg"], f: "tab", t: "Opiáceo" },
+{ n: "Morfina", b: "Morfina", c: ["10mg", "30mg", "60mg"], f: "tab", t: "Opiáceo" },
+{ n: "Oxicodona", b: "OxyContin", c: ["10mg", "20mg", "40mg", "80mg"], f: "tab", t: "Opiáceo" },
+{ n: "Tapentadol", b: "Nucynta", c: ["50mg", "100mg"], f: "tab", t: "Opiáceo" },
+{ n: "Buprenorfina", b: "Subutex", c: ["2mg", "8mg"], f: "tab", t: "Opiáceo" },
+{ n: "Metotrexato", b: "Metotrexato", c: ["2.5mg", "5mg", "10mg", "15mg"], f: "tab", t: "FARME" },
+{ n: "Hidroxicloroquina", b: "Plaquenil", c: ["200mg"], f: "tab", t: "FARME" },
+{ n: "Sulfasalazina", b: "Salazopyrin", c: ["500mg"], f: "tab", t: "FARME" },
+{ n: "Leflunomida", b: "Arava", c: ["10mg", "20mg"], f: "tab", t: "FARME" },
+{ n: "Azatioprina", b: "Imuran", c: ["50mg"], f: "tab", t: "FARME" },
+{ n: "Etanercept", b: "Enbrel", c: ["25mg", "50mg"], f: "inj", t: "Biológico" },
+{ n: "Adalimumab", b: "Humira", c: ["40mg"], f: "inj", t: "Biológico" },
+{ n: "Infliximab", b: "Remicade", c: ["100mg"], f: "inj", t: "Biológico" },
+{ n: "Abatacept", b: "Orencia", c: ["250mg"], f: "inj", t: "Biológico" },
+{ n: "Rituximab", b: "Rituxan", c: ["100mg", "500mg"], f: "inj", t: "Biológico" },
+{ n: "Tocilizumab", b: "Actemra", c: ["20mg", "80mg"], f: "inj", t: "Biológico" },
+{ n: "Secukinumab", b: "Cosentyx", c: ["75mg", "150mg"], f: "inj", t: "Biológico" },
+{ n: "Alopurinol", b: "Alopurinol", c: ["100mg", "300mg"], f: "tab", t: "Antigota" },
+{ n: "Febuxostat", b: "Uloric", c: ["40mg", "80mg"], f: "tab", t: "Antigota" },
+{ n: "Colchicina", b: "Colchicina", c: ["0.5mg", "1mg"], f: "tab", t: "Antigota" },
+{ n: "Probenecid", b: "Benemid", c: ["500mg"], f: "tab", t: "Antigota" },
+{ n: "Prednisona", b: "Rayos", c: ["5mg", "10mg", "20mg", "50mg"], f: "tab", t: "Corticoide" },
+{ n: "Triamcinolona", b: "Kenalog", c: ["10mg", "40mg"], f: "inj", t: "Corticoide IA" },
+{ n: "Carbonato de calcio + vitamina D3", b: "Calcigen", c: ["1000/800IU"], f: "tab", t: "Suplemento óseo" },
+{ n: "Etinilestradiol/Levonorgestrel", b: "Yasminelle", c: ["0.02/0.1mg"], f: "tab", t: "Anticonceptivo combinado" },
+{ n: "Etinilestradiol/Desogestrel", b: "Marvelon", c: ["0.03/0.15mg"], f: "tab", t: "Anticonceptivo combinado" },
+{ n: "Etinilestradiol/Gestodeno", b: "Minulet", c: ["0.02/0.075mg","0.03/0.1mg"], f: "tab", t: "Anticonceptivo combinado" },
+{ n: "Etinilestradiol/Drospirenona", b: "Yasmin", c: ["0.03/3mg"], f: "tab", t: "Anticonceptivo combinado" },
+{ n: "Etinilestradiol/Ciproterona", b: "Diane 35", c: ["0.035/2mg"], f: "tab", t: "Anticonceptivo combinado" },
+{ n: "Levonorgestrel", b: "Microdiol", c: ["0.03mg"], f: "tab", t: "Minipíldora" },
+{ n: "Desogestrel", b: "Cerazet", c: ["0.075mg"], f: "tab", t: "Minipíldora" },
+{ n: "Progesterona micronizada", b: "Prometrium", c: ["100mg","200mg"], f: "cap", t: "Progestágeno" },
+{ n: "Levonorgestrel", b: "Postinor", c: ["1.5mg"], f: "tab", t: "Anticoncepción emergencia" },
+{ n: "Levonorgestrel SIU", b: "Mirena", c: ["52mg"], f: "DIU", t: "DIU hormonal" },
+{ n: "Citrato de clomifeno", b: "Clomid", c: ["50mg"], f: "tab", t: "Inductor ovulación" },
+{ n: "Letrozol", b: "Femara", c: ["2.5mg"], f: "tab", t: "Inductor ovulación" },
+{ n: "Oxitocina", b: "Oxitocin", c: ["10UI/mL"], f: "amp", t: "Uterotónico" },
+{ n: "Ergometrina", b: "Ergotina", c: ["0.2mg"], f: "amp", t: "Uterotónico" },
+{ n: "Misoprostol", b: "Cytotec", c: ["25mcg","200mcg"], f: "tab", t: "Uterotónico" },
+{ n: "Carbetocina", b: "Pabal", c: ["100mcg"], f: "amp", t: "Uterotónico" },
+{ n: "Nifedipino", b: "Adalat", c: ["10mg","20mg"], f: "cap", t: "Tocolítico" },
+{ n: "Atosibán", b: "Tractocile", c: ["6.75mg/0.9mL"], f: "amp", t: "Tocolítico" },
+{ n: "Ritodrina", b: "Yutopar", c: ["10mg"], f: "tab", t: "Tocolítico" },
+{ n: "Estradiol", b: "Estrace", c: ["1mg","2mg"], f: "tab", t: "TRH menopausia" },
+{ n: "Estrógenos conjugados", b: "Premarin", c: ["0.625mg","1.25mg"], f: "tab", t: "TRH menopausia" },
+{ n: "Tibolona", b: "Livial", c: ["2.5mg"], f: "tab", t: "SERM menopausia" },
+{ n: "Raloxifeno", b: "Evista", c: ["60mg"], f: "tab", t: "SERM" },
+{ n: "Clotrimazol", b: "Canesten", c: ["100mg","500mg"], f: "ovl", t: "Antifúngico vaginal" },
+{ n: "Miconazol", b: "Daktarin", c: ["100mg","200mg"], f: "ovl", t: "Antifúngico vaginal" },
+{ n: "Nistatina", b: "Micostatin", c: ["100000UI"], f: "ovl", t: "Antifúngico vaginal" },
+{ n: "Metronidazol gel vaginal", b: "Flagyl", c: ["0.75%"], f: "gel", t: "Antibiótico vaginal" },
+{ n: "Clindamicina crema vaginal", b: "Cleocin", c: ["2%"], f: "crm", t: "Antibiótico vaginal" },
+{ n: "Sulfato ferroso", b: "Ferro Gradumet", c: ["325mg"], f: "tab", t: "Anemia gestacional" },
+{ n: "Ácido fólico", b: "Folico", c: ["1mg","5mg"], f: "tab", t: "Prenatal" },
+{ n: "Hierro polimaltosado", b: "Ferrograd", c: ["100mg"], f: "tab", t: "Anemia gestacional" },
+{ n: "Hierro + ácido fólico", b: "Ferrogradumet", c: ["325mg+1mg"], f: "tab", t: "Prenatal combinado" },
+{ n: "Indometacina", b: "Indomin", c: ["25mg","50mg"], f: "tab", t: "Antiinflamatorio tocolítico" },
+{ n: "Ibuprofeno", b: "Actron", c: ["200mg","400mg","600mg"], f: "tab", t: "Antiinflamatorio" },
+{ n: "Betametasona", b: "Celestone", c: ["3mg","4mg"], f: "tab", t: "Madurez pulmonar fetal" },
+{ n: "Terbutalina", b: "Bricanyl", c: ["2.5mg","5mg"], f: "tab", t: "Tocolítico" },
+{ n: "Estradiol/Norgestimato", b: "Ortho Cyclen", c: ["0.035/0.25mg"], f: "tab", t: "Anticonceptivo acné" },
+{ n: "Espironolactona", b: "Aldactone", c: ["25mg","50mg"], f: "tab", t: "Antiandrogénico" },
+{ n: "Etinilestradiol/Levonorgestrel 30/150", b: "Microgynon", c: ["0.03/0.15mg"], f: "tab", t: "Anticonceptivo" },
+{ n: "Noretisterona/Estradiol valerato", b: "Nuvelle", c: ["1mg/5mg"], f: "tab", t: "TRH" },
+{ n: "Progesterona vaginal", b: "Crinone", c: ["8%"], f: "gel", t: "Soporte lúteo" },
+{ n: "Dinoprostona", b: "Prepidil", c: ["0.5mg/3g"], f: "gel", t: "Maduración cervical" },
+{ n: "Medroxiprogesterona acetato", b: "Depo-Provera", c: ["150mg"], f: "amp", t: "Anticonceptivo inyectable" },
+{ n: "Enantato de noretisterona", b: "Noristerat", c: ["200mg"], f: "amp", t: "Anticonceptivo inyectable" },
+{ n: "Amoxicilina suspensión", b: "Amoxil", c: ["125mg/5mL","250mg/5mL","500mg/5mL"], f: "susp", t: "Antibiótico pediátrico" },
+{ n: "Amoxicilina-clavulanato suspensión", b: "Augmentin", c: ["125/31.25mg/5mL","250/62.5mg/5mL"], f: "susp", t: "Antibiótico pediátrico" },
+{ n: "Azitromicina suspensión", b: "Zithromax", c: ["40mg/mL","100mg/5mL","200mg/5mL"], f: "susp", t: "Antibiótico macrolido pediátrico" },
+{ n: "Cefalexina suspensión", b: "Keflex", c: ["125mg/5mL","250mg/5mL"], f: "susp", t: "Antibiótico cefalosporina pediátrico" },
+{ n: "Eritromicina suspensión", b: "Ilosone", c: ["125mg/5mL","250mg/5mL"], f: "susp", t: "Antibiótico macrolido pediátrico" },
+{ n: "Ceftriaxona ampolla pediátrica", b: "Rocefin", c: ["250mg","500mg"], f: "amp", t: "Antibiótico cefalosporina pediátrico" },
+{ n: "Paracetamol suspensión", b: "Tafirol", c: ["120mg/5mL","160mg/5mL"], f: "susp", t: "Antipiré pediátrico" },
+{ n: "Paracetamol gotas", b: "Tafirol", c: ["100mg/mL"], f: "gts", t: "Antipiré pediátrico" },
+{ n: "Ibuprofeno suspensión pediátrica", b: "Actron", c: ["100mg/5mL","150mg/5mL"], f: "susp", t: "Antiinflamatorio pediátrico" },
+{ n: "Metamizol gotas", b: "Nolotil", c: ["500mg/mL"], f: "gts", t: "Analgésico pediátrico" },
+{ n: "Albendazol suspensión", b: "Zentel", c: ["20mg/mL"], f: "susp", t: "Antiparasitario pediátrico" },
+{ n: "Mebendazol suspensión", b: "Emverm", c: ["20mg/mL"], f: "susp", t: "Antiparasitario pediátrico" },
+{ n: "Metronidazol suspensión", b: "Flagyl", c: ["40mg/mL"], f: "susp", t: "Antiparasitario pediátrico" },
+{ n: "Sales de rehidratación oral", b: "Suero Vital", c: ["1L"], f: "sol", t: "Rehidratación pediátrica" },
+{ n: "Racecadotrilo suspensión", b: "Hidrasec", c: ["10mg/mL"], f: "susp", t: "Antidiarreico pediátrico" },
+{ n: "Zinc suspensión", b: "Zinc IMSS", c: ["10mg/5mL","20mg/5mL"], f: "susp", t: "Suplemento pediátrico" },
+{ n: "Prednisolona suspensión", b: "Prednisona", c: ["5mg/5mL","15mg/5mL"], f: "susp", t: "Corticoide pediátrico" },
+{ n: "Dexametasona ampolla", b: "Dexazone", c: ["4mg/mL"], f: "amp", t: "Corticoide pediátrico" },
+{ n: "Salbutamol suspensión", b: "Asmabron", c: ["2mg/5mL"], f: "susp", t: "Broncodilatador pediátrico" },
+{ n: "Salbutamol solución nebulización", b: "Ventolin", c: ["0.5mg/mL","1mg/mL"], f: "sol", t: "Broncodilatador pediátrico" },
+{ n: "Loratadina suspensión", b: "Claritín", c: ["5mg/5mL"], f: "susp", t: "Antihistamínico pediátrico" },
+{ n: "Cetirizina gotas", b: "Alergyl", c: ["10mg/mL"], f: "gts", t: "Antihistamínico pediátrico" },
+{ n: "Difenhidramina suspensión", b: "Benadryl", c: ["12.5mg/5mL"], f: "susp", t: "Antihistamínico pediátrico" },
+{ n: "Hidroxizina suspensión", b: "Atarax", c: ["10mg/5mL"], f: "susp", t: "Antihistamínico ansiolítico pediátrico" },
+{ n: "Clorfenamina suspensión", b: "Polaramine", c: ["2mg/5mL"], f: "susp", t: "Antihistamínico pediátrico" },
+{ n: "Vitamina D gotas", b: "Calcitriol", c: ["200UI/gota"], f: "gts", t: "Suplemento vitamínico pediátrico" },
+{ n: "Vitamina A", b: "Vitamina A IMSS", c: ["200000UI"], f: "cap", t: "Suplemento vitamínico pediátrico" },
+{ n: "Polivitamínico gotas", b: "Poly-vi-sol", c: ["1mL"], f: "gts", t: "Suplemento vitamínico pediátrico" },
+{ n: "Fenobarbital solución oral", b: "Luminal", c: ["20mg/5mL"], f: "sol", t: "Antiepiléptico pediátrico" },
+{ n: "Ácido valproico suspensión", b: "Depakine", c: ["50mg/mL"], f: "susp", t: "Antiepiléptico pediátrico" },
+{ n: "Levetiracetam suspensión", b: "Keppra", c: ["10mg/mL"], f: "susp", t: "Antiepiléptico pediátrico" },
+{ n: "Cafeína citrato", b: "Cafcit", c: ["20mg/mL"], f: "sol", t: "Estimulante respiratorio neonatal" },
+{ n: "Poractant alfa", b: "Curosurf", c: ["80mg/mL"], f: "susp", t: "Surfactante neonatal" },
+{ n: "Morfina jarabe", b: "MST Continus", c: ["2mg/mL"], f: "sol", t: "Analgésico pediátrico" },
+{ n: "Fentanilo transdérmico pediátrico", b: "Duragesic", c: ["12mcg/72h","25mcg/72h"], f: "parch", t: "Analgésico pediátrico" },
+{ n: "Hidrocortisona crema", b: "Cortef", c: ["1%"], f: "crm", t: "Corticoide tópico dermatología" },
+{ n: "Betametasona crema", b: "Celestone", c: ["0.05%","0.1%"], f: "crm", t: "Corticoide tópico dermatología" },
+{ n: "Clobetasol propionato crema", b: "Clobex", c: ["0.05%"], f: "crm", t: "Corticoide tópico potente dermatología" },
+{ n: "Triamcinolona crema", b: "Kenalog", c: ["0.05%","0.1%"], f: "crm", t: "Corticoide tópico dermatología" },
+{ n: "Desonida crema", b: "Desowen", c: ["0.05%"], f: "crm", t: "Corticoide tópico leve dermatología" },
+{ n: "Mometasona crema", b: "Elocom", c: ["0.1%"], f: "crm", t: "Corticoide tópico dermatología" },
+{ n: "Fluocinolona crema", b: "Fluonid", c: ["0.025%","0.1%"], f: "crm", t: "Corticoide tópico dermatología" },
+{ n: "Ketoconazol crema", b: "Nizoral", c: ["2%"], f: "crm", t: "Antifúngico tópico dermatología" },
+{ n: "Clotrimazol crema", b: "Canesten", c: ["1%"], f: "crm", t: "Antifúngico tópico dermatología" },
+{ n: "Terbinafina crema", b: "Lamisil", c: ["1%"], f: "crm", t: "Antifúngico tópico dermatología" },
+{ n: "Miconazol crema", b: "Daktarin", c: ["2%"], f: "crm", t: "Antifúngico tópico dermatología" },
+{ n: "Econazol crema", b: "Ecostatin", c: ["1%"], f: "crm", t: "Antifúngico tópico dermatología" },
+{ n: "Ciclopirox crema", b: "Loprox", c: ["1%"], f: "crm", t: "Antifúngico tópico dermatología" },
+{ n: "Mupirocina ungüento", b: "Bactroban", c: ["2%"], f: "ung", t: "Antibiótico tópico dermatología" },
+{ n: "Ácido fusídico crema", b: "Fucidin", c: ["2%"], f: "crm", t: "Antibiótico tópico dermatología" },
+{ n: "Eritromicina gel", b: "Acnesol", c: ["2%"], f: "gel", t: "Antibiótico tópico dermatología" },
+{ n: "Clindamicina gel", b: "Cleocin", c: ["1%"], f: "gel", t: "Antibiótico tópico dermatología" },
+{ n: "Neomicina polvo", b: "Neomicina", c: ["0.5%"], f: "pol", t: "Antibiótico tópico dermatología" },
+{ n: "Tretinoína crema", b: "Retin A", c: ["0.025%","0.05%","0.1%"], f: "crm", t: "Retinoide tópico acné" },
+{ n: "Adapaleno gel", b: "Differin", c: ["0.1%"], f: "gel", t: "Retinoide tópico acné" },
+{ n: "Tazaroteno crema", b: "Tazorac", c: ["0.05%","0.1%"], f: "crm", t: "Retinoide tópico acné" },
+{ n: "Ácido salicílico", b: "Salicylic", c: ["2%","10%"], f: "sol", t: "Queratolítico dermatología" },
+{ n: "Urea crema", b: "Urea", c: ["10%","20%","40%"], f: "crm", t: "Queratolítico dermatología" },
+{ n: "Ácido láctico loción", b: "AHA", c: ["5%","10%"], f: "lot", t: "Queratolítico dermatología" },
+{ n: "Peróxido de benzoílo gel", b: "Benzac", c: ["2.5%","5%","10%"], f: "gel", t: "Acné" },
+{ n: "Doxiciclina tableta", b: "Doryx", c: ["50mg","100mg"], f: "tab", t: "Acné antibiótico" },
+{ n: "Isotretinoína cápsula", b: "Accutane", c: ["10mg","20mg","40mg"], f: "cap", t: "Acné severo" },
+{ n: "Calcipotriol crema", b: "Daivonex", c: ["50mcg/g"], f: "crm", t: "Psoriasis" },
+{ n: "Calcipotriol+Betametasona crema", b: "Daivobet", c: ["50/0.5mcg/mg"], f: "crm", t: "Psoriasis" },
+{ n: "Metotrexato tableta", b: "Metotrexato", c: ["2.5mg"], f: "tab", t: "Psoriasis severa dermatología" },
+{ n: "Loratadina tableta", b: "Claritín", c: ["10mg"], f: "tab", t: "Antihistamínico dermatología" },
+{ n: "Cetirizina tableta", b: "Alergyl", c: ["10mg"], f: "tab", t: "Antihistamínico dermatología" },
+{ n: "Fexofenadina tableta", b: "Allegra", c: ["60mg","120mg","180mg"], f: "tab", t: "Antihistamínico dermatología" },
+{ n: "Bilastina tableta", b: "Bilaxten", c: ["20mg"], f: "tab", t: "Antihistamínico dermatología" },
+{ n: "Rupatadina tableta", b: "Rupafin", c: ["10mg"], f: "tab", t: "Antihistamínico dermatología" },
+{ n: "Levocetirizina tableta", b: "Xyzal", c: ["5mg"], f: "tab", t: "Antihistamínico dermatología" },
+{ n: "Desloratadina tableta", b: "Aerius", c: ["5mg"], f: "tab", t: "Antihistamínico dermatología" },
+{ n: "Ebastina tableta", b: "Ebastel", c: ["10mg"], f: "tab", t: "Antihistamínico dermatología" },
+{ n: "Vaselina", b: "Vaselina", c: ["100%"], f: "ung", t: "Emoliente dermatología" },
+{ n: "Óxido de zinc", b: "Oxido de zinc", c: ["20%"], f: "crm", t: "Protector barrera dermatología" },
+{ n: "Dimeticona loción", b: "Dimeticona", c: ["4%"], f: "lot", t: "Protector barrera dermatología" },
+{ n: "Aciclovir crema", b: "Zovirax", c: ["5%"], f: "crm", t: "Antiviral tópico herpes" },
+{ n: "Permetrina loción", b: "Permetrina", c: ["5%"], f: "lot", t: "Escabicida pediculicida dermatología" },
+{ n: "Lindano loción", b: "Lindano", c: ["1%"], f: "lot", t: "Escabicida dermatología" },
+{ n: "Benzoato de bencilo loción", b: "Benzoato de bencilo", c: ["10%"], f: "lot", t: "Escabicida dermatología" },
+{ n: "Ivermectina tópica crema", b: "Stromectol", c: ["1%"], f: "crm", t: "Escabicida dermatología" },
+{ n: "Lágrimas artificiales", b: "Lágrimas Artificiales", c: ["10mL"], f: "gts", t: "Oftalmología lubricante" },
+{ n: "Tobramicina colirio", b: "Tobrex", c: ["0.3%"], f: "gts", t: "Oftalmología antibiótico" },
+{ n: "Gentamicina colirio", b: "Gentalyn", c: ["0.3%"], f: "gts", t: "Oftalmología antibiótico" },
+{ n: "Ciprofloxacino colirio", b: "Ciloxan", c: ["0.3%"], f: "gts", t: "Oftalmología antibiótico" },
+{ n: "Prednisolona colirio", b: "Pred Forte", c: ["1%"], f: "gts", t: "Oftalmología corticoide" },
+{ n: "Dexametasona colirio", b: "Dexameth", c: ["0.1%"], f: "gts", t: "Oftalmología corticoide" },
+{ n: "Ketorolaco colirio", b: "Acular", c: ["0.5%"], f: "gts", t: "Oftalmología AINE" },
+{ n: "Brimonidina colirio", b: "Alphagan", c: ["0.15%","0.2%"], f: "gts", t: "Oftalmología glaucoma" },
+{ n: "Timolol colirio", b: "Timoptol", c: ["0.25%","0.5%"], f: "gts", t: "Oftalmología glaucoma" },
+{ n: "Dorzolamida colirio", b: "Trusopt", c: ["2%"], f: "gts", t: "Oftalmología glaucoma" },
+{ n: "Latanoprost colirio", b: "Xalatan", c: ["50mcg/mL"], f: "gts", t: "Oftalmología glaucoma" },
+{ n: "Travoprost colirio", b: "Travatan", c: ["40mcg/mL"], f: "gts", t: "Oftalmología glaucoma" },
+{ n: "Bimatoprost colirio", b: "Lumigan", c: ["0.03%"], f: "gts", t: "Oftalmología glaucoma" },
+{ n: "Ketotifeno colirio", b: "Zaditor", c: ["0.025%"], f: "gts", t: "Oftalmología antihistamínico" },
+{ n: "Olopatadina colirio", b: "Patanol", c: ["0.1%"], f: "gts", t: "Oftalmología antihistamínico" },
+{ n: "Diclofenaco colirio", b: "Voltaren", c: ["0.1%"], f: "gts", t: "Oftalmología AINE" },
+{ n: "Oximetazolina nasal", b: "Afrin", c: ["0.05%"], f: "aer", t: "ORL descongestivo" },
+{ n: "Xilometazolina nasal", b: "Dristan", c: ["0.1%"], f: "aer", t: "ORL descongestivo" },
+{ n: "Budesonida nasal", b: "Pulmicort", c: ["0.25mg/dosis"], f: "aer", t: "ORL corticoide" },
+{ n: "Fluticasona nasal", b: "Flixonase", c: ["50mcg/dosis"], f: "aer", t: "ORL corticoide" },
+{ n: "Mometasona nasal", b: "Asmanex", c: ["50mcg/dosis"], f: "aer", t: "ORL corticoide" },
+{ n: "Beclometasona nasal", b: "Becloforte", c: ["50mcg/dosis"], f: "aer", t: "ORL corticoide" },
+{ n: "Cromoglicato nasal", b: "Lomusol", c: ["20mg/dosis"], f: "aer", t: "ORL antiinflamatorio" },
+{ n: "Ipratropio nasal", b: "Atrovent", c: ["0.03%"], f: "aer", t: "ORL anticolinérgico" },
+{ n: "Peróxido de hidrógeno ótico", b: "Otosil", c: ["3%"], f: "sol", t: "ORL limpiador ótico" },
+{ n: "Neomicina/Polimixina ótica", b: "Ótico", c: ["400UI/mL"], f: "gts", t: "ORL antibiótico ótico" },
+{ n: "Ciprofloxacino ótico", b: "Otocin", c: ["0.3%"], f: "gts", t: "ORL antibiótico ótico" },
+{ n: "Amoxicilina tableta/suspensión", b: "Amoxil", c: ["500mg","250mg/5mL"], f: "tab/susp", t: "ORL antibiótico otitis media" },
+{ n: "Claritromicina tableta", b: "Klacid", c: ["250mg","500mg"], f: "tab", t: "ORL antibiótico sinusitis" },
+{ n: "Pseudoefedrina tableta", b: "Sudafed", c: ["30mg","60mg"], f: "tab", t: "ORL descongestivo sistémico" }
+];
+
 
 </script>
 </body>
