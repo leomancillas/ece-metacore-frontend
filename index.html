@@ -403,7 +403,7 @@
       <h2 class="modal-title" id="medModalTitle">💊 Agregar medicamento</h2>
       <button class="btn btn-secondary btn-sm" onclick="closeModal('medModal')">✕</button>
     </div>
-    <div class="form-group"><label>Medicamento / principio activo *</label><input id="med_nombre" placeholder="Metformina, Losartán, Omeprazol..."></div>
+    <div class="form-group"><label>Medicamento / principio activo *</label><input id="med_nombre" placeholder="Metformina, Losartán, Omeprazol..."><div id="med_drug_hint" style="display:none"></div></div>
     <div class="grid-2">
       <div class="form-group"><label>Presentación</label><input id="med_presenta" placeholder="850 mg tabletas, 20 mg cápsulas..."></div>
       <div class="form-group"><label>Dosis</label><input id="med_dosis" placeholder="1 tableta, 500 mg..."></div>
@@ -1504,6 +1504,9 @@ async function viewPatient(id) {
     setTimeout(() => renderLabCharts(labs), 0);
     // Load medications asynchronously (non-blocking)
     loadMedications(id);
+    // Initialize timeline tab (reset guard so it re-initializes on each patient view)
+    window.__timelineInit = false;
+    setTimeout(() => initTimelineTab(notes, labs, vitals, citas), 50);
   } catch (e) { if (navRequestId === myReqId) c.innerHTML = '<p class="error-msg">' + e.message + '</p>'; }
 }
 
@@ -3777,6 +3780,39 @@ async function loadMedications(patientId) {
 }
 
 function medRow(m) {
+  const rxInstr = getRxInstructions(m.nombre);
+  const ndDrug = rxInstr ? NEXT_DOSE_DRUGS[rxInstr.key] : null;
+
+  // Build instructions section if available
+  let instrHtml = '';
+  if (rxInstr) {
+    const instrText = rxInstr.instr.replace(/\n/g, '<br>');
+    instrHtml = `
+      <div style="margin-top:8px;margin-bottom:8px">
+        <button type="button" class="btn btn-secondary btn-xs" id="med_instr_btn_${m.id||'new'}" onclick="toggleMedInstructions('${m.id||'new'}')" style="padding:2px 6px;font-size:0.75rem;background:#e6f2ff;border:1px solid #4299e1;color:#2c5282;cursor:pointer">ℹ️ Ver instrucciones</button>
+      </div>
+      <div id="med_instr_${m.id||'new'}" style="display:none;margin:8px 0;padding:10px 12px;border-left:4px solid #4fd1c5;background:#f0fffe;border-radius:4px;font-size:0.75rem;color:#234e52;line-height:1.4">
+        ${instrText}
+      </div>
+    `;
+  }
+
+  // Build next dose info if applicable
+  let nextDoseHtml = '';
+  if (ndDrug) {
+    if (ndDrug.note_override) {
+      nextDoseHtml = `<div style="margin-top:6px;padding:6px 8px;background:#fff5e6;border-left:3px solid #ed8936;border-radius:3px;font-size:0.75rem;color:#744210;font-weight:600">${ndDrug.note_override}</div>`;
+    } else if (ndDrug.interval_days > 0) {
+      const today = new Date();
+      const next = new Date(today);
+      next.setDate(today.getDate() + ndDrug.interval_days);
+      const dd = String(next.getDate()).padStart(2,'0');
+      const mm = String(next.getMonth()+1).padStart(2,'0');
+      const yyyy = next.getFullYear();
+      nextDoseHtml = `<div style="margin-top:6px;padding:6px 8px;background:#fef3c7;border-left:3px solid #f59e0b;border-radius:3px;font-size:0.75rem;color:#78350f;font-weight:600">⚠️ Próxima dosis: ${dd}/${mm}/${yyyy}</div>`;
+    }
+  }
+
   return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
     <span style="font-size:1.2rem;flex-shrink:0">${m.activo ? '💊' : '📦'}</span>
     <div style="flex:1">
@@ -3784,6 +3820,8 @@ function medRow(m) {
       <div style="font-size:0.8rem;color:#4a5568">${[m.dosis,m.frecuencia,m.via].filter(Boolean).join(' · ')}</div>
       ${m.indicacion ? `<div style="font-size:0.78rem;color:#718096">${m.indicacion}</div>` : ''}
       <div style="font-size:0.72rem;color:#a0aec0">Desde: ${m.fecha_inicio ? m.fecha_inicio.split('T')[0] : 'N/D'}${m.fecha_fin ? ' → '+m.fecha_fin.split('T')[0] : ''}</div>
+      ${instrHtml}
+      ${nextDoseHtml}
     </div>
     ${isMedico() ? `<div style="display:flex;gap:4px;flex-shrink:0" class="no-print">
       <button class="btn btn-secondary btn-sm" onclick="editMed('${m.id}')" style="padding:3px 8px">✏️</button>
@@ -3806,6 +3844,16 @@ function openMedModal(med) {
   document.getElementById('medModalTitle').textContent = med ? '✏️ Editar medicamento' : '💊 Agregar medicamento';
   document.getElementById('medError').textContent = '';
   document.getElementById('medModal').classList.add('open');
+
+  // Attach oninput listener to med_nombre for drug instruction hints
+  const medNameInput = document.getElementById('med_nombre');
+  if (medNameInput) {
+    const newInput = medNameInput.cloneNode(true);
+    newInput.oninput = function() { medInstructionHint(); };
+    medNameInput.parentNode.replaceChild(newInput, medNameInput);
+  }
+  // Initialize hint on open
+  setTimeout(medInstructionHint, 0);
 }
 
 async function editMed(id) {
@@ -5171,6 +5219,18 @@ function rxLookupDrug(val) {
 // ══════════════════════════════════════════════════════════════
 // 🔔 RECORDATORIOS PREVENTIVOS
 // ══════════════════════════════════════════════════════════════
+function getLatestWizardByType(notes, tipo) {
+  for (const n of (notes || [])) {
+    try {
+      if (typeof n.plan_tratamiento !== 'string') continue;
+      if (!n.plan_tratamiento.startsWith('{')) continue;
+      const meta = JSON.parse(n.plan_tratamiento);
+      if (meta._tipo === tipo && meta.wizard) return meta.wizard;
+    } catch(e) {}
+  }
+  return null;
+}
+
 function buildPreventiveReminders(pat, notes, labs, vitals) {
   if (!pat || !notes || !labs || !vitals) return [];
   const reminders = [];
@@ -5182,9 +5242,20 @@ function buildPreventiveReminders(pat, notes, labs, vitals) {
     return [n.motivo_consulta||'', n.exploracion_fisica||'', n.diagnostico||'', n.plan_tratamiento||'', n.indicaciones||'', meta].join(' ').toLowerCase();
   }).join(' ') + ' ' + (pat.antecedentes||'').toLowerCase();
 
-  const isDiabetic = /diabetes|glucémica|hba1c|hemoglobina glucosilada|insulina|metformina/i.test(allNoteText);
-  const hasThyroid = /hipotiroidismo|hipertiroidismo|hashimoto|tiroiditis|cáncer de tiroides|tsh|levotiroxina/i.test(allNoteText);
-  const hasOsteoporosis = /osteoporosis|menopausia|postmenopáusica|corticoides|bifosfonato|denosumab/i.test(allNoteText);
+  let isDiabetic = false;
+  let diabetesWizard = null;
+  diabetesWizard = getLatestWizardByType(notes, 'dm2');
+  if (diabetesWizard) { isDiabetic = true; } else { isDiabetic = /diabetes|glucémica|hba1c|hemoglobina glucosilada|insulina|metformina/i.test(allNoteText); }
+
+  let hasThyroid = false;
+  let thyroidWizard = null;
+  thyroidWizard = getLatestWizardByType(notes, 'hipotiroidismo') || getLatestWizardByType(notes, 'hiperfuncion');
+  if (thyroidWizard) { hasThyroid = true; } else { hasThyroid = /hipotiroidismo|hipertiroidismo|hashimoto|tiroiditis|cáncer de tiroides|tsh|levotiroxina/i.test(allNoteText); }
+
+  let hasOsteoporosis = false;
+  let osteoWizard = null;
+  osteoWizard = getLatestWizardByType(notes, 'osteoporosis');
+  if (osteoWizard) { hasOsteoporosis = true; } else { hasOsteoporosis = /osteoporosis|menopausia|postmenopáusica|corticoides|bifosfonato|denosumab/i.test(allNoteText); }
 
   function extractLatestYear(kws) {
     const pat = kws.map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
@@ -5218,29 +5289,89 @@ function buildPreventiveReminders(pat, notes, labs, vitals) {
 
   if (isDiabetic) {
     // Fondo de ojo
-    const foYear = extractLatestYear(['fondo de ojo','retinografía','oftalmólogo','retinopatía']);
-    if (!foYear) addReminder('missing','Fondo de ojo','Último: No registrado','Solicitar');
-    else { const d = Math.floor((today.getFullYear()-foYear)*365.25); addReminder(d>365?'overdue':d>300?'due_soon':'ok','Fondo de ojo','Último: '+foYear+(d>365?' · Vencido hace '+Math.floor((d-365)/30)+' meses':''),'Solicitar'); }
+    if (diabetesWizard && diabetesWizard.ultimo_fondo_ojo) {
+      const foYear = parseInt(diabetesWizard.ultimo_fondo_ojo);
+      if (foYear && foYear >= 2000) {
+        const d = Math.floor((today.getFullYear() - foYear) * 365.25);
+        let retStatus = 'ok';
+        let retDetail = 'Último: ' + foYear;
+        if (diabetesWizard.retinopatia_diabetica && !diabetesWizard.retinopatia_diabetica.toLowerCase().includes('sin retinopatía') && !diabetesWizard.retinopatia_diabetica.toLowerCase().includes('sin escrutinio')) {
+          addReminder('due_soon', 'Oftalmología (retinopatía)', 'Estado: ' + diabetesWizard.retinopatia_diabetica, 'Seguimiento');
+          retStatus = 'due_soon';
+          retDetail += ' · Retinopatía documentada';
+        }
+        if (d > 365) retStatus = 'overdue';
+        else if (d > 300) retStatus = 'due_soon';
+        addReminder(retStatus, 'Fondo de ojo', retDetail + (d > 365 ? ' · Vencido hace ' + Math.floor((d-365)/30) + ' meses' : ''), 'Solicitar');
+      } else {
+        addReminder('missing', 'Fondo de ojo', 'Último: No registrado', 'Solicitar');
+      }
+    } else {
+      const foYear = extractLatestYear(['fondo de ojo','retinografía','oftalmólogo','retinopatía']);
+      if (!foYear) addReminder('missing','Fondo de ojo','Último: No registrado','Solicitar');
+      else { const d = Math.floor((today.getFullYear()-foYear)*365.25); addReminder(d>365?'overdue':d>300?'due_soon':'ok','Fondo de ojo','Último: '+foYear+(d>365?' · Vencido hace '+Math.floor((d-365)/30)+' meses':''),'Solicitar'); }
+    }
 
     // Microalbuminuria
-    const microLab = getLatestLab(['microalbuminuria','albumin','rac']);
-    if (!microLab) addReminder('missing','Microalbuminuria/RAC','Último: No registrado','Solicitar');
-    else { const d = daysSince(microLab.created_at); addReminder(d>365?'overdue':d>300?'due_soon':'ok','Microalbuminuria/RAC','Último: '+fmtDate(microLab.created_at)+(d>365?' · Vencido':''),'Solicitar'); }
+    if (diabetesWizard && diabetesWizard.albuminuria) {
+      const microLab = getLatestLab(['microalbuminuria','albumin','rac']);
+      if (!microLab) {
+        addReminder('missing', 'Microalbuminuria/RAC', 'Estado: ' + diabetesWizard.albuminuria, 'Solicitar');
+      } else {
+        const d = daysSince(microLab.created_at);
+        addReminder(d>365?'overdue':d>300?'due_soon':'ok', 'Microalbuminuria/RAC', 'Último: '+fmtDate(microLab.created_at)+' ('+diabetesWizard.albuminuria+')'+(d>365?' · Vencido':''), 'Solicitar');
+      }
+    } else {
+      const microLab = getLatestLab(['microalbuminuria','albumin','rac']);
+      if (!microLab) addReminder('missing','Microalbuminuria/RAC','Último: No registrado','Solicitar');
+      else { const d = daysSince(microLab.created_at); addReminder(d>365?'overdue':d>300?'due_soon':'ok','Microalbuminuria/RAC','Último: '+fmtDate(microLab.created_at)+(d>365?' · Vencido':''),'Solicitar'); }
+    }
 
     // Monofilamento
-    const monoYear = extractLatestYear(['monofilamento','neuropatía','pie diabético']);
-    if (!monoYear) addReminder('missing','Pie diabético (monofilamento)','Último: No registrado','Evaluar');
-    else { const d = Math.floor((today.getFullYear()-monoYear)*365.25); addReminder(d>365?'overdue':d>300?'due_soon':'ok','Pie diabético (monofilamento)','Último: '+monoYear+(d>365?' · Vencido':''),'Evaluar'); }
+    if (diabetesWizard && diabetesWizard.monofilamento_10g) {
+      let monoStatus = 'ok';
+      let monoDetail = 'Estado: ' + diabetesWizard.monofilamento_10g;
+      if (!diabetesWizard.monofilamento_10g.toLowerCase().includes('normal')) {
+        monoStatus = 'overdue';
+        monoDetail += ' · Anormal - requiere seguimiento';
+      }
+      addReminder(monoStatus, 'Pie diabético (monofilamento)', monoDetail, 'Evaluar');
+    } else {
+      const monoYear = extractLatestYear(['monofilamento','neuropatía','pie diabético']);
+      if (!monoYear) addReminder('missing','Pie diabético (monofilamento)','Último: No registrado','Evaluar');
+      else { const d = Math.floor((today.getFullYear()-monoYear)*365.25); addReminder(d>365?'overdue':d>300?'due_soon':'ok','Pie diabético (monofilamento)','Último: '+monoYear+(d>365?' · Vencido':''),'Evaluar'); }
+    }
 
     // HbA1c
-    const hba1cLab = getLatestLab(['hba1c','hemoglobina glucosilada']);
-    if (!hba1cLab) addReminder('missing','HbA1c','Último: No registrado','Solicitar');
-    else {
-      const d = daysSince(hba1cLab.created_at);
-      const val = parseFloat(hba1cLab.resultado||0);
-      const interval = val > 7 ? 90 : 180;
-      const detail = 'Último: '+fmtDate(hba1cLab.created_at)+(hba1cLab.resultado?' ('+hba1cLab.resultado+'%)':'')+(d>interval?' · Vencido':'');
-      addReminder(d>interval?'overdue':d>interval-30?'due_soon':'ok','HbA1c',detail,'Solicitar');
+    if (diabetesWizard && diabetesWizard.ultima_hba1c) {
+      const hba1cVal = parseFloat(diabetesWizard.ultima_hba1c);
+      const monthsAgo = parseInt(diabetesWizard.fecha_ultima_hba1c) || 0;
+      let hba1cStatus = 'ok';
+      if (hba1cVal > 7 && monthsAgo > 3) { hba1cStatus = 'overdue'; }
+      else if (hba1cVal > 7 && monthsAgo > 2) { hba1cStatus = 'due_soon'; }
+      else if (monthsAgo > 6) { hba1cStatus = 'due_soon'; }
+      const hba1cDetail = 'Último: ' + diabetesWizard.ultima_hba1c + '% hace ' + monthsAgo + ' meses' + (hba1cStatus !== 'ok' ? ' · Vencido' : '');
+      addReminder(hba1cStatus, 'HbA1c', hba1cDetail, 'Solicitar');
+    } else {
+      const hba1cLab = getLatestLab(['hba1c','hemoglobina glucosilada']);
+      if (!hba1cLab) addReminder('missing','HbA1c','Último: No registrado','Solicitar');
+      else {
+        const d = daysSince(hba1cLab.created_at);
+        const val = parseFloat(hba1cLab.resultado||0);
+        const interval = val > 7 ? 90 : 180;
+        const detail = 'Último: '+fmtDate(hba1cLab.created_at)+(hba1cLab.resultado?' ('+hba1cLab.resultado+'%)':'')+(d>interval?' · Vencido':'');
+        addReminder(d>interval?'overdue':d>interval-30?'due_soon':'ok','HbA1c',detail,'Solicitar');
+      }
+    }
+
+    // Nefrología (TFGe from wizard)
+    if (diabetesWizard && diabetesWizard.tfge_actual) {
+      const tfge = parseFloat(diabetesWizard.tfge_actual);
+      let nefroStatus = 'ok';
+      let nefroDetail = 'TFGe actual: ' + tfge + ' mL/min/1.73m²';
+      if (tfge < 30) { nefroStatus = 'overdue'; nefroDetail += ' · ERC Estadio 4-5'; }
+      else if (tfge < 60) { nefroStatus = 'due_soon'; nefroDetail += ' · ERC Estadio 3'; }
+      addReminder(nefroStatus, 'Nefrología (TFGe)', nefroDetail, 'Seguimiento');
     }
 
     // Odontología
@@ -5339,6 +5470,415 @@ function renderRemindersPanel(reminders) {
     <div style="max-height:500px;overflow-y:auto">${items}</div>
   </div>`;
 }
+
+// ══════════════════════════════════════════════════════════════
+// DRUG INSTRUCTION HELPERS
+// ══════════════════════════════════════════════════════════════
+
+function toggleMedInstructions(medId) {
+  const instrDiv = document.getElementById('med_instr_' + medId);
+  if (!instrDiv) return;
+  const isVisible = instrDiv.style.display !== 'none';
+  instrDiv.style.display = isVisible ? 'none' : 'block';
+  const btn = document.getElementById('med_instr_btn_' + medId);
+  if (btn) btn.textContent = isVisible ? 'ℹ️ Ver instrucciones' : 'ℹ️ Ocultar instrucciones';
+}
+
+function medInstructionHint() {
+  const medNameInput = document.getElementById('med_nombre');
+  if (!medNameInput) return;
+  const val = medNameInput.value.trim();
+  const hintDiv = document.getElementById('med_drug_hint');
+  if (!hintDiv) return;
+  if (!val || val.length < 2) { hintDiv.innerHTML = ''; hintDiv.style.display = 'none'; return; }
+  const match = getRxInstructions(val);
+  if (!match) { hintDiv.innerHTML = ''; hintDiv.style.display = 'none'; return; }
+  hintDiv.innerHTML = '<div style="font-size:0.75rem;color:#4299e1;margin-top:4px">💊 Coincide: <strong>' + match.key.charAt(0).toUpperCase() + match.key.slice(1) + '</strong> — instrucciones disponibles</div>';
+  hintDiv.style.display = 'block';
+}
+
+// ══════════════════════════════════════════════════════════════
+// ECE META CORE - Timeline View Feature
+// Chronological unified timeline merging notes, labs, vitals, and appointments
+// ══════════════════════════════════════════════════════════════
+
+(function() {
+  'use strict';
+
+  function injectTimelineCSS() {
+    if (document.querySelector('style[data-timeline="1"]')) return;
+    const style = document.createElement('style');
+    style.setAttribute('data-timeline', '1');
+    style.textContent = `
+      .timeline-container { position: relative; padding: 20px 0; }
+      .timeline-event { display: flex; gap: 20px; margin-bottom: 24px; position: relative; }
+      .timeline-event:last-child .timeline-line { height: 0; }
+      .timeline-marker { position: relative; display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 40px; }
+      .timeline-dot { width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 3px var(--color); background: var(--color); z-index: 2; position: relative; }
+      .timeline-line { position: absolute; width: 2px; height: 100%; top: 16px; left: 50%; transform: translateX(-50%); background: var(--color); opacity: 0.3; }
+      .timeline-content { flex: 1; background: white; border: 1px solid var(--border); border-left: 4px solid var(--color); border-radius: 8px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.2s; }
+      .timeline-content:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+      .timeline-timestamp { font-size: 0.78rem; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+      .timeline-title { font-size: 0.95rem; font-weight: 600; color: #2d3748; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+      .timeline-icon { font-size: 1.2rem; }
+      .timeline-subtitle { font-size: 0.85rem; color: #4a5568; line-height: 1.5; margin-bottom: 8px; }
+      .timeline-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; margin-right: 4px; }
+      .timeline-badge-nota { background: #d1fae5; color: #065f46; }
+      .timeline-badge-lab { background: #dbeafe; color: #0c4a6e; }
+      .timeline-badge-vital { background: #fed7aa; color: #7c2d12; }
+      .timeline-badge-cita { background: #e9d5ff; color: #5b21b6; }
+      .timeline-empty { text-align: center; padding: 40px 20px; color: #718096; font-style: italic; }
+      .timeline-tab-btn { margin-left: auto; background: #f0f9ff; color: #0369a1; border: 1px solid #0ea5e9; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+      .timeline-tab-btn:hover { background: #0369a1; color: white; }
+      .timeline-tab-btn.active { background: #0369a1; color: white; }
+      #timelineContainer { display: none; }
+      #timelineContainer.active { display: block; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function renderTimeline(notes, labs, vitals, citas) {
+    if (!notes) notes = [];
+    if (!labs) labs = [];
+    if (!vitals) vitals = [];
+    if (!citas) citas = [];
+
+    const events = [
+      ...notes.map(n => ({ ...n, _kind: 'nota', _date: new Date(n.created_at) })),
+      ...labs.map(l => ({ ...l, _kind: 'lab', _date: new Date(l.fecha_toma || l.created_at) })),
+      ...vitals.map(v => ({ ...v, _kind: 'vital', _date: new Date(v.created_at) })),
+      ...citas.map(c => ({ ...c, _kind: 'cita', _date: new Date(c.fecha_cita) })),
+    ];
+
+    events.sort((a, b) => b._date - a._date);
+
+    if (events.length === 0) {
+      return '<div class="timeline-empty">No hay eventos en la línea de tiempo</div>';
+    }
+
+    return '<div class="timeline-container">' + events.map((evt) => {
+      const timestamp = fmtDT(evt._date.toISOString(), 'datetime');
+      let icon, title, subtitle, colorVar;
+
+      switch (evt._kind) {
+        case 'nota':
+          icon = '🖊️';
+          title = evt.tipo ? (notaBadge(evt.tipo) + ' ' + (evt.tipo === 'receta' ? 'Prescripción' : 'Nota clínica')) : 'Nota clínica';
+          const motivo = evt.motivo_consulta ? evt.motivo_consulta.substring(0, 80) : '';
+          const diag = evt.diagnostico ? evt.diagnostico.substring(0, 60) : '';
+          subtitle = [motivo, diag].filter(Boolean).join(' · ');
+          colorVar = '#10b981';
+          break;
+        case 'lab':
+          icon = '🔬';
+          title = evt.nombre_estudio || 'Laboratorio';
+          const result = evt.resultado || '';
+          const units = evt.unidades ? ' ' + evt.unidades : '';
+          const interp = evt.interpretacion ? ` <span class="timeline-badge timeline-badge-lab">${evt.interpretacion}</span>` : '';
+          subtitle = `<strong>${result}${units}</strong>${interp}`;
+          colorVar = '#3b82f6';
+          break;
+        case 'vital':
+          icon = '📏';
+          title = 'Signos vitales';
+          const parts = [];
+          if (evt.presion_sistolica && evt.presion_diastolica) parts.push(`TA ${evt.presion_sistolica}/${evt.presion_diastolica}`);
+          if (evt.frecuencia_cardiaca) parts.push(`FC ${evt.frecuencia_cardiaca}`);
+          if (evt.peso_kg) parts.push(`Peso ${evt.peso_kg} kg`);
+          subtitle = parts.join(' • ');
+          colorVar = '#f59e0b';
+          break;
+        case 'cita':
+          icon = '🗓️';
+          title = 'Cita · ' + (evt.motivo || evt.especialidad || 'General');
+          const estatoMap = {
+            'programada': '<span class="timeline-badge" style="background:#bee3f8;color:#2a69ac">Programada</span>',
+            'completada': '<span class="timeline-badge" style="background:#c6f6d5;color:#276749">Completada</span>',
+            'cancelada': '<span class="timeline-badge" style="background:#fed7d7;color:#9b2c2c">Cancelada</span>',
+          };
+          subtitle = estatoMap[evt.estado] || `<span class="timeline-badge">${evt.estado}</span>`;
+          colorVar = '#a78bfa';
+          break;
+        default:
+          return '';
+      }
+
+      return `
+        <div class="timeline-event" style="--color: ${colorVar}">
+          <div class="timeline-marker">
+            <div class="timeline-dot"></div>
+            <div class="timeline-line"></div>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-timestamp">${timestamp}</div>
+            <div class="timeline-title"><span class="timeline-icon">${icon}</span>${title}</div>
+            <div class="timeline-subtitle">${subtitle}</div>
+          </div>
+        </div>
+      `;
+    }).join('') + '</div>';
+  }
+
+  function initTimelineTab(notes, labs, vitals, citas) {
+    if (window.__timelineInit) return;
+    window.__timelineInit = true;
+
+    injectTimelineCSS();
+
+    const notesCard = Array.from(document.querySelectorAll('.card')).find(el => {
+      const title = el.querySelector('.card-title');
+      return title && title.textContent.includes('Notas clinicas');
+    });
+    if (!notesCard) {
+      console.warn('[Timeline] Notes card not found, skipping integration');
+      return;
+    }
+
+    const cardHeader = notesCard.querySelector('.card-header');
+    if (!cardHeader) return;
+
+    const timelineHtml = renderTimeline(notes, labs, vitals, citas);
+    const timelineDiv = document.createElement('div');
+    timelineDiv.id = 'timelineContainer';
+    timelineDiv.innerHTML = timelineHtml;
+
+    const notesContent = notesCard.querySelector('.card-header').nextElementSibling;
+    if (notesContent) {
+      notesContent.parentNode.insertBefore(timelineDiv, notesContent.nextSibling);
+    } else {
+      notesCard.appendChild(timelineDiv);
+    }
+
+    const tabBtn = document.createElement('button');
+    tabBtn.className = 'btn btn-secondary btn-sm timeline-tab-btn';
+    tabBtn.innerHTML = '📅 Timeline';
+    tabBtn.style.marginLeft = 'auto';
+    tabBtn.onclick = (e) => {
+      e.preventDefault();
+      const timelineDivEl = document.getElementById('timelineContainer');
+      const notesContentEl = notesCard.querySelector('.card-header').nextElementSibling;
+      const isShowingTimeline = timelineDivEl && timelineDivEl.classList.contains('active');
+      if (isShowingTimeline) {
+        timelineDivEl.classList.remove('active');
+        if (notesContentEl && notesContentEl !== timelineDivEl) notesContentEl.style.display = '';
+        tabBtn.textContent = '📅 Timeline';
+        tabBtn.classList.remove('active');
+      } else {
+        if (notesContentEl && notesContentEl !== timelineDivEl) notesContentEl.style.display = 'none';
+        if (timelineDivEl) timelineDivEl.classList.add('active');
+        tabBtn.textContent = '📝 Notas';
+        tabBtn.classList.add('active');
+      }
+    };
+
+    const headerButtons = cardHeader.querySelector('div[style*="flex"]');
+    if (headerButtons) {
+      headerButtons.appendChild(tabBtn);
+    } else {
+      cardHeader.appendChild(tabBtn);
+    }
+  }
+
+  window.initTimelineTab = initTimelineTab;
+  window.renderTimeline = renderTimeline;
+})();
+
+// ══════════════════════════════════════════════════════════════
+// ECE META CORE - Feature Sharing Module
+// Features: TTL cache for sharing.json, interconsult notes
+// ══════════════════════════════════════════════════════════════
+
+const SHARE_CACHE_KEY = 'ece_share_cache';
+const SHARE_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
+
+const _origLoadShareData = loadShareData;
+
+async function loadShareDataCached(forceRefresh = false) {
+  if (forceRefresh) {
+    const data = await _origLoadShareData(forceRefresh);
+    try { localStorage.setItem(SHARE_CACHE_KEY, JSON.stringify({ data, ts: Date.now() })); } catch(e) { console.warn('[Share Cache] Could not store cache:', e.message); }
+    return data;
+  }
+  try {
+    const cached = localStorage.getItem(SHARE_CACHE_KEY);
+    if (cached) {
+      const { data, ts } = JSON.parse(cached);
+      const age = Date.now() - ts;
+      if (age < SHARE_CACHE_TTL) { console.log(`[Share Cache] Hit (age: ${Math.round(age/1000)}s)`); return data; }
+    }
+  } catch(e) { console.warn('[Share Cache] Error reading cache:', e.message); }
+  console.log('[Share Cache] Miss or expired — fetching from API');
+  const data = await _origLoadShareData(false);
+  try { localStorage.setItem(SHARE_CACHE_KEY, JSON.stringify({ data, ts: Date.now() })); } catch(e) { console.warn('[Share Cache] Could not store cache:', e.message); }
+  return data;
+}
+
+window.loadShareData = loadShareDataCached;
+
+const _origSaveShareData = saveShareData;
+async function saveShareDataWithCacheInvalidation(newData) {
+  try {
+    await _origSaveShareData(newData);
+    try { localStorage.removeItem(SHARE_CACHE_KEY); console.log('[Share Cache] Invalidated after successful save'); } catch(e) { console.warn('[Share Cache] Could not clear cache:', e.message); }
+  } catch(e) { throw e; }
+}
+window.saveShareData = saveShareDataWithCacheInvalidation;
+
+function generateUUID() {
+  return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
+}
+
+function renderInterconsultNotes(patientId) {
+  const shareEntry = _shareData?.shares?.[patientId];
+  const notes = shareEntry?.interconsult_notes || [];
+
+  let notesHTML = '';
+  if (notes.length === 0) {
+    notesHTML = '<p style="color:#a0aec0;font-size:0.9rem;padding:12px;text-align:center">Sin notas de interconsulta aún</p>';
+  } else {
+    notesHTML = notes.map(note => `
+      <div style="padding:12px;border-bottom:1px solid var(--border);background:#f7fafc">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <div style="font-weight:500;color:#1a202c;font-size:0.9rem">${escapeHtml(note.author_name)}</div>
+          <div style="color:#718096;font-size:0.85rem">${formatDate(note.created_at)}</div>
+        </div>
+        <div style="color:#2d3748;font-size:0.9rem;white-space:pre-wrap">${escapeHtml(note.text)}</div>
+      </div>
+    `).join('');
+  }
+
+  return `
+    <div style="border-left:4px solid var(--teal,#14b8a6);background:#f0fdfa;border-radius:4px;overflow:hidden;margin-bottom:16px">
+      <div style="padding:0">
+        <div style="padding:12px;border-bottom:1px solid rgba(20,184,166,0.2)">
+          <div style="font-weight:600;color:#0d9488;font-size:0.95rem">📝 Notas de interconsulta</div>
+        </div>
+        <div style="max-height:250px;overflow-y:auto">${notesHTML}</div>
+        <div style="padding:12px;border-top:1px solid rgba(20,184,166,0.2);background:#ffffff">
+          <textarea id="interconsultNoteText" placeholder="Escribe tu nota de interconsulta aquí..."
+            style="width:100%;min-height:80px;padding:8px;border:1px solid var(--border);border-radius:4px;font-family:inherit;font-size:0.9rem;resize:vertical"></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn btn-primary btn-sm" onclick="addInterconsultNote('${patientId}')" style="flex:1">Guardar nota</button>
+          </div>
+          <div id="interconsultStatus" style="margin-top:8px;font-size:0.85rem"></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const map = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;' };
+  return String(text).replace(/[&<>"']/g, m => map[m]);
+}
+
+function formatDate(isoString) {
+  if (!isoString) return '';
+  try {
+    const d = new Date(isoString);
+    const now = new Date();
+    const diff = now - d;
+    if (diff < 60 * 60 * 1000) { const mins = Math.floor(diff / (60 * 1000)); return `hace ${mins} min`; }
+    if (diff < 24 * 60 * 60 * 1000) { const hrs = Math.floor(diff / (60 * 60 * 1000)); return `hace ${hrs} hora${hrs > 1 ? 's' : ''}`; }
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch(e) { return isoString; }
+}
+
+async function addInterconsultNote(patientId) {
+  const textArea = document.getElementById('interconsultNoteText');
+  const text = (textArea?.value || '').trim();
+  const statusEl = document.getElementById('interconsultStatus');
+
+  if (!text) { if (statusEl) statusEl.innerHTML = '<span style="color:#dc2626">Por favor escribe una nota antes de guardar.</span>'; return; }
+  if (statusEl) statusEl.innerHTML = '<span style="color:#2563eb">Guardando...</span>';
+
+  try {
+    await loadShareDataCached(true);
+    const data = JSON.parse(JSON.stringify(_shareData));
+    if (!data.shares[patientId]) { if (statusEl) statusEl.innerHTML = '<span style="color:#dc2626">Paciente no encontrado en datos compartidos.</span>'; return; }
+    if (!data.shares[patientId].interconsult_notes) data.shares[patientId].interconsult_notes = [];
+    const newNote = {
+      id: generateUUID(),
+      author_id: currentUser?.id || 'unknown',
+      author_name: currentUser?.name || 'Médico',
+      text,
+      created_at: new Date().toISOString()
+    };
+    data.shares[patientId].interconsult_notes.push(newNote);
+    await saveShareData(data);
+    if (textArea) textArea.value = '';
+    if (statusEl) statusEl.innerHTML = '<span style="color:#059669">Nota guardada exitosamente.</span>';
+    setTimeout(() => {
+      const notesContainer = document.getElementById('interconsultNotesContainer');
+      if (notesContainer) notesContainer.innerHTML = renderInterconsultNotes(patientId);
+      if (statusEl) statusEl.innerHTML = '';
+    }, 500);
+  } catch(e) {
+    console.error('[Interconsult] Error saving note:', e);
+    if (statusEl) statusEl.innerHTML = '<span style="color:#dc2626">Error al guardar nota: ' + escapeHtml(e.message) + '</span>';
+  }
+}
+
+function openInterconsultPanel(patientId) {
+  const modal = document.getElementById('interconsultModal');
+  if (!modal) { console.error('[Interconsult] Modal element not found'); return; }
+  const patient = currentPatient || allPatients?.find(p => p.id === patientId);
+  const patientName = patient ? `${patient.nombre} ${patient.apellido_paterno} ${patient.apellido_materno || ''}`.trim() : 'Paciente';
+  const header = modal.querySelector('.modal-header');
+  if (header) header.innerHTML = `<span>📝 Interconsulta - ${escapeHtml(patientName)}</span>`;
+  const body = modal.querySelector('.modal-body');
+  if (body) { body.id = 'interconsultNotesContainer'; body.innerHTML = renderInterconsultNotes(patientId); }
+  modal.classList.add('open');
+  modal.style.display = 'flex';
+}
+
+function closeInterconsultPanel() {
+  const modal = document.getElementById('interconsultModal');
+  if (modal) { modal.classList.remove('open'); modal.style.display = 'none'; }
+}
+
+const _origViewPatientShared = viewPatientShared;
+window.viewPatientShared = async function(id, isShared = false) {
+  await _origViewPatientShared.call(this, id, isShared);
+  if (isShared && typeof isMedico === 'function' && isMedico() && currentUser?.role !== 'recepcion') {
+    setTimeout(() => {
+      const actionBar = document.querySelector('#mainContent .no-print > div[style*="margin-left:auto"]');
+      if (actionBar && !actionBar.querySelector('.btn-interconsult')) {
+        const interconsultBtn = document.createElement('button');
+        interconsultBtn.className = 'btn btn-secondary btn-sm btn-interconsult';
+        interconsultBtn.innerHTML = '📝 Interconsulta';
+        interconsultBtn.style.background = 'var(--teal, #14b8a6)';
+        interconsultBtn.style.color = 'white';
+        interconsultBtn.style.border = 'none';
+        interconsultBtn.onclick = () => openInterconsultPanel(id);
+        actionBar.appendChild(interconsultBtn);
+      }
+    }, 100);
+  }
+};
+
+(function initInterconsultModal() {
+  if (!document.getElementById('interconsultModal')) {
+    const modalHTML = `
+    <div id="interconsultModal"
+         style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:16px"
+         onclick="if(event.target===this) closeInterconsultPanel()">
+      <div style="background:white;border-radius:8px;width:100%;max-width:600px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 10px 25px rgba(0,0,0,0.2)">
+        <div class="modal-header"
+             style="padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-weight:600">
+          <span>📝 Interconsulta</span>
+          <button onclick="closeInterconsultPanel()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#718096">×</button>
+        </div>
+        <div class="modal-body" style="flex:1;overflow-y:auto;padding:16px"></div>
+      </div>
+    </div>`;
+    const mainContent = document.getElementById('mainContent');
+    if (mainContent) { mainContent.insertAdjacentHTML('afterend', modalHTML); }
+    else { document.body.insertAdjacentHTML('beforeend', modalHTML); }
+  }
+})();
 </script>
 </body>
 </html>
