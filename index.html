@@ -302,6 +302,19 @@
     .share-doctor-name { font-weight: 600; font-size: 0.9rem; }
     .share-doctor-role { font-size: 0.75rem; color: #718096; }
     .share-current-tag { font-size: 0.7rem; background: #c6f6d5; color: #276749; padding: 2px 8px; border-radius: 8px; font-weight: 700; }
+    /* ── Recordatorios preventivos ── */
+    @keyframes reminder-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(197,48,48,0.6)} 50%{box-shadow:0 0 0 7px rgba(197,48,48,0)} }
+    .reminder-pulse { animation: reminder-pulse 2.2s infinite; }
+    .reminder-item { transition: transform 0.15s, box-shadow 0.15s; }
+    .reminder-item:hover { transform: translateX(3px); }
+    @keyframes slideInReminder { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+    .reminders-panel { animation: slideInReminder 0.3s ease; }
+    /* ── Drug lookup panel ── */
+    .rx-drug-lookup { background:#f0fff4;border:1px solid #9ae6b4;border-radius:8px;padding:10px 14px;margin-top:8px; }
+    .rx-drug-lookup input { background:white;border:1px solid #9ae6b4;border-radius:6px;padding:6px 10px;font-size:0.85rem;width:100%;outline:none; }
+    .rx-drug-instr { margin-top:8px;background:white;border:1px solid #c6f6d5;border-radius:6px;padding:10px;font-size:0.8rem;color:#2d3748;white-space:pre-wrap;line-height:1.5;display:none; }
+    .rx-drug-instr.visible { display:block; }
+    .rx-drug-instr .rx-instr-drug { font-weight:700;color:#276749;margin-bottom:4px;font-size:0.82rem; }
 </style>
 </head>
 <body>
@@ -792,6 +805,11 @@
         <textarea id="rx_medicamentos" rows="6" placeholder="1. Metformina 850 mg tabletas, 1 tableta VO c/12h con alimentos × 60 días&#10;2. Omeprazol 20 mg cápsulas, 1 cápsula VO c/24h en ayuno × 30 días&#10;3. ..."></textarea>
         <button class="btn-voice" title="Dictar medicamentos" onclick="toggleVoice('rx_medicamentos',this)">🎤</button>
       </div>
+    </div>
+    <div class="rx-drug-lookup">
+      <div style="font-size:0.78rem;font-weight:700;color:#276749;margin-bottom:6px">💊 Buscar instrucciones de medicamento</div>
+      <input id="rx_lookup_input" placeholder="Escribe el nombre del medicamento..." oninput="rxLookupDrug(this.value)" autocomplete="off">
+      <div id="rx_lookup_result" class="rx-drug-instr"></div>
     </div>
     <div class="form-group">
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
@@ -1365,6 +1383,7 @@ async function viewPatient(id) {
         ${lastV.cuello_cm ? `<div class="stat-card"><div class="stat-num">${lastV.cuello_cm} cm</div><div class="stat-label">Perímetro cuello</div></div>` : ''}
         ${proxCitaHtml}
       </div>
+      ${renderRemindersPanel(buildPreventiveReminders(pat, notes, labs, vitals))}
       <div class="grid-2">
         <div class="card">
           <div class="card-header"><span class="card-title">Datos del paciente</span><button class="btn btn-secondary btn-sm no-print" onclick='editPatient("${pat.id}")'>Editar</button></div>
@@ -3934,35 +3953,69 @@ const WIZARD_SCHEMA = {
   dm2: {
     title: '🩸 Diabetes Mellitus tipo 2',
     sections: [
-      { title: 'Historia y síntomas', fields: [
-        { id:'anos_dx', type:'number', label:'Años desde diagnóstico', min:0, max:50 },
-        { id:'adherencia', type:'select', label:'Adherencia al tratamiento', options:['Buena (>80%)','Parcial (50–80%)','Mala (<50%)'] },
-        { id:'automonitoreo', type:'checkbox', label:'Realiza automonitoreo de glucemia' },
-        { id:'hipoglucemias', type:'select', label:'Hipoglucemias', options:['Ninguna','Leves (resuelve solo)','Moderadas (requiere ayuda)','Severas (pérdida de conciencia)'] },
-        { id:'poliuria', type:'checkbox', label:'Poliuria' },
-        { id:'polidipsia', type:'checkbox', label:'Polidipsia' },
-        { id:'polifagia', type:'checkbox', label:'Polifagia' },
-        { id:'astenia_dm2', type:'checkbox', label:'Astenia / fatiga' },
+      { title: '1 — Debut y diagnóstico', fields: [
+        { id:'ano_dx', type:'number', label:'Año de diagnóstico', min:1960, max:2026 },
+        { id:'edad_dx', type:'number', label:'Edad al diagnóstico (años)', min:1, max:100 },
+        { id:'forma_presentacion', type:'checkbox-group', label:'Forma de presentación al debut', options:[
+          {id:'debut_poliuria',label:'Poliuria'},{id:'debut_polidipsia',label:'Polidipsia'},
+          {id:'debut_perdida_peso',label:'Pérdida de peso involuntaria'},{id:'debut_hallazgo_incidental',label:'Hallazgo incidental'},
+          {id:'debut_cad',label:'Cetoacidosis diabética (CAD)'},{id:'debut_asintomatico',label:'Asintomático'},
+        ]},
+        { id:'glucosa_debut', type:'number', label:'Glucosa al debut (mg/dL)', min:70, max:800 },
+        { id:'hba1c_debut', type:'number', label:'HbA1c al debut (%)', min:4, max:20, step:0.1 },
+        { id:'dm_familia_1grado', type:'checkbox', label:'DM en familia de primer grado (padres, hermanos, hijos)' },
       ]},
-      { title: 'Laboratorio', fields: [
-        { id:'glucemia', type:'number', label:'Glucemia en ayuno (mg/dL)', min:50, max:600 },
-        { id:'hba1c', type:'number', label:'HbA1c (%)', min:4, max:20, step:0.1 },
-        { id:'meta_hba1c', type:'select', label:'Meta HbA1c', options:['< 6.5%','< 7.0%','< 7.5%','< 8.0%','< 8.5%'] },
-        { id:'tfge', type:'number', label:'TFGe (mL/min)', min:0, max:200 },
-        { id:'albuminuria', type:'select', label:'Albuminuria', options:['Sin albuminuria','Microalbuminuria (30–300 mg/g)','Macroalbuminuria (>300 mg/g)'] },
+      { title: '2 — Historia del tratamiento', fields: [
+        { id:'tto_inicial', type:'select', label:'Tratamiento inicial al diagnóstico', options:['Solo dieta / cambios de estilo de vida','Metformina monoterapia','Sulfonilúrea monoterapia','Insulina desde el debut','Combinación oral (sin insulina)','Otro'] },
+        { id:'secuencia_escalada', type:'textarea', label:'Secuencia de escalada terapéutica', placeholder:'Ej: Metformina 500 → 1500 mg → se agrega gliptina → se agrega insulina basal' },
+        { id:'num_farmacos_actuales', type:'number', label:'Medicamentos antidiabéticos actuales (cantidad)', min:0, max:10 },
+        { id:'usa_insulina', type:'checkbox', label:'Usa insulina actualmente' },
+        { id:'tipo_insulina', type:'select', label:'Tipo de insulina', options:['Basal (NPH, glargina, detemir, degludec)','Basal-bolo (basal + rápida prandial)','Premezcla (bifásica)','Bomba de infusión continua (CSII)'], dependsOn:'usa_insulina' },
+        { id:'dosis_insulina_basal', type:'number', label:'Dosis de insulina basal (UI/día)', min:0, max:500, step:0.5, dependsOn:'usa_insulina' },
+        { id:'anos_con_insulina', type:'number', label:'Años con insulina', min:0, max:50, step:0.5, dependsOn:'usa_insulina' },
+        { id:'adherencia_terapeutica', type:'select', label:'Adherencia terapéutica global', options:['Buena (>80%, toma >6 días/semana)','Regular (50–80%, olvidos ocasionales)','Mala (<50%, abandono frecuente)'] },
       ]},
-      { title: 'Exploración diabetológica', fields: [
-        { id:'pulsos', type:'select', label:'Pulsos periféricos', options:['Presentes y simétricos','Disminuidos','Ausentes'] },
-        { id:'monofilamento', type:'select', label:'Monofilamento 10g', options:['Normal','Disminuido','Ausente'] },
-        { id:'diapason', type:'select', label:'Diapasón 128 Hz', options:['Normal','Disminuido','Ausente'] },
-        { id:'ulcera', type:'checkbox', label:'Úlcera activa en pie' },
+      { title: '3 — Control glucémico y complicaciones agudas', fields: [
+        { id:'ultima_hba1c', type:'number', label:'Última HbA1c (%)', min:4, max:20, step:0.1 },
+        { id:'fecha_ultima_hba1c', type:'number', label:'Hace cuántos meses', min:0, max:24 },
+        { id:'meta_hba1c_acordada', type:'select', label:'Meta de HbA1c acordada', options:['<7.0% (control intensivo)','<7.5% (control convencional)','<8.0% (control menos intensivo)','Individualizada','No definida'] },
+        { id:'cad_antecedente', type:'checkbox', label:'Antecedente de cetoacidosis diabética (CAD)' },
+        { id:'num_episodios_cad', type:'number', label:'Número de episodios de CAD', min:1, max:20, dependsOn:'cad_antecedente' },
+        { id:'ultimo_episodio_cad', type:'number', label:'Año del último episodio de CAD', min:2000, max:2026, dependsOn:'cad_antecedente' },
+        { id:'hipoglucemias_severas', type:'checkbox', label:'Hipoglucemias severas en el último año (requieren asistencia)' },
+        { id:'frecuencia_hipoglucemias_leves', type:'number', label:'Hipoglucemias leves (veces/semana)', min:0, max:7, step:0.5 },
+        { id:'hiperglucemia_postprandial', type:'checkbox', label:'Hiperglucemia postprandial predominante' },
+        { id:'hiperglucemia_ayuno', type:'checkbox', label:'Hiperglucemia en ayuno predominante' },
       ]},
-      { title: 'Complicaciones crónicas', fields: [
-        { id:'retinopatia', type:'select', label:'Retinopatía', options:['Sin retinopatía','No proliferativa leve','No proliferativa moderada/severa','Proliferativa','EMD'] },
-        { id:'nefropatia', type:'checkbox', label:'Nefropatía diabética' },
-        { id:'neuropatia_per', type:'checkbox', label:'Neuropatía periférica' },
-        { id:'neuropatia_aut', type:'checkbox', label:'Neuropatía autonómica' },
-        { id:'ecv_dm2', type:'checkbox', label:'ECV establecida' },
+      { title: '4 — Complicaciones crónicas (screening)', fields: [
+        { id:'retinopatia_diabetica', type:'select', label:'Retinopatía diabética', options:['Sin escrutinio realizado','Sin retinopatía','RDNP leve','RDNP moderada','RDNP severa','RDP (proliferativa)','EMD (edema macular)','No evaluable'] },
+        { id:'ultimo_fondo_ojo', type:'number', label:'Año del último fondo de ojo', min:2000, max:2026 },
+        { id:'tfge_actual', type:'number', label:'TFGe actual (mL/min)', min:5, max:200 },
+        { id:'albuminuria', type:'select', label:'Albuminuria / Proteinuria', options:['Normoalbuminuria (<30 mg/g)','Microalbuminuria (30–300 mg/g)','Macroalbuminuria (>300 mg/g)','Sin dato'] },
+        { id:'neuropatia_periferica', type:'checkbox', label:'Neuropatía periférica confirmada' },
+        { id:'pie_diabetico_previo', type:'checkbox', label:'Antecedente de pie diabético / úlcera neuropática' },
+        { id:'ecv_establecida', type:'checkbox', label:'Enfermedad cardiovascular establecida' },
+        { id:'ecv_infarto', type:'checkbox', label:'Infarto de miocardio previo', dependsOn:'ecv_establecida' },
+        { id:'ecv_evc', type:'checkbox', label:'Accidente cerebrovascular (EVC) previo', dependsOn:'ecv_establecida' },
+        { id:'ecv_revascularizacion', type:'checkbox', label:'Revascularización coronaria o periférica', dependsOn:'ecv_establecida' },
+        { id:'higado_graso', type:'checkbox', label:'Hígado graso (EHGNA / MAFLD) confirmado' },
+      ]},
+      { title: '5 — Automanejo y monitoreo', fields: [
+        { id:'automonitoreo_glucosa', type:'checkbox', label:'Realiza automonitoreo de glucosa capilar (glucómetro)' },
+        { id:'frecuencia_glucometrias', type:'number', label:'Glucometrías al día', min:0, max:8, dependsOn:'automonitoreo_glucosa' },
+        { id:'usa_mcg', type:'checkbox', label:'Usa monitoreo continuo de glucosa (MCG / sensor)' },
+        { id:'tipo_mcg', type:'select', label:'Tipo de sensor', options:['FreeStyle Libre','Dexcom G6/G7','Medtronic Guardian','Otro'], dependsOn:'usa_mcg' },
+        { id:'actividad_fisica', type:'select', label:'Actividad física actual', options:['Sedentario (<150 min/semana)','Moderada (150–300 min/semana)','Vigorosa (≥300 min/semana)','No evaluado'] },
+        { id:'tipo_alimentacion', type:'select', label:'Plan dietético', options:['Sin plan estructurado','Hipocalórico para pérdida de peso','Bajo índice glucémico','Dieta mediterránea','Cetogénico / muy bajo en carbohidratos','Otro'] },
+        { id:'educacion_diabetologica', type:'checkbox', label:'Ha recibido educación diabetológica estructurada' },
+        { id:'atiende_nutricionista', type:'checkbox', label:'Atiende con nutricionista / dietista' },
+      ]},
+      { title: '6 — Exploración diabetológica', fields: [
+        { id:'pulsos_perifericos', type:'select', label:'Pulsos periféricos', options:['Presentes y simétricos','Disminuidos unilaterales','Disminuidos bilaterales','Ausentes'] },
+        { id:'monofilamento_10g', type:'select', label:'Monofilamento 10g', options:['Normal (siente en ambos pies)','Disminuido','Ausente (no percibe)'] },
+        { id:'diapason_128hz', type:'select', label:'Vibración — diapasón 128 Hz', options:['Normal','Disminuida','Ausente'] },
+        { id:'ulcera_activa', type:'checkbox', label:'⚠️ Úlcera activa en pie diabético' },
+        { id:'amputacion_previa', type:'checkbox', label:'⚠️ Antecedente de amputación' },
       ]},
     ]
   },
@@ -4156,22 +4209,97 @@ function buildObesidadNote(mk) {
 
 function buildDM2Note(mk) {
   const v = (f) => wv(mk, f), n = (f, u='') => wn(mk, f, u);
-  const syms = [];
-  if (v('poliuria')) syms.push('poliuria'); if (v('polidipsia')) syms.push('polidipsia');
-  if (v('polifagia')) syms.push('polifagia'); if (v('astenia_dm2')) syms.push('astenia');
-  const comps = [];
-  if (v('retinopatia') && v('retinopatia') !== 'Sin retinopatía') comps.push('Retinopatía: ' + v('retinopatia'));
-  if (v('nefropatia')) comps.push('Nefropatía'); if (v('neuropatia_per')) comps.push('Neuropatía periférica');
-  if (v('neuropatia_aut')) comps.push('Neuropatía autonómica'); if (v('ecv_dm2')) comps.push('ECV establecida');
-  const hba1c = parseFloat(v('hba1c') || 0);
-  const metaStr = v('meta_hba1c') || '';
-  const metaNum = parseFloat(metaStr.replace('<','').replace('%','').trim() || 9999);
-  const ctrl = (hba1c > 0 && metaNum < 9999) ? (hba1c <= metaNum ? 'bien controlada' : 'fuera de meta') : '';
+
+  // SECCIÓN 1: Debut y diagnóstico
+  const formas = [];
+  if (v('debut_poliuria')) formas.push('poliuria');
+  if (v('debut_polidipsia')) formas.push('polidipsia');
+  if (v('debut_perdida_peso')) formas.push('pérdida de peso');
+  if (v('debut_hallazgo_incidental')) formas.push('hallazgo incidental');
+  if (v('debut_cad')) formas.push('CAD');
+  if (v('debut_asintomatico')) formas.push('asintomático');
+  const debutStr = formas.length ? formas.join(', ') : 'no especificada';
+  const familiaStr = v('dm_familia_1grado') ? 'Sí, DM en familia 1° grado' : 'No documentado o negado';
+
+  // SECCIÓN 2: Tratamiento
+  const ttoInicialStr = v('tto_inicial') || 'No especificado';
+  const numFarmacos = v('num_farmacos_actuales') ? parseInt(v('num_farmacos_actuales')) : 0;
+  const insulinaStr = v('usa_insulina')
+    ? 'Sí — Tipo: ' + (v('tipo_insulina') || 'no especificado') + ', Dosis basal: ' + n('dosis_insulina_basal', 'UI') + ', Años: ' + (v('anos_con_insulina') || 'no registrado')
+    : 'No';
+
+  // SECCIÓN 3: Control y complicaciones agudas
+  const hba1cActual = parseFloat(v('ultima_hba1c') || 0);
+  const metaStr = v('meta_hba1c_acordada') || '';
+  const controlGlucemico = (() => {
+    if (hba1cActual === 0) return 'No evaluado';
+    if (metaStr.indexOf('<7.0') !== -1) return hba1cActual <= 7.0 ? 'En meta' : 'Fuera de meta';
+    if (metaStr.indexOf('<7.5') !== -1) return hba1cActual <= 7.5 ? 'En meta' : 'Fuera de meta';
+    if (metaStr.indexOf('<8.0') !== -1) return hba1cActual <= 8.0 ? 'En meta' : 'Fuera de meta';
+    return 'Meta individualizada — evaluar con paciente';
+  })();
+  const cadStr = v('cad_antecedente')
+    ? 'Sí — ' + (v('num_episodios_cad') || '?') + ' episodios, último: ' + (v('ultimo_episodio_cad') || '?')
+    : 'No documentado';
+  let hipoglucemiasStr = v('hipoglucemias_severas') ? 'Severas en último año: Sí' : 'Severas en último año: No';
+  if (v('frecuencia_hipoglucemias_leves') && parseFloat(v('frecuencia_hipoglucemias_leves')) > 0) {
+    hipoglucemiasStr += ' | Leves: ' + v('frecuencia_hipoglucemias_leves') + '/semana';
+  }
+  const patronGlucem = [];
+  if (v('hiperglucemia_postprandial')) patronGlucem.push('postprandial predominante');
+  if (v('hiperglucemia_ayuno')) patronGlucem.push('ayuno predominante');
+  const patronStr = patronGlucem.length ? patronGlucem.join(' + ') : 'sin patrón específico registrado';
+
+  // SECCIÓN 4: Complicaciones crónicas
+  const complicaciones = [];
+  const retinopatia = v('retinopatia_diabetica');
+  if (retinopatia && retinopatia !== 'Sin escrutinio realizado' && retinopatia !== 'Sin retinopatía') {
+    complicaciones.push('Retinopatía: ' + retinopatia + ' (último: ' + (v('ultimo_fondo_ojo') || 'sin fecha') + ')');
+  }
+  if (v('tfge_actual')) {
+    const tfge = parseFloat(v('tfge_actual'));
+    if (tfge < 60) {
+      complicaciones.push('Nefropatía diabética: TFGe ' + n('tfge_actual', 'mL/min') + ' — ' + (v('albuminuria') || ''));
+    }
+  }
+  if (v('neuropatia_periferica')) complicaciones.push('Neuropatía periférica');
+  if (v('pie_diabetico_previo')) complicaciones.push('Antecedente de pie diabético / úlcera neuropática');
+  const ecvComps = [];
+  if (v('ecv_infarto')) ecvComps.push('IAM');
+  if (v('ecv_evc')) ecvComps.push('EVC');
+  if (v('ecv_revascularizacion')) ecvComps.push('revascularización');
+  if (ecvComps.length) complicaciones.push('ECV establecida: ' + ecvComps.join(', '));
+  if (v('higado_graso')) complicaciones.push('Hígado graso (MAFLD/EHGNA)');
+
+  // SECCIÓN 5: Automanejo
+  const automonitoreoStr = v('automonitoreo_glucosa')
+    ? 'Glucometrías: ' + (v('frecuencia_glucometrias') || '?') + '/día'
+    : 'No realiza automonitoreo';
+  const mcgStr = v('usa_mcg')
+    ? 'MCG/sensor: Sí (' + (v('tipo_mcg') || 'tipo no especificado') + ')'
+    : 'No usa sensor';
+  const ejercicioStr = v('actividad_fisica') || 'No evaluada';
+  const nutricionStr = v('tipo_alimentacion') || 'No especificada';
+  const soporteArr = [];
+  if (v('atiende_endocrinologo')) soporteArr.push('Endocrinología');
+  if (v('atiende_nutricionista')) soporteArr.push('Nutrición');
+  if (v('educacion_diabetologica')) soporteArr.push('Educación estructurada');
+  const soporteGlobal = soporteArr.length ? soporteArr.join(', ') : 'Sin seguimiento especializado registrado';
+
+  // Exploración física diabetológica
+  const exFisica = [
+    'Pulsos: ' + (v('pulsos_perifericos') || 'no evaluados'),
+    'Monofilamento: ' + (v('monofilamento_10g') || 'no evaluado'),
+    'Vibración 128Hz: ' + (v('diapason_128hz') || 'no evaluada'),
+    v('ulcera_activa') ? '⚠️ ÚLCERA ACTIVA' : '',
+    v('amputacion_previa') ? '⚠️ Amputación previa' : ''
+  ].filter(Boolean).join('   ');
+
   return {
-    sintomas: '── DM2 ──\n' + (n('anos_dx') ? 'Años dx: ' + n('anos_dx') + '   ' : '') + 'Adherencia: ' + (v('adherencia') || 'no evaluada') + (v('automonitoreo') ? '   Automonitoreo: sí' : '') + '\n' + (syms.length ? 'Síntomas: ' + syms.join(', ') : 'Asintomático') + '\nHipoglucemias: ' + (v('hipoglucemias') || 'no evaluadas'),
-    exfisica: ['Pulsos: ' + (v('pulsos') || 'no evaluados'), 'Monofilamento: ' + (v('monofilamento') || 'no evaluado'), 'Diapasón: ' + (v('diapason') || 'no evaluado'), v('ulcera') ? '⚠️ Úlcera activa en pie' : ''].filter(Boolean).join('   '),
-    estudios: [n('glucemia') ? 'Glucemia ayuno: ' + n('glucemia', 'mg/dL') : '', n('hba1c') ? 'HbA1c: ' + n('hba1c', '%') : '', metaStr ? 'Meta: ' + metaStr : '', n('tfge') ? 'TFGe: ' + n('tfge', 'mL/min') : '', v('albuminuria') ? 'Albuminuria: ' + v('albuminuria') : ''].filter(Boolean).join('   '),
-    impresion: 'DM2' + (ctrl ? ' — ' + ctrl : '') + (comps.length ? '\nComplicaciones: ' + comps.join(', ') : '\nSin complicaciones crónicas documentadas'),
+    sintomas: '── DIABETES MELLITUS TIPO 2 ──\nAño diagnóstico: ' + (v('ano_dx') || '?') + '   Edad al debut: ' + (v('edad_dx') || '?') + ' años\nForma de presentación: ' + debutStr + '\nGlucosa debut: ' + (n('glucosa_debut', 'mg/dL') || '?') + '   HbA1c debut: ' + (n('hba1c_debut', '%') || '?') + '\nFamilia 1° grado: ' + familiaStr,
+    exfisica: exFisica || 'Exploración diabetológica no registrada',
+    estudios: 'Última HbA1c: ' + (n('ultima_hba1c', '%') || 'sin dato') + ' (hace ' + (v('fecha_ultima_hba1c') || '?') + ' meses)\nMeta acordada: ' + (metaStr || 'no definida') + '   Control: ' + controlGlucemico + '\nTFGe: ' + (n('tfge_actual', 'mL/min') || 'sin dato') + '   Albuminuria: ' + (v('albuminuria') || 'no evaluada') + '\nAutomonitoreo: ' + automonitoreoStr + '   ' + mcgStr + '\nActividad física: ' + ejercicioStr + '   Plan nutricional: ' + nutricionStr + '\nSeguimiento especializado: ' + soporteGlobal,
+    impresion: 'DM2 — ' + controlGlucemico + '\n' + numFarmacos + ' medicamento(s) antidiabético(s): ' + ttoInicialStr + ' → escalada (ver historia)\nInsulina: ' + insulinaStr + '\nAdherencia: ' + (v('adherencia_terapeutica') || 'no evaluada') + '\nPatrón glucémico: ' + patronStr + '\nCAD: ' + cadStr + '\n' + hipoglucemiasStr + (complicaciones.length > 0 ? '\n\nComplicaciones crónicas:\n• ' + complicaciones.join('\n• ') : '\n\nSin complicaciones crónicas documentadas'),
   };
 }
 
@@ -4276,12 +4404,20 @@ function renderWizardField(mk, f) {
   const depAttr = f.dependsOn ? ` data-depends-on="wf_${mk}_${f.dependsOn}"` : '';
   if (f.type === 'checkbox') {
     return `<div class="wizard-field" id="wfrow_${id}"${depAttr}${depStyle}><input type="checkbox" id="${id}" onchange="onWizardChange()"><label for="${id}">${f.label}</label></div>`;
+  } else if (f.type === 'checkbox-group') {
+    const items = (f.options||[]).map(o => {
+      const oid = `wf_${mk}_${o.id}`;
+      return `<div class="wizard-field" style="padding-left:4px"><input type="checkbox" id="${oid}" onchange="onWizardChange()"><label for="${oid}">${o.label}</label></div>`;
+    }).join('');
+    return `<div class="wizard-group" id="wfrow_${id}"${depAttr}><div class="wizard-group-title">${f.label}</div>${items}</div>`;
   } else if (f.type === 'select') {
     const opts = f.options.map(o => `<option value="${o}">${o}</option>`).join('');
     return `<div class="wizard-field" id="wfrow_${id}"${depAttr}${depStyle}><label for="${id}">${f.label}:</label><select id="${id}" onchange="onWizardChange()"><option value="">—</option>${opts}</select></div>`;
   } else if (f.type === 'number') {
     const attrs = ['type="number"', f.min !== undefined ? `min="${f.min}"` : '', f.max !== undefined ? `max="${f.max}"` : '', f.step ? `step="${f.step}"` : ''].filter(Boolean).join(' ');
     return `<div class="wizard-field" id="wfrow_${id}"${depAttr}${depStyle}><label for="${id}">${f.label}:</label><input ${attrs} id="${id}" oninput="onWizardChange()"></div>`;
+  } else if (f.type === 'textarea') {
+    return `<div class="wizard-field" id="wfrow_${id}"${depAttr}${depStyle} style="flex-direction:column;align-items:flex-start;gap:4px"><label style="font-size:0.82rem;color:#2d3748">${f.label}:</label><textarea id="${id}" rows="2" placeholder="${f.placeholder||''}" style="width:100%;font-size:0.79rem;border:1px solid #cbd5e0;border-radius:5px;padding:4px 6px;resize:vertical" oninput="onWizardChange()"></textarea></div>`;
   }
   return '';
 }
@@ -4817,6 +4953,297 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {/* ignore in dev */});
   });
+}
+
+// ══════════════════════════════════════════════════════════════
+// 💊 DRUG INSTRUCTIONS — Auto-instrucciones por medicamento
+// ══════════════════════════════════════════════════════════════
+const DRUG_INSTRUCTIONS = {
+  'metformina': 'Tomar con alimentos para reducir efectos GI. Iniciar con dosis baja y titular. Suspender antes de procedimientos con contraste IV.',
+  'glibenclamida': 'Tomar 30 min antes del desayuno. Riesgo de hipoglucemia — educar al paciente. No omitir comidas.',
+  'glimepirida': 'Tomar 30 min antes del desayuno. Riesgo de hipoglucemia — educar al paciente. No omitir comidas.',
+  'glipizida': 'Tomar 30 min antes del desayuno. Riesgo de hipoglucemia — educar al paciente. No omitir comidas.',
+  'sitagliptina': 'Puede tomarse con o sin alimentos. Ajustar dosis en ERC. Sin riesgo significativo de hipoglucemia en monoterapia.',
+  'saxagliptina': 'Puede tomarse con o sin alimentos. Ajustar dosis en ERC. Sin riesgo significativo de hipoglucemia en monoterapia.',
+  'alogliptina': 'Puede tomarse con o sin alimentos. Ajustar dosis en ERC. Sin riesgo significativo de hipoglucemia en monoterapia.',
+  'linagliptina': 'Puede tomarse con o sin alimentos. Ajustar dosis en ERC. Sin riesgo significativo de hipoglucemia en monoterapia.',
+  'vildagliptina': 'Puede tomarse con o sin alimentos. Ajustar dosis en ERC. Sin riesgo significativo de hipoglucemia en monoterapia.',
+  'empagliflozina': 'Tomar por la mañana con o sin alimentos. Buena higiene genital por riesgo de infecciones. Suspender 3-4 días antes de cirugía mayor. Hidratación adecuada.',
+  'dapagliflozina': 'Tomar por la mañana con o sin alimentos. Buena higiene genital por riesgo de infecciones. Suspender 3-4 días antes de cirugía mayor. Hidratación adecuada.',
+  'canagliflozina': 'Tomar por la mañana con o sin alimentos. Buena higiene genital por riesgo de infecciones. Suspender 3-4 días antes de cirugía mayor. Hidratación adecuada.',
+  'ertugliflozina': 'Tomar por la mañana con o sin alimentos. Buena higiene genital por riesgo de infecciones. Suspender 3-4 días antes de cirugía mayor. Hidratación adecuada.',
+  'semaglutida oral': 'Tomar en ayuno con 120 mL de agua. Esperar 30 min antes de ingerir alimentos, bebidas u otros medicamentos.',
+  'semaglutida': 'Aplicar SC en abdomen, muslo o brazo. Rotar sitios. Aplicar el mismo día cada semana — puede cambiarse el día si el intervalo es ≥4 días.',
+  'liraglutida': 'Aplicar SC en abdomen, muslo o brazo. Rotar sitios.',
+  'dulaglutida': 'Aplicar SC en abdomen, muslo o brazo. Rotar sitios.',
+  'exenatida': 'Aplicar SC en abdomen, muslo o brazo. Rotar sitios.',
+  'insulina glargina': 'Aplicar SC a la misma hora todos los días. Rotar sitios en el mismo área. Conservar en refrigeración — una vez abierto a temperatura ambiente máx 30 días.',
+  'insulina degludec': 'Aplicar SC a la misma hora todos los días. Rotar sitios en el mismo área. Conservar en refrigeración — una vez abierto a temperatura ambiente máx 30 días.',
+  'glargina': 'Aplicar SC a la misma hora todos los días. Rotar sitios en el mismo área. Conservar en refrigeración — una vez abierto a temperatura ambiente máx 30 días.',
+  'degludec': 'Aplicar SC a la misma hora todos los días. Rotar sitios en el mismo área. Conservar en refrigeración — una vez abierto a temperatura ambiente máx 30 días.',
+  'insulina aspart': 'Aplicar SC inmediatamente antes de cada comida (0-15 min antes). Rotar sitios.',
+  'insulina lispro': 'Aplicar SC inmediatamente antes de cada comida (0-15 min antes). Rotar sitios.',
+  'insulina glulisina': 'Aplicar SC inmediatamente antes de cada comida (0-15 min antes). Rotar sitios.',
+  'aspart': 'Aplicar SC inmediatamente antes de cada comida (0-15 min antes). Rotar sitios.',
+  'lispro': 'Aplicar SC inmediatamente antes de cada comida (0-15 min antes). Rotar sitios.',
+  'glulisina': 'Aplicar SC inmediatamente antes de cada comida (0-15 min antes). Rotar sitios.',
+  'insulina nph': 'Mezclar suavemente (rodar frasco). Aplicar antes del desayuno y cena. Rotar sitios.',
+  'nph': 'Mezclar suavemente (rodar frasco). Aplicar antes del desayuno y cena. Rotar sitios.',
+  'pioglitazona': 'Puede tomarse con o sin alimentos. Monitorear peso y edema. Contraindicado en IC NYHA III-IV y riesgo de fractura.',
+  'acarbosa': 'Tomar con el primer bocado de cada comida principal. Titular dosis gradualmente.',
+  'miglitol': 'Tomar con el primer bocado de cada comida principal. Titular dosis gradualmente.',
+  'levotiroxina': 'Tomar en AYUNO con vaso grande de agua (240 mL). Esperar 30-60 minutos antes de desayunar. Separar 3-4 horas de: calcio, hierro, antiácidos, fibra. Separar 1 hora del café. Conservar a temperatura ambiente.',
+  'lt4': 'Tomar en AYUNO con vaso grande de agua (240 mL). Esperar 30-60 minutos antes de desayunar. Separar 3-4 horas de: calcio, hierro, antiácidos, fibra. Separar 1 hora del café. Conservar a temperatura ambiente.',
+  'liotironina': 'Tomar en ayuno. Dividir en 2-3 dosis diarias por vida media corta. Monitorear síntomas de hipertiroidismo.',
+  'metimazol': 'Tomar con alimentos para reducir náusea. Vigilar síntomas de agranulocitosis (fiebre, faringitis — acudir a urgencias). Control hemático en 2-4 semanas.',
+  'tiamazol': 'Tomar con alimentos para reducir náusea. Vigilar síntomas de agranulocitosis (fiebre, faringitis — acudir a urgencias). Control hemático en 2-4 semanas.',
+  'propiltiouracilo': 'Dividir en 3 dosis/día. Reservado para primer trimestre embarazo, crisis tirotóxica o intolerancia a metimazol.',
+  'ptu': 'Dividir en 3 dosis/día. Reservado para primer trimestre embarazo, crisis tirotóxica o intolerancia a metimazol.',
+  'alendronato': 'Tomar en AYUNO con vaso lleno de agua (240 mL). Permanecer SENTADO O DE PIE 30-60 minutos. NO recostarse. No ingerir nada más por 30 min.',
+  'risedronato': 'Tomar en AYUNO con vaso lleno de agua (240 mL). Permanecer SENTADO O DE PIE 30-60 minutos. NO recostarse. No ingerir nada más por 30 min.',
+  'ibandronato': 'Tomar en AYUNO con vaso lleno de agua (240 mL). Permanecer SENTADO O DE PIE 30-60 minutos. NO recostarse. No ingerir nada más por 30 min.',
+  'zoledronato': 'Infusión IV anual. Administrar con precaución en ERC. Pre-hidratación recomendada.',
+  'denosumab': 'Aplicar SC en abdomen, muslo o parte superior del brazo. Próxima dosis en exactamente 6 meses — marcar fecha. Si se retrasa >2 semanas, administrar lo antes posible. Mantener calcio y vitamina D adecuados.',
+  'teriparatida': 'Aplicar SC en muslo o abdomen. Puede causar mareo o taquicardia post-dosis — sentarse 15 min después. Refrigerar entre 2-8°C. Duración máxima 24 meses.',
+  'abaloparatida': 'Aplicar SC en muslo o abdomen. Puede causar mareo o taquicardia post-dosis — sentarse 15 min después. Refrigerar entre 2-8°C. Duración máxima 24 meses.',
+  'raloxifeno': 'Puede tomarse con o sin alimentos. Descontinuar 72 horas antes de inmovilización prolongada. Riesgo de TEV — vigilar.',
+  'calcio': 'Separar según tipo — Carbonato: tomar CON alimentos. Citrato: puede tomarse sin alimentos. Separar 2-4h de levotiroxina, hierro, antibióticos.',
+  'vitamina d': 'Tomar con la comida más abundante del día para mejor absorción (liposoluble). Dosis semanal/mensual: tomar el mismo día designado.',
+  'colecalciferol': 'Tomar con la comida más abundante del día para mejor absorción (liposoluble). Dosis semanal/mensual: tomar el mismo día designado.',
+  'hidrocortisona': 'Tomar con el desayuno (mayor dosis) y al mediodía o tarde (menor dosis). NO tomar al acostarse. Duplicar dosis en situaciones de estrés mayor — regla del enfermo.',
+  'fludrocortisona': 'Tomar con alimentos. Vigilar edema, HTA y potasio.',
+  'cabergolina': 'Tomar CON ALIMENTOS para reducir náusea. Dosis habitual 2 veces por semana.',
+  'bromocriptina': 'Tomar con alimentos. Iniciar con dosis bajas nocturnas. Puede causar hipotensión ortostática.',
+  'octreótida lar': 'Aplicar IM profundo (glúteo) o SC. Rotar lado en cada aplicación. Aplicar cada 28 días. Refrigerar.',
+  'octreotida lar': 'Aplicar IM profundo (glúteo) o SC. Rotar lado en cada aplicación. Aplicar cada 28 días. Refrigerar.',
+  'lanreótida': 'Aplicar IM profundo (glúteo) o SC. Rotar lado en cada aplicación. Aplicar cada 28 días. Refrigerar.',
+  'lanreotida': 'Aplicar IM profundo (glúteo) o SC. Rotar lado en cada aplicación. Aplicar cada 28 días. Refrigerar.',
+  'octreótida': 'Aplicar IM profundo (glúteo) o SC. Rotar lado en cada aplicación. Aplicar cada 28 días. Refrigerar.',
+  'octreotida': 'Aplicar IM profundo (glúteo) o SC. Rotar lado en cada aplicación. Aplicar cada 28 días. Refrigerar.',
+};
+
+const NEXT_DOSE_DRUGS = {
+  'denosumab': { interval_days: 180, label: '6 meses' },
+  'octreótida lar': { interval_days: 28, label: '28 días' },
+  'octreotida lar': { interval_days: 28, label: '28 días' },
+  'lanreótida': { interval_days: 28, label: '28 días' },
+  'lanreotida': { interval_days: 28, label: '28 días' },
+  'teriparatida': { interval_days: 0, note_override: '⚠️ Inyección diaria — marcar calendario. Máx duración 24 meses.' },
+  'abaloparatida': { interval_days: 0, note_override: '⚠️ Inyección diaria — marcar calendario. Máx duración 24 meses.' },
+};
+
+function fuzzyMatchDrug(typed) {
+  if (!typed || typed.length < 3) return null;
+  const norm = typed.toLowerCase().trim();
+  if (DRUG_INSTRUCTIONS[norm]) return norm;
+  for (const key of Object.keys(DRUG_INSTRUCTIONS)) {
+    if (norm.includes(key)) return key;
+    if (key.includes(norm)) return key;
+  }
+  return null;
+}
+
+function getRxInstructions(name) {
+  const key = fuzzyMatchDrug(name);
+  if (!key) return null;
+  let instr = DRUG_INSTRUCTIONS[key];
+  const nd = NEXT_DOSE_DRUGS[key];
+  if (nd) {
+    if (nd.note_override) {
+      instr = nd.note_override + '\n\n' + instr;
+    } else {
+      const today = new Date();
+      const next = new Date(today);
+      next.setDate(today.getDate() + nd.interval_days);
+      const dd = String(next.getDate()).padStart(2,'0');
+      const mm = String(next.getMonth()+1).padStart(2,'0');
+      const yyyy = next.getFullYear();
+      instr += '\n\n⚠️ Próxima dosis: ' + dd + '/' + mm + '/' + yyyy + ' (en ' + nd.label + ')';
+    }
+  }
+  return { key, instr };
+}
+
+function rxLookupDrug(val) {
+  const result = document.getElementById('rx_lookup_result');
+  if (!result) return;
+  if (!val || val.length < 3) { result.classList.remove('visible'); result.innerHTML = ''; return; }
+  const match = getRxInstructions(val);
+  if (!match) { result.classList.remove('visible'); result.innerHTML = ''; return; }
+  result.innerHTML = '<div class="rx-instr-drug">💊 ' + match.key.charAt(0).toUpperCase() + match.key.slice(1) + '</div>' + match.instr.replace(/\n/g,'<br>');
+  result.classList.add('visible');
+}
+
+// ══════════════════════════════════════════════════════════════
+// 🔔 RECORDATORIOS PREVENTIVOS
+// ══════════════════════════════════════════════════════════════
+function buildPreventiveReminders(pat, notes, labs, vitals) {
+  if (!pat || !notes || !labs || !vitals) return [];
+  const reminders = [];
+  const today = new Date();
+
+  const allNoteText = (notes || []).map(n => {
+    let meta = '';
+    try { meta = n.plan_tratamiento && n.plan_tratamiento.startsWith('{') ? JSON.stringify(JSON.parse(n.plan_tratamiento)) : ''; } catch(e) {}
+    return [n.motivo_consulta||'', n.exploracion_fisica||'', n.diagnostico||'', n.plan_tratamiento||'', n.indicaciones||'', meta].join(' ').toLowerCase();
+  }).join(' ') + ' ' + (pat.antecedentes||'').toLowerCase();
+
+  const isDiabetic = /diabetes|glucémica|hba1c|hemoglobina glucosilada|insulina|metformina/i.test(allNoteText);
+  const hasThyroid = /hipotiroidismo|hipertiroidismo|hashimoto|tiroiditis|cáncer de tiroides|tsh|levotiroxina/i.test(allNoteText);
+  const hasOsteoporosis = /osteoporosis|menopausia|postmenopáusica|corticoides|bifosfonato|denosumab/i.test(allNoteText);
+
+  function extractLatestYear(kws) {
+    const pat = kws.map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
+    const re = new RegExp('(?:'+pat+').*?(20\\d{2})','gi');
+    let m, yr = null;
+    while ((m = re.exec(allNoteText)) !== null) { const y = parseInt(m[1]); if (!yr || y > yr) yr = y; }
+    return yr;
+  }
+
+  function getLatestLab(patterns) {
+    const re = new RegExp('^('+patterns.map(p=>p.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')','i');
+    const matching = labs.filter(l => re.test(l.nombre_estudio||''));
+    if (!matching.length) return null;
+    return matching.sort((a,b)=>new Date(b.created_at||b.fecha_toma)-new Date(a.created_at||a.fecha_toma))[0];
+  }
+
+  function daysSince(date) { if (!date) return null; return Math.floor((today - new Date(date))/(24*3600*1000)); }
+
+  function fmtDate(date) {
+    if (!date) return 'Nunca registrado';
+    const d = daysSince(date);
+    if (d < 1) return 'Hoy';
+    if (d < 30) return 'Hace '+d+' días';
+    if (d < 365) return 'Hace '+Math.floor(d/30)+' meses';
+    return 'Hace '+Math.floor(d/365)+' año'+(Math.floor(d/365)>1?'s':'');
+  }
+
+  function addReminder(type, title, detail, action) {
+    reminders.push({type, title, detail, action});
+  }
+
+  if (isDiabetic) {
+    // Fondo de ojo
+    const foYear = extractLatestYear(['fondo de ojo','retinografía','oftalmólogo','retinopatía']);
+    if (!foYear) addReminder('missing','Fondo de ojo','Último: No registrado','Solicitar');
+    else { const d = Math.floor((today.getFullYear()-foYear)*365.25); addReminder(d>365?'overdue':d>300?'due_soon':'ok','Fondo de ojo','Último: '+foYear+(d>365?' · Vencido hace '+Math.floor((d-365)/30)+' meses':''),'Solicitar'); }
+
+    // Microalbuminuria
+    const microLab = getLatestLab(['microalbuminuria','albumin','rac']);
+    if (!microLab) addReminder('missing','Microalbuminuria/RAC','Último: No registrado','Solicitar');
+    else { const d = daysSince(microLab.created_at); addReminder(d>365?'overdue':d>300?'due_soon':'ok','Microalbuminuria/RAC','Último: '+fmtDate(microLab.created_at)+(d>365?' · Vencido':''),'Solicitar'); }
+
+    // Monofilamento
+    const monoYear = extractLatestYear(['monofilamento','neuropatía','pie diabético']);
+    if (!monoYear) addReminder('missing','Pie diabético (monofilamento)','Último: No registrado','Evaluar');
+    else { const d = Math.floor((today.getFullYear()-monoYear)*365.25); addReminder(d>365?'overdue':d>300?'due_soon':'ok','Pie diabético (monofilamento)','Último: '+monoYear+(d>365?' · Vencido':''),'Evaluar'); }
+
+    // HbA1c
+    const hba1cLab = getLatestLab(['hba1c','hemoglobina glucosilada']);
+    if (!hba1cLab) addReminder('missing','HbA1c','Último: No registrado','Solicitar');
+    else {
+      const d = daysSince(hba1cLab.created_at);
+      const val = parseFloat(hba1cLab.resultado||0);
+      const interval = val > 7 ? 90 : 180;
+      const detail = 'Último: '+fmtDate(hba1cLab.created_at)+(hba1cLab.resultado?' ('+hba1cLab.resultado+'%)':'')+(d>interval?' · Vencido':'');
+      addReminder(d>interval?'overdue':d>interval-30?'due_soon':'ok','HbA1c',detail,'Solicitar');
+    }
+
+    // Odontología
+    const dentalYear = extractLatestYear(['dentista','odontólogo','valoración dental','odontología']);
+    if (!dentalYear) addReminder('missing','Odontología','Último: No registrado','Agendar');
+    else { const d = Math.floor((today.getFullYear()-dentalYear)*365.25); addReminder(d>180?'overdue':d>150?'due_soon':'ok','Odontología','Último: '+dentalYear+(d>180?' · Vencido':''),'Agendar'); }
+  }
+
+  if (hasThyroid) {
+    // TSH
+    const tshLab = getLatestLab(['tsh']);
+    if (!tshLab) addReminder('missing','TSH de control','Último: No registrado','Solicitar');
+    else { const d = daysSince(tshLab.created_at); const detail='Último: '+fmtDate(tshLab.created_at)+(tshLab.resultado?' ('+tshLab.resultado+')':'')+(d>180?' · Vencido':''); addReminder(d>180?'overdue':d>150?'due_soon':'ok','TSH de control',detail,'Solicitar'); }
+
+    // USG tiroideo
+    const usgYear = extractLatestYear(['ultrasonido tiroideo','usg tiroides','ecografía tiroides','nódulo tiroideo']);
+    if (!usgYear) addReminder('missing','USG tiroideo','Último: No registrado','Solicitar');
+    else { const d = Math.floor((today.getFullYear()-usgYear)*365.25); addReminder(d>365?'overdue':d>300?'due_soon':'ok','USG tiroideo','Último: '+usgYear+(d>365?' · Vencido':''),'Solicitar'); }
+
+    // Tiroglobulina (solo si Ca tiroides)
+    if (/tiroglobulina|tg\b|ablación|cáncer de tiroides|tiroidectomía/i.test(allNoteText)) {
+      const tgLab = getLatestLab(['tiroglobulina','tg ']);
+      if (!tgLab) addReminder('missing','Tiroglobulina post-ablación','Último: No registrado','Solicitar');
+      else { const d = daysSince(tgLab.created_at); addReminder(d>365?'overdue':d>300?'due_soon':'ok','Tiroglobulina post-ablación','Último: '+fmtDate(tgLab.created_at)+(d>365?' · Vencido':''),'Solicitar'); }
+    }
+  }
+
+  if (hasOsteoporosis) {
+    // DMO
+    const dmoYear = extractLatestYear(['densitometría','dexa','dmo','t-score']);
+    if (!dmoYear) addReminder('missing','Densitometría ósea (DMO)','Último: No registrado','Solicitar');
+    else { const d = Math.floor((today.getFullYear()-dmoYear)*365.25); addReminder(d>730?'overdue':d>650?'due_soon':'ok','Densitometría ósea (DMO)','Último: '+dmoYear+(d>730?' · Vencido':''),'Solicitar'); }
+
+    // Calcio + Vit D
+    const calcioLab = getLatestLab(['calcio','vitamina d','25-oh','25ohd']);
+    if (!calcioLab) addReminder('missing','Calcio + Vitamina D','Último: No registrado','Solicitar');
+    else { const d = daysSince(calcioLab.created_at); addReminder(d>365?'overdue':d>300?'due_soon':'ok','Calcio + Vitamina D','Último: '+fmtDate(calcioLab.created_at)+(d>365?' · Vencido':''),'Solicitar'); }
+  }
+
+  // Perfil lipídico (siempre)
+  const lipidLab = getLatestLab(['colesterol','ldl','hdl','triglicérido']);
+  if (!lipidLab) addReminder('missing','Perfil lipídico','Último: No registrado','Solicitar');
+  else { const d = daysSince(lipidLab.created_at); addReminder(d>365?'overdue':d>300?'due_soon':'ok','Perfil lipídico','Último: '+fmtDate(lipidLab.created_at)+(d>365?' · Vencido':''),'Solicitar'); }
+
+  // TA
+  const lastVital = vitals && vitals[0];
+  if (!lastVital) addReminder('missing','Presión arterial','Última: No registrada','Registrar');
+  else { const d = daysSince(lastVital.created_at); const bp = lastVital.presion_sistolica&&lastVital.presion_diastolica?lastVital.presion_sistolica+'/'+lastVital.presion_diastolica:'N/A'; addReminder(d<30?'ok':d<90?'due_soon':'overdue','Presión arterial','Última: '+fmtDate(lastVital.created_at)+' ('+bp+')'+(d>=90?' · Vencida':''),'Registrar'); }
+
+  // Denosumab
+  if (/denosumab/i.test(allNoteText)) {
+    const dYear = extractLatestYear(['denosumab']);
+    if (!dYear) addReminder('missing','Denosumab próxima dosis','Última dosis: No registrada','Agendar');
+    else { const d = Math.floor((today.getFullYear()-dYear)*365.25); addReminder(d>150?'overdue':d>120?'due_soon':'ok','Denosumab próxima dosis','Última dosis: '+dYear+(d>150?' · Vencida':''),'Agendar'); }
+  }
+
+  // Revisión de receta
+  if (notes && notes[0] && notes[0].created_at) {
+    const d = daysSince(notes[0].created_at);
+    if (d > 180) addReminder('due_soon','Revisión de receta','Última visita: '+fmtDate(notes[0].created_at)+' · Revisar medicamentos','Revisar');
+  }
+
+  return reminders;
+}
+
+function renderRemindersPanel(reminders) {
+  if (!reminders || !reminders.length) return '';
+  const order = {overdue:0, due_soon:1, ok:2, missing:3};
+  const sorted = reminders.slice().sort((a,b)=>(order[a.type]||9)-(order[b.type]||9));
+  const cfg = {
+    overdue: {icon:'🔴', color:'#c53030', bg:'#fed7d7', border:'#fc8181'},
+    due_soon: {icon:'🟡', color:'#d69e2e', bg:'#feebc8', border:'#f6ad55'},
+    ok: {icon:'🟢', color:'#276749', bg:'#c6f6d5', border:'#9ae6b4'},
+    missing: {icon:'⬜', color:'#718096', bg:'#edf2f7', border:'#cbd5e0'}
+  };
+  const items = sorted.map(r => {
+    const c = cfg[r.type] || cfg.missing;
+    const pulse = r.type === 'overdue' ? 'reminder-pulse' : '';
+    return `<div class="reminder-item ${pulse}" style="background:${c.bg};border:2px solid ${c.border};border-radius:8px;padding:10px 14px;margin-bottom:7px;display:flex;align-items:flex-start;gap:10px">
+      <span style="font-size:1.1rem;flex-shrink:0">${c.icon}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;color:${c.color};font-size:0.85rem">${r.title}</div>
+        <div style="font-size:0.78rem;color:#4a5568">${r.detail}</div>
+      </div>
+    </div>`;
+  }).join('');
+  const overdueCount = sorted.filter(r=>r.type==='overdue').length;
+  const badge = overdueCount > 0 ? `<span style="background:#c53030;color:white;border-radius:10px;padding:2px 8px;font-size:0.72rem;font-weight:700;margin-left:6px">⚠️ ${overdueCount} vencido${overdueCount>1?'s':''}</span>` : '';
+  return `<div class="reminders-panel" style="margin-bottom:18px;background:white;border-radius:10px;padding:14px 16px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #edf2f7">
+      <span style="font-size:1.3rem">🔔</span>
+      <span style="font-weight:700;font-size:1rem;color:#2d3748">Recordatorios preventivos</span>
+      ${badge}
+      <span style="margin-left:auto;font-size:0.75rem;color:#718096;background:#edf2f7;padding:3px 8px;border-radius:4px">${reminders.length} recordatorio${reminders.length!==1?'s':''}</span>
+    </div>
+    <div style="max-height:500px;overflow-y:auto">${items}</div>
+  </div>`;
 }
 </script>
 </body>
