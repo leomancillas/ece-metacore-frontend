@@ -10308,6 +10308,1129 @@ Object.assign(WIZARD_BUILDERS, {
 
 ['medicina_interna', 'equilibrio_electrolitico'].forEach(m => IMPLEMENTED_MODULES.add(m));
 
+
+// ============================================================
+// TIER 5: Oncología · Pediatría
+// ============================================================
+// ECE META CORE EHR - Oncología Feature Module
+// Pattern: Object.assign() appends to existing globals (TEMPLATE_MODULES, WIZARD_SCHEMA, WIZARD_BUILDERS, IMPLEMENTED_MODULES)
+
+Object.assign(TEMPLATE_MODULES, {
+  oncologia_solida: {
+    label: "Oncología de Tumores Sólidos",
+    diagnostico: "Paciente con diagnóstico confirmado de neoplasia maligna de [tipo de tumor]. Se realiza evaluación integral incluyendo estadificación TNM según criterios de AJCC, evaluación del estado funcional mediante escala ECOG, y definición de intención terapéutica en contexto multidisciplinario. Se documentan antecedentes de tratamientos previos (cirugía oncológica, quimioterapia, radioterapia, inmunoterapia) y respuesta a los mismos.",
+    sintomas: "Síntomas constitucionales: [pérdida de peso/fiebre/sudores nocturnos presentes/ausentes]. Síntomas locales según localización tumoral: [especificar]. Dolor oncológico: valoración mediante escala EVA. Fatiga: grado de impacto funcional. Síntomas secundarios a tratamiento activo: náusea, vómito, mucositis, neuropatía periférica, alopecia.",
+    exfisica: "Exploración general: estado nutricional, presencia de adenopatías palpables, masas abdominales. Evaluación de infiltración local. Signos de síndrome de vena cava superior si afectación mediastínica. Evaluación de extremidades inferiores para descartar edema por linfedema o trombosis. Exploración neurológica si metástasis cerebral o neuropatía quimioterapia-inducida.",
+    estudios: "Imaging oncológica basal según localización (TC toráxico, TC abdómino-pélvico, RMN cerebral, PET-TC según indicación). Biomarcadores tumorales de línea basal. Analítica completa: hemograma, bioquímica hepática y renal, perfil lipídico, marcadores inflamatorios. Estudios de extensión completados. Reportes de anatomía patológica y pruebas de inmunohistoquímica. Perfil molecular disponible si aplica (HER2, EGFR, PD-L1, MSI, BRCA, etc.).",
+    impresion: "Diagnóstico: [tumor tipo] estadio [TNM/Estadio global]. ECOG [0-4] / Karnofsky [%]. Intención terapéutica: [curativa/paliativa/adyuvante/neoadyuvante/mantenimiento]. Tolerancia a tratamiento: [buena/con eventos adversos grado X]. Respuesta radiológica: [evaluada en último imaging]. Plan oncológico multidisciplinario en vigencia.",
+    tx_farmaco: "Quimioterapia: [esquema si aplica, ciclos completados, próximo ciclo previsto]. Inmunoterapia: [agente, dosis, intervalos]. Terapia dirigida: [si corresponde según perfil molecular]. Hormonoterapia: [si aplica]. Tratamiento de síntomas: analgésicos según escala WHO, antieméticos, antidiarreicos, laxantes. Profilaxis infecciosa según riesgo.",
+    tx_nofarmaco: "Evaluación nutricional con dietista oncológico. Valoración de capacidad funcional y rehabilitación. Apoyo psiconcológico documentado. Manejo del dolor oncológico multidisciplinario. Fisioterapia para linfedema o limitación funcional. Actividad física adaptada según tolerancia. Cuidados de la piel según tipo de radioterapia.",
+    seguimiento: "Próximo control oncológico programado en [semanas]. Próxima evaluación radiológica según protocolo de respuesta: [semanas]. Monitorización de toxicidad farmacológica. Evaluación periódica del estado nutricional. Seguimiento de efectos adversos a largo plazo. Rehabilitación funcional si es necesario. Derivación a cuidados paliativos si progresión o cambio en intención terapéutica."
+  },
+  onco_hemato: {
+    label: "Hematología Oncológica",
+    diagnostico: "Paciente con diagnóstico de neoplasia hematológica confirmada por morfología, citometría de flujo, e inmunohistoquímica. [Especificar tipo: LLA, LMA, LLC, LMC, linfoma, mieloma, mielodisplasia u otra]. Se documenta fase actual de enfermedad, antecedentes de tratamientos previos, y estado actual de remisión o refractariedad. En casos de alogénico, se especifica el tipo de trasplante y complicaciones asociadas.",
+    sintomas: "Síntomas de presentación: [adenopatía, hepatomegalia, esplenomegalia, síntomas constitucionales]. Síntomas derivados de citopenia: infecciones recurrentes, sangrados, fatiga marcada. Síntomas de infiltración extramedular: dolor óseo, síntomas neurológicos si infiltración SNC. Síntomas secundarios a tratamiento: mucositis, citopenias, infecciones oportunistas, EICH si alogénico.",
+    exfisica: "Palpación sistemática de regiones ganglionares cervical, axilar, inguinal. Hepatomegalia y esplenomegalia con evaluación de tamaño. Signos de sangrado: petequias, equimosis, mucosa. Evaluación de mucositis oral. Signos de infiltración extramedular si presenta. Examen neurológico completo si sospecha infiltración del SNC.",
+    estudios: "Hemograma completo con fórmula diferencial: hemoglobina, leucocitos, plaquetas, neutrófilos absolutos. Bioquímica: creatinina, urea, electrolitos, bilirrubina, transaminasas, DHL, ácido úrico. En linfomas: LDH, beta-2 microglobulina, IPI (Índice de Pronóstico Internacional). En mieloma: calcio, proteína total, albúmina, ISS (Índice de Estadificación Internacional), cadenas ligeras libres. Médula ósea: aspirado, biopsia, citometría de flujo. Estudios moleculares: BCR-ABL si LMC, mutaciones específicas. Imaging según tipo.",
+    impresion: "Diagnóstico: [tipo de neoplasia hematológica]. Fase: [diagnóstico inicial/remisión completa/parcial/refractario/recaída/mantenimiento]. Ciclo actual: [X] de [total]. Biomarcadores: [detalle de BCR-ABL, respuesta molecular, mutaciones relevantes]. Estado de trasplante: [si aplica, tipo, fecha, complicaciones]. Pronóstico estimado según índices (IPI, ISS, otros).",
+    tx_farmaco: "Quimioterapia: [protocolo específico, ciclos completados, próximos ciclos]. Inmunoterapia: [si aplica, agentes específicos]. Terapia dirigida: [imatinib u otros TKI si BCR-ABL+, inhibidores de BTK, inhibidores de proteasoma en mieloma]. Medicamentos de soporte: factores de crecimiento hematopoyético (FCHP) según indicación, transfusiones de hematíes/plaquetas según umbrales. Profilaxis infecciosa: TMP-SMX para PCP, antifúngico, antiherpes si trasplante alogénico o quimioterapia intensiva.",
+    tx_nofarmaco: "Transfusiones de hematíes si Hb <7 o síntomas. Transfusiones de plaquetas si <20,000 o síntomas. Soporte nutritivo. Aislamiento protector si trasplante alogénico con inmunosupresión. Manejo psicológico y apoyo a familia. Rehabilitación funcional progresiva. Control de infecciones oportunistas mediante vigilancia microbiológica.",
+    seguimiento: "Monitoreo hematológico cada [especificar frecuencia según fase]: hemograma, bioquímica básica. Monitoreo de respuesta molecular: PCR cuantitativa para BCR-ABL (si aplica) cada [frecuencia]. Evaluación de EICH en trasplantados alogénicos. Screening de infecciones oportunistas. Próxima quimioterapia/radioterapia según cronograma. Evaluación de respuesta radiológica según calendario de restadificación. Cuidados postcuarentena en trasplantados alogénicos."
+  },
+  cuidados_paliativos: {
+    label: "Cuidados Paliativos",
+    diagnostico: "Paciente con enfermedad oncológica/sistémica avanzada e incurable, con pronóstico limitado. Se realiza evaluación integral mediante escalas validadas de desempeño (ECOG, PPS) y carga de síntomas. El enfoque terapéutico se reorienta hacia control de síntomas, confort, calidad de vida, y apoyo integral a paciente y familia. Se documenta comprensión del pronóstico por parte del paciente y su red de apoyo.",
+    sintomas: "Dolor oncológico: intensidad EVA, características, impacto funcional, requerimientos analgésicos. Disnea: grado de limitación, factores precipitantes. Náusea/vómito: frecuencia, factores desencadenantes. Síndrome de anorexia-caquexia: pérdida de peso, ingesta. Constipación: factores causales. Delirium/agitación: fluctuación de consciencia, desorientación. Síntomas emocionales: ansiedad, depresión, miedo. Síntomas espirituales documentados.",
+    exfisica: "Evaluación del estado nutricional: peso actual vs basal, IMC, presencia de caquexia. Evaluación de dolor: localización, características, distribución. Frecuencia respiratoria, SpO2 si disnea. Evaluación neuropsiquiátrica: nivel de consciencia, orientación, agitación. Integridad de piel: úlceras de presión, infiltraciones. Signos de deshidratación. Evaluación funcional: movilidad, continencia.",
+    estudios: "No se realiza estudios diagnósticos invasivos o de extensión rutinarios. Laboratorio básico si aporta información para decisiones de confort (hemoglobina para considerar transfusión de confort, calcio si hipercalcemia sintomática, función renal para dosis de fármacos). Evaluaciones se orientan al control de síntomas. Se evitan procedimientos fútiles.",
+    impresion: "Diagnóstico: [enfermedad base]. Pronóstico: [días-semanas/semanas-meses/meses/>6 meses]. ECOG: [0-4] / PPS: [%]. Carga de síntomas: [leve/moderada/severa]. Metas de atención acordadas: [confort primario/extensión limitada/resucitación si cambio abrupto/comodidad exclusiva]. Orden DNR: [presente/ausente]. Directivas anticipadas: [documentadas/pendientes]. Cuidador primario: [nombre, relación].",
+    tx_farmaco: "Analgésicos según escala WHO: [escalón 1-2-3 según EVA]. Opioides: [tipo, dosis actual en mg/día, pauta]. Rotación de opioides si tolerancia. Medicamentos coadyuvantes: neuropáticos, antiinflamatorios si indicado. Antieméticos: [según etiología de náusea]. Laxantes: [estimulantes y osmóticos para prevenir constipación opioides]. Ansiolíticos: [dosis de confort]. Medicamentos de sedación paliativa si indicado: midazolam, fenobarbital. Medicamentos para síntomas específicos: morfina en bolo para disnea, antidiarreicos si diarrea, antiespasmódicos.",
+    tx_nofarmaco: "Medidas de confort: higiene, cambios posturales frecuentes, ambiente tranquilo. Fisioterapia: movilización pasiva, prevención de úlceras de presión. Masaje, aromaterapia, musicoterapia. Apoyo psicológico y psiconcológico para paciente y cuidador. Apoyo espiritual/religioso según creencias. Nutrición: alimentos preferidos en pequeñas cantidades, hidratación según tolerancia. Comunicación clara y honesta sobre pronóstico. Preparación familiar para muerte inminente.",
+    seguimiento: "Visitas frecuentes según contexto: hospitalario [diarias], domiciliario [2-3 veces/semana]. Monitoreo de síntomas a cada contacto. Titulación de opioides según respuesta. Evaluación de efectividad de tratamiento de síntomas. Reasignación de metas si cambios clínicos. Anticipación de síntomas terminales. Apoyo post-mortem a familia. Documentación de últimos deseos y legado del paciente."
+  }
+});
+
+Object.assign(WIZARD_SCHEMA, {
+  oncologia_solida: {
+    title: "Oncología de Tumores Sólidos",
+    sections: [
+      {
+        title: "Tipo y Estadificación",
+        fields: [
+          { id: "tumor_tipo", label: "Tipo de Tumor", type: "select", options: ["mama", "pulmón", "colorrectal", "gástrico", "hepático", "páncreas", "próstata", "vejiga", "renal", "cervicouterino", "endometrio", "ovario", "tiroides", "melanoma", "cabeza_cuello", "otro"] },
+          { id: "estadio_t", label: "Estadio T (Tamaño/Extensión local)", type: "select", options: ["T0", "T1", "T2", "T3", "T4", "Tx"] },
+          { id: "estadio_n", label: "Estadio N (Ganglios linfáticos)", type: "select", options: ["N0", "N1", "N2", "N3", "Nx"] },
+          { id: "estadio_m", label: "Estadio M (Metástasis a distancia)", type: "select", options: ["M0", "M1", "Mx"] },
+          { id: "estadio_global", label: "Estadio Global", type: "select", options: ["I", "II", "III", "IVA", "IVB", "IVC"] }
+        ]
+      },
+      {
+        title: "Estado Funcional e Intención Terapéutica",
+        fields: [
+          { id: "ecog", label: "Escala ECOG", type: "select", options: ["0 (Asintomático)", "1 (Sintomático ambulatorio)", "2 (En cama <50%)", "3 (En cama >50%)", "4 (Postrado)"] },
+          { id: "karnofsky", label: "Índice de Karnofsky", type: "number", unit: "%", dependsOn: {} },
+          { id: "intencion_tto", label: "Intención Terapéutica", type: "select", options: ["curativa", "paliativa", "adyuvante", "neoadyuvante", "mantenimiento"] }
+        ]
+      },
+      {
+        title: "Tratamientos Activos",
+        fields: [
+          { id: "quimioterapia", label: "En quimioterapia activa", type: "checkbox" },
+          { id: "inmunoterapia", label: "En inmunoterapia", type: "checkbox" },
+          { id: "radioterapia", label: "En radioterapia", type: "checkbox" },
+          { id: "cirugia_previa", label: "Cirugía oncológica previa", type: "checkbox" }
+        ]
+      },
+      {
+        title: "Biomarcadores y Perfil Molecular",
+        fields: [
+          { id: "biomarcadores", label: "Biomarcadores / Perfil Molecular", type: "textarea", dependsOn: {} }
+        ]
+      },
+      {
+        title: "Toxicidad y Complicaciones",
+        fields: [
+          { id: "toxicidad_grado", label: "Grado de Toxicidad Actual", type: "select", options: ["G0 (Sin toxicidad)", "G1 (Leve)", "G2 (Moderada)", "G3 (Severa)", "G4 (Amenaza vida)"] },
+          { id: "neutropenia", label: "Neutropenia febril actual", type: "checkbox" },
+          { id: "dolor_eva", label: "Dolor (Escala EVA)", type: "number", unit: "/10" }
+        ]
+      },
+      {
+        title: "Metástasis a Distancia",
+        fields: [
+          { id: "metastasis_sitios", label: "Sitios de Metástasis", type: "checkbox-group", options: ["pulmón", "hígado", "hueso", "cerebro", "ganglio", "peritoneo", "otro"] }
+        ]
+      }
+    ]
+  },
+  onco_hemato: {
+    title: "Hematología Oncológica",
+    sections: [
+      {
+        title: "Diagnóstico y Fase de Enfermedad",
+        fields: [
+          { id: "dx_hemato", label: "Diagnóstico Hematológico", type: "select", options: ["LLA", "LMA", "LLC", "LMC", "Linfoma Hodgkin", "Linfoma no-Hodgkin (DLBCL)", "Linfoma folicular", "Mieloma múltiple", "Mielodisplasia", "Policitemia vera", "Trombocitemia esencial", "Mielofibrosis"] },
+          { id: "fase_enfermedad", label: "Fase de Enfermedad", type: "select", options: ["Diagnóstico inicial", "Remisión completa", "Remisión parcial", "Refractario", "Recaída", "Mantenimiento", "Vigilancia"] }
+        ]
+      },
+      {
+        title: "Tratamiento Quimioterápico y Trasplante",
+        fields: [
+          { id: "ciclo_qmt", label: "Ciclo de Quimioterapia Actual", type: "number", unit: "ciclo" },
+          { id: "trasplante_cmo", label: "Trasplante de médula ósea realizado", type: "checkbox" },
+          { id: "tipo_trasplante", label: "Tipo de Trasplante", type: "select", options: ["autólogo", "alogénico"], dependsOn: { field: "trasplante_cmo", value: true } },
+          { id: "gvhd", label: "EICH (GvHD) activo", type: "checkbox", dependsOn: { field: "tipo_trasplante", value: "alogénico" } },
+          { id: "gvhd_grado", label: "Grado de EICH", type: "select", options: ["I", "II", "III", "IV"], dependsOn: { field: "gvhd", value: true } }
+        ]
+      },
+      {
+        title: "Biomarcadores Moleculares",
+        fields: [
+          { id: "bcr_abl", label: "BCR-ABL positivo (Filadelfia+)", type: "checkbox" },
+          { id: "respuesta_molecular", label: "Respuesta Molecular", type: "select", options: ["RMC (respuesta molecular completa)", "RMM (respuesta molecular mayor)", "sin respuesta"], dependsOn: { field: "bcr_abl", value: true } }
+        ]
+      },
+      {
+        title: "Hemograma Completo",
+        fields: [
+          { id: "hb", label: "Hemoglobina", type: "number", unit: "g/dL" },
+          { id: "leucocitos", label: "Leucocitos", type: "number", unit: "×10³/μL" },
+          { id: "plaquetas", label: "Plaquetas", type: "number", unit: "×10³/μL" },
+          { id: "neutrofilos_abs", label: "Neutrófilos Absolutos", type: "number", unit: "×10³/μL" }
+        ]
+      },
+      {
+        title: "Marcadores Pronósticos",
+        fields: [
+          { id: "dhl", label: "LDH (Lactato Deshidrogenasa)", type: "number", unit: "U/L" },
+          { id: "beta2_microglobulina", label: "Beta-2 Microglobulina", type: "number", unit: "mg/L" },
+          { id: "riesgo_ipi", label: "Índice de Pronóstico Internacional (IPI)", type: "select", options: ["Bajo (0-1)", "Bajo-intermedio (2)", "Alto-intermedio (3)", "Alto (4-5)"] },
+          { id: "iss_mieloma", label: "Índice de Estadificación Internacional (ISS)", type: "select", options: ["I (β2M <3.5 + albúmina ≥3.5)", "II (criterio intermedio)", "III (β2M ≥5.5)"] }
+        ]
+      },
+      {
+        title: "Toxicidad e Infecciones",
+        fields: [
+          { id: "toxicidad_grado", label: "Grado de Toxicidad", type: "select", options: ["G0", "G1", "G2", "G3", "G4"] },
+          { id: "infeccion_oportunista", label: "Infección oportunista activa", type: "checkbox" }
+        ]
+      }
+    ]
+  },
+  cuidados_paliativos: {
+    title: "Cuidados Paliativos",
+    sections: [
+      {
+        title: "Diagnóstico y Pronóstico",
+        fields: [
+          { id: "dx_principal", label: "Diagnóstico Principal", type: "text" },
+          { id: "pronostico", label: "Pronóstico Estimado", type: "select", options: ["Días-semanas", "Semanas-meses", "Meses", ">6 meses"] }
+        ]
+      },
+      {
+        title: "Estado Funcional",
+        fields: [
+          { id: "ecog", label: "Escala ECOG", type: "select", options: ["0", "1", "2", "3", "4"] },
+          { id: "pps", label: "Escala de Desempeño Paliativo (PPS)", type: "number", unit: "%" }
+        ]
+      },
+      {
+        title: "Control de Dolor",
+        fields: [
+          { id: "dolor_eva", label: "Intensidad de Dolor (EVA)", type: "number", unit: "/10" },
+          { id: "opioide_actual", label: "Opioide Actual", type: "select", options: ["Ninguno", "Tramadol", "Morfina oral", "Morfina IV", "Oxicodona", "Fentanilo TD", "Hidromorfona"] },
+          { id: "dosis_opioide", label: "Dosis de Opioide", type: "number", unit: "mg/día", dependsOn: { field: "opioide_actual", operator: "not_equals", value: "Ninguno" } }
+        ]
+      },
+      {
+        title: "Síntomas Prevalentes",
+        fields: [
+          { id: "disnea", label: "Disnea presente", type: "checkbox" },
+          { id: "nausea_vomito", label: "Náusea/Vómito", type: "checkbox" },
+          { id: "delirium", label: "Delirium / agitación terminal", type: "checkbox" },
+          { id: "anorexia_caquexia", label: "Síndrome de anorexia-caquexia", type: "checkbox" },
+          { id: "constipacion", label: "Constipación por opioides", type: "checkbox" }
+        ]
+      },
+      {
+        title: "Medidas de Confort y Decisiones Avanzadas",
+        fields: [
+          { id: "sedacion_paliativa", label: "Sedación paliativa indicada", type: "checkbox" },
+          { id: "directivas_anticipadas", label: "Directivas anticipadas documentadas", type: "checkbox" },
+          { id: "orden_dnr", label: "Orden de no reanimación (DNR)", type: "checkbox" },
+          { id: "apoyo_espiritual", label: "Apoyo espiritual/religioso solicitado", type: "checkbox" }
+        ]
+      },
+      {
+        title: "Red de Apoyo y Contexto",
+        fields: [
+          { id: "cuidador_primario", label: "Cuidador Primario", type: "text" },
+          { id: "lugar_atencion", label: "Lugar de Atención Preferido", type: "select", options: ["Hospital", "Domicilio", "Hospicio", "Residencia"] }
+        ]
+      }
+    ]
+  }
+});
+
+Object.assign(WIZARD_BUILDERS, {
+  oncologia_solida: (mk) => {
+    const sintomas = [];
+    const exfisica = [];
+    const estudios = [];
+    const impresion = [];
+    const tx_farmaco = [];
+    const tx_nofarmaco = [];
+    const seguimiento = [];
+
+    const tumorTipo = wv(mk, "tumor_tipo") || "no especificado";
+    const estadioT = wv(mk, "estadio_t") || "Tx";
+    const estadioN = wv(mk, "estadio_n") || "Nx";
+    const estadioM = wv(mk, "estadio_m") || "Mx";
+    const estadioGlobal = wv(mk, "estadio_global") || "sin asignar";
+    const ecog = wv(mk, "ecog") || "no evaluado";
+    const karnofsky = wn(mk, "karnofsky", "%") || "no medido";
+    const intencionTto = wv(mk, "intencion_tto") || "pendiente";
+    const quimio = wv(mk, "quimioterapia");
+    const inmuno = wv(mk, "inmunoterapia");
+    const radio = wv(mk, "radioterapia");
+    const cirugiaPrev = wv(mk, "cirugia_previa");
+    const biomarcadores = wv(mk, "biomarcadores") || "no documentados";
+    const toxGrado = wv(mk, "toxicidad_grado") || "G0";
+    const neutropenia = wv(mk, "neutropenia");
+    const dolorEva = wn(mk, "dolor_eva", "/10") || "no evaluado";
+    const metastasisSitios = wv(mk, "metastasis_sitios") || [];
+
+    impresion.push(`Diagnóstico: Neoplasia maligna de ${tumorTipo} estadio TNM ${estadioT}${estadioN}${estadioM} (Estadio global ${estadioGlobal}).`);
+    impresion.push(`Estado funcional: ECOG ${ecog}, Índice de Karnofsky ${karnofsky}.`);
+    impresion.push(`Intención terapéutica: ${intencionTto}.`);
+
+    sintomas.push(`Evaluación de síntomas locales según localización de tumor: ${tumorTipo}.`);
+    sintomas.push(`Dolor oncológico: EVA ${dolorEva}.`);
+    sintomas.push(`Síntomas constitucionales: fatiga, pérdida de peso, fiebre según evaluación clínica.`);
+    sintomas.push(`Síntomas derivados de tratamiento oncológico activo: náusea, vómito, mucositis, neuropatía periférica.`);
+
+    exfisica.push(`Exploración general: evaluación de estado nutricional, búsqueda de adenopatías, masas palpables.`);
+    exfisica.push(`Signos de infiltración local o síndrome de vena cava superior según localización.`);
+    exfisica.push(`Evaluación de extremidades para linfedema o signos de trombosis venosa profunda.`);
+    exfisica.push(`Exploración neurológica completa si antecedente de metástasis o neuropatía.`);
+
+    estudios.push(`Imaging de línea basal según tipo tumoral: ${tumorTipo}.`);
+    estudios.push(`Biomarcadores tumorales documentados: ${biomarcadores}.`);
+    estudios.push(`Hemograma, bioquímica hepática y renal, perfil lipídico.`);
+    estudios.push(`Reportes de patología con inmunohistoquímica completados.`);
+
+    if (estadioM === "M1" || (metastasisSitios && metastasisSitios.length > 0)) {
+      impresion.push("⚠️ ENFERMEDAD METASTÁSICA CONFIRMADA — Re-evaluación de intención terapéutica según objetivos de control.");
+      if (metastasisSitios.length > 0) {
+        const sitios = Array.isArray(metastasisSitios) ? metastasisSitios.join(", ") : metastasisSitios;
+        sintomas.push(`Metástasis detectadas a: ${sitios}.`);
+      }
+    }
+
+    if (ecog >= 3 || (karnofsky && parseInt(karnofsky) < 60)) {
+      impresion.push("⚠️ ECOG ≥3 o Karnofsky <60: DISCUTIR METAS DE ATENCIÓN con paciente/familia — Considerar cambio a cuidados paliativos o suspensión de tratamiento activo.");
+      tx_farmaco.push("Evaluación para medidas de confort, considerar suspensión de quimioterapia si estado funcional deteriorado.");
+    }
+
+    if (toxGrado && (toxGrado.includes("G3") || toxGrado.includes("G4"))) {
+      impresion.push(`⚠️ TOXICIDAD GRADO ${toxGrado.replace("G", "")}: CONSIDERAR REDUCCIÓN DE DOSIS O SUSPENSIÓN DE TRATAMIENTO.`);
+      tx_farmaco.push(`Manejo de toxicidad grado ${toxGrado.replace("G", "")}: soportivo agresivo, considerar reducción dosis o diferir siguiente ciclo.`);
+    }
+
+    if (neutropenia) {
+      impresion.push("⚠️ NEUTROPENIA FEBRIL ACTUAL: PROTOCOLO ANTIBIÓTICO URGENTE — Hemocultivos, antibióticos de amplio espectro IV inmediatos.");
+      tx_farmaco.push("Neutropenia febril: hemocultivos inmediatos, antibióticos de amplio espectro IV (ej: cefepima 2g c/8h), considerar antifúngico si fiebre persistente >72h.");
+    }
+
+    if (quimio) {
+      tx_farmaco.push("Quimioterapia: continuar según esquema vigente, monitoreo de toxicidad pre-quimio, evaluación de respuesta según calendario.");
+    }
+    if (inmuno) {
+      tx_farmaco.push("Inmunoterapia: continuar según protocolo, vigilancia de eventos adversos inmuno-relacionados (neumitis, colitis, hepatitis, endocrinología).");
+    }
+    if (radio) {
+      tx_farmaco.push("Radioterapia: continuar según plan, cuidados de piel, manejo de toxicidad aguda.");
+    }
+
+    tx_nofarmaco.push("Evaluación nutricional integral: consideración de suplementos orales, sonda nasogástrica o nutrición parenteral si desnutrición severa.");
+    tx_nofarmaco.push("Evaluación de capacidad funcional y rehabilitación: fisioterapia, terapia ocupacional según necesidad.");
+    tx_nofarmaco.push("Apoyo psiconcológico: screening de depresión, ansiedad, derivación a psiquiatría si es necesario.");
+    tx_nofarmaco.push("Manejo multidisciplinario del dolor: no solo fármacos, considerar anestesiología intervencionista si dolor refractario.");
+
+    seguimiento.push("Próximo control oncológico en [semanas según protocolo].");
+    seguimiento.push("Próxima evaluación radiológica según calendarios de restadificación.");
+    seguimiento.push("Monitorización periódica de toxicidad farmacológica y estado general.");
+    if (cirugiaPrev) {
+      seguimiento.push("Seguimiento de complicaciones post-quirúrgicas si aplica.");
+    }
+    seguimiento.push("Reevaluación de metas de atención si cambios en intención terapéutica o estado funcional.");
+
+    return {
+      sintomas: sintomas.join("\n"),
+      exfisica: exfisica.join("\n"),
+      estudios: estudios.join("\n"),
+      impresion: impresion.join("\n"),
+      tx_farmaco: tx_farmaco.join("\n"),
+      tx_nofarmaco: tx_nofarmaco.join("\n"),
+      seguimiento: seguimiento.join("\n")
+    };
+  },
+
+  onco_hemato: (mk) => {
+    const sintomas = [];
+    const exfisica = [];
+    const estudios = [];
+    const impresion = [];
+    const tx_farmaco = [];
+    const tx_nofarmaco = [];
+    const seguimiento = [];
+
+    const dxHemato = wv(mk, "dx_hemato") || "no especificado";
+    const faseEnfermedad = wv(mk, "fase_enfermedad") || "desconocida";
+    const cicloQmt = wn(mk, "ciclo_qmt", "ciclo") || "0";
+    const trasplanteCMO = wv(mk, "trasplante_cmo");
+    const tipoTrasplante = wv(mk, "tipo_trasplante") || "";
+    const gvhd = wv(mk, "gvhd");
+    const gvhdGrado = wv(mk, "gvhd_grado") || "N/A";
+    const bcrAbl = wv(mk, "bcr_abl");
+    const respuestaMolecular = wv(mk, "respuesta_molecular") || "N/A";
+    const hb = wn(mk, "hb", "g/dL") || "no medido";
+    const leucocitos = wn(mk, "leucocitos", "×10³/μL") || "no medido";
+    const plaquetas = wn(mk, "plaquetas", "×10³/μL") || "no medido";
+    const neutrofilosAbs = wn(mk, "neutrofilos_abs", "×10³/μL") || "no medido";
+    const dhl = wn(mk, "dhl", "U/L") || "no medido";
+    const beta2Micro = wn(mk, "beta2_microglobulina", "mg/L") || "no medido";
+    const riesgoIpi = wv(mk, "riesgo_ipi") || "no evaluado";
+    const issM = wv(mk, "iss_mieloma") || "no evaluado";
+    const toxGrado = wv(mk, "toxicidad_grado") || "G0";
+    const infeccionOp = wv(mk, "infeccion_oportunista");
+
+    impresion.push(`Diagnóstico hematológico: ${dxHemato}.`);
+    impresion.push(`Fase de enfermedad: ${faseEnfermedad}.`);
+    impresion.push(`Ciclo de quimioterapia actual: ${cicloQmt}.`);
+
+    if (trasplanteCMO && tipoTrasplante) {
+      impresion.push(`Trasplante de médula ósea: ${tipoTrasplante} realizado.`);
+    }
+    if (bcrAbl) {
+      impresion.push(`BCR-ABL POSITIVO (Filadelfia+) — Respuesta molecular: ${respuestaMolecular}.`);
+    }
+
+    sintomas.push(`Síntomas constitucionales: fiebre, sudores nocturnos, pérdida de peso según evaluación.`);
+    sintomas.push(`Síntomas derivados de citopenia: infecciones recurrentes, sangrados, fatiga marcada.`);
+    sintomas.push(`Síntomas de infiltración extramedular si aplica: dolor óseo, síntomas neurológicos.`);
+    sintomas.push(`Síntomas de tratamiento: mucositis, náusea, vómito, toxicidad intestinal.`);
+
+    exfisica.push(`Palpación sistemática de regiones ganglionares: cervical, axilar, inguinal, supraclavicular.`);
+    exfisica.push(`Hepatoesplenomegalia: evaluación de tamaño del hígado y bazo.`);
+    exfisica.push(`Búsqueda de signos de sangrado: petequias, equimosis, epistaxis, sangrado gingival.`);
+    exfisica.push(`Exploración de mucosa oral para mucositis, infecciones.`);
+
+    estudios.push(`Hemograma actual: Hb ${hb}, Leucocitos ${leucocitos}, Plaquetas ${plaquetas}, Neutrófilos abs ${neutrofilosAbs}.`);
+    estudios.push(`Marcadores de actividad: LDH ${dhl}, Beta-2 microglobulina ${beta2Micro}.`);
+    estudios.push(`Bioquímica: función renal, hepatograma, ácido úrico, electrolitos.`);
+    estudios.push(`Médula ósea: aspirado, biopsia, citometría de flujo según necesidad.`);
+    if (dxHemato.includes("Linfoma")) {
+      estudios.push(`Índice Pronóstico Internacional (IPI): ${riesgoIpi}.`);
+    }
+    if (dxHemato.includes("Mieloma")) {
+      estudios.push(`Índice Estadificación Internacional (ISS): ${issM}.`);
+    }
+
+    const plaqNum = plaquetas ? parseInt(plaquetas.split(" ")[0]) : null;
+    const neuNum = neutrofilosAbs ? parseFloat(neutrofilosAbs.split(" ")[0]) : null;
+    const hbNum = hb ? parseFloat(hb.split(" ")[0]) : null;
+
+    if (neuNum !== null && neuNum < 0.5) {
+      impresion.push(`⚠️ NEUTROPENIA SEVERA: RAN <500/μL — Riesgo muy alto de infección, considerar aislamiento protector.`);
+      tx_farmaco.push("Neutropenia severa: FCHP (G-CSF), profilaxis con TMP-SMX y antifúngico, aislamiento protector, hemocultivos ante fiebre.");
+    } else if (neuNum !== null && neuNum < 1.0) {
+      tx_farmaco.push("Neutropenia moderada: considerar FCHP, profilaxis infecciosa, vigilancia estrecha.");
+    }
+
+    if (plaqNum !== null && plaqNum < 20) {
+      impresion.push(`⚠️ PLAQUETOPENIA SEVERA: <20,000/μL — Riesgo hemorrágico, considerar transfusión profiláctica.`);
+      tx_farmaco.push("Plaquetopenia severa: transfusión de plaquetas profiláctica o según síntomas, evitar invasiones.");
+    } else if (plaqNum !== null && plaqNum < 50) {
+      tx_farmaco.push("Plaquetopenia moderada: transfusión según síntomas, vigilancia.");
+    }
+
+    if (hbNum !== null && hbNum < 7) {
+      impresion.push(`⚠️ ANEMIA SEVERA: Hb <7 g/dL — Considerar transfusión de hematíes.`);
+      tx_farmaco.push("Anemia severa: transfusión de hematíes concentrados, evaluar esplenectomía o imatinib si aplica.");
+    }
+
+    if (gvhd && gvhdGrado && (gvhdGrado.includes("III") || gvhdGrado.includes("IV"))) {
+      impresion.push(`⚠️ EICH (GvHD) GRADO ${gvhdGrado}: ESCALAR INMUNOSUPRESIÓN — Considerar segundo agente (micofenolato, tacrolimus adicional, esteroides sistémicos).`);
+      tx_farmaco.push(`EICH grado ${gvhdGrado}: esteroides sistémicos dosis altas, considerar segundo agente inmunosupresor (micofenolato 3g/día, tacrolimus adicional).`);
+    } else if (gvhd) {
+      tx_farmaco.push(`EICH activo: mantener inmunosupresión actual, monitoreo de toxicidad.`);
+    }
+
+    if (toxGrado && (toxGrado.includes("G3") || toxGrado.includes("G4"))) {
+      tx_farmaco.push(`Toxicidad grado ${toxGrado}: considerar reducción de dosis, diferir ciclo siguiente.`);
+    }
+
+    if (infeccionOp) {
+      impresion.push("⚠️ INFECCIÓN OPORTUNISTA ACTIVA: Protocolo de tratamiento urgente según microbiología.");
+      tx_farmaco.push("Infección oportunista: antibióticos/antivirales específicos según cultivo, modificación de profilaxis.");
+    }
+
+    tx_farmaco.push("Profilaxis infecciosa: TMP-SMX (PCP), antifúngico (itraconazol o fluconazol), aciclovir o valaciclovir según riesgo.");
+    tx_farmaco.push("Factores de crecimiento: FCHP según protocolo de quimioterapia.");
+
+    tx_nofarmaco.push("Transfusiones: hematíes si Hb <7 (o sintomas), plaquetas si <20,000 o síntomas.");
+    tx_nofarmaco.push("Apoyo nutricional: evaluación dietética, suplementos orales, evitar alimentos sin cocinar si inmunodeprimido.");
+    if (trasplanteCMO && tipoTrasplante === "alogénico") {
+      tx_nofarmaco.push("Post-trasplante alogénico: aislamiento protector, evaluación de EICH, rehabilitación progresiva.");
+    }
+    tx_nofarmaco.push("Apoyo psicológico: counseling sobre diagnóstico, pronóstico, opciones terapéuticas.");
+
+    seguimiento.push("Hemograma cada [especificar frecuencia]: evaluar tendencias de Hb, leucocitos, plaquetas.");
+    if (bcrAbl) {
+      seguimiento.push("PCR cuantitativa BCR-ABL cada [especificar]: monitoreo de respuesta molecular a TKI.");
+    }
+    seguimiento.push("Bioquímica periódica: función renal, hepatograma, ácido úrico.");
+    if (trasplanteCMO) {
+      seguimiento.push("Monitoreo de EICH: evaluación clínica frecuente, biopsias si sospecha EICH crónica.");
+    }
+    seguimiento.push("Screening de infecciones oportunistas según riesgo.");
+    seguimiento.push("Próximo ciclo de quimioterapia según cronograma de respuesta.");
+
+    return {
+      sintomas: sintomas.join("\n"),
+      exfisica: exfisica.join("\n"),
+      estudios: estudios.join("\n"),
+      impresion: impresion.join("\n"),
+      tx_farmaco: tx_farmaco.join("\n"),
+      tx_nofarmaco: tx_nofarmaco.join("\n"),
+      seguimiento: seguimiento.join("\n")
+    };
+  },
+
+  cuidados_paliativos: (mk) => {
+    const sintomas = [];
+    const exfisica = [];
+    const estudios = [];
+    const impresion = [];
+    const tx_farmaco = [];
+    const tx_nofarmaco = [];
+    const seguimiento = [];
+
+    const dxPrincipal = wv(mk, "dx_principal") || "enfermedad avanzada";
+    const pronostico = wv(mk, "pronostico") || "no estimado";
+    const ecog = wv(mk, "ecog") || "no evaluado";
+    const pps = wn(mk, "pps", "%") || "no medido";
+    const dolorEva = wn(mk, "dolor_eva", "/10") || "no evaluado";
+    const opioidAct = wv(mk, "opioide_actual") || "Ninguno";
+    const dosisOpioide = wn(mk, "dosis_opioide", "mg/día") || "no aplicable";
+    const disnea = wv(mk, "disnea");
+    const nauseaVomito = wv(mk, "nausea_vomito");
+    const delirium = wv(mk, "delirium");
+    const anorexiaCaquexia = wv(mk, "anorexia_caquexia");
+    const constipacion = wv(mk, "constipacion");
+    const sedacionPaliativa = wv(mk, "sedacion_paliativa");
+    const directivasAnticipadas = wv(mk, "directivas_anticipadas");
+    const ordenDNR = wv(mk, "orden_dnr");
+    const apoyoEspiritual = wv(mk, "apoyo_espiritual");
+    const cuidadorPrimario = wv(mk, "cuidador_primario") || "no documentado";
+    const lugarAtencion = wv(mk, "lugar_atencion") || "a definir";
+
+    impresion.push(`Diagnóstico: ${dxPrincipal}.`);
+    impresion.push(`Pronóstico: ${pronostico}.`);
+    impresion.push(`Estado funcional: ECOG ${ecog} / PPS ${pps}.`);
+    impresion.push(`Cuidador primario: ${cuidadorPrimario}.`);
+    impresion.push(`Lugar de atención preferido: ${lugarAtencion}.`);
+
+    if (directivasAnticipadas) {
+      impresion.push("✓ Directivas anticipadas DOCUMENTADAS.");
+    } else {
+      impresion.push("⚠️ Directivas anticipadas PENDIENTES — Realizar conversación de metas en próxima visita.");
+    }
+
+    if (ordenDNR) {
+      impresion.push("✓ Orden de NO REANIMACIÓN documentada en expediente.");
+    }
+
+    sintomas.push(`Dolor oncológico/síntomas: EVA ${dolorEva}.`);
+    if (disnea) {
+      sintomas.push("Disnea: presente, evaluar grado de limitación funcional.");
+    }
+    if (nauseaVomito) {
+      sintomas.push("Náusea/vómito: presente, identificar factores desencadenantes.");
+    }
+    if (delirium) {
+      sintomas.push("Delirium/agitación: presente, evaluar causas reversibles (hipoxia, infección, medicamentos).");
+    }
+    if (anorexiaCaquexia) {
+      sintomas.push("Síndrome anorexia-caquexia: presente, impacto en calidad de vida y nutrición.");
+    }
+    if (constipacion) {
+      sintomas.push("Constipación: presente, probablemente secundaria a opioides.");
+    }
+    sintomas.push("Síntomas emocionales: depresión, ansiedad, miedo a la muerte según evaluación.");
+    sintomas.push("Síntomas espirituales: necesidad de apoyo religioso/existencial según preferencias.");
+
+    exfisica.push(`Estado nutricional: evaluación de peso actual vs basal, signos de caquexia.`);
+    exfisica.push(`Frecuencia respiratoria, saturación de oxígeno si disnea presente.`);
+    exfisica.push(`Evaluación neurológica: nivel de consciencia, orientación temporal y espacial.`);
+    exfisica.push(`Integridad de piel: evaluación de úlceras de presión, infiltraciones, heridas.`);
+    exfisica.push(`Evaluación de movilidad: capacidad de transferencias, riesgo de caídas.`);
+
+    estudios.push("Laboratorio: mínimo, solo si aporta información para decisiones de confort.");
+    estudios.push("Hemoglobina: si considerar transfusión de confort (umbral >7 es excesivo en cuidados paliativos).");
+    estudios.push("Calcio, función renal: si hipercalcemia o para ajuste de dosis de opioides.");
+    estudios.push("NO realizar estudios de extensión, imaging rutinaria, o procedimientos invasivos.");
+
+    const dolorNum = dolorEva ? parseInt(dolorEva.split("/")[0]) : null;
+    let analgesia = "Sin analgesia";
+    if (dolorNum !== null) {
+      if (dolorNum <= 3) analgesia = "Escalón 1: paracetamol/AINE";
+      else if (dolorNum <= 6) analgesia = "Escalón 2: opioide débil (tramadol, codeína)";
+      else if (dolorNum <= 10) analgesia = "Escalón 3: opioide fuerte (morfina, oxicodona, fentanilo)";
+    }
+
+    tx_farmaco.push(`Escala analgésica WHO: ${analgesia}.`);
+    tx_farmaco.push(`Opioide actual: ${opioidAct} — Dosis: ${dosisOpioide}.`);
+
+    if (opioidAct !== "Ninguno") {
+      tx_farmaco.push("Titulación de opioides: aumentar dosis 25-50% cada 24-48h si dolor no controlado.");
+      tx_farmaco.push("Manejo de rotación de opioides si tolerancia o efectos adversos intolerados.");
+    }
+
+    if (disnea) {
+      tx_farmaco.push("Disnea: morfina a dosis bajas (2-5mg cada 4h, titular según respuesta), ansiolítico (lorazepam 0.5-2mg) si angustia asociada.");
+    }
+    if (nauseaVomito) {
+      tx_farmaco.push("Náusea/vómito: antieméticos según causa probable (ondansetrón 8mg c/8h si por medicamentos, metoclopramida si dismotilidad, corticoides si por aumento PIC).");
+    }
+    if (delirium) {
+      tx_farmaco.push("Delirium: haloperidol 0.5-2mg cada 8h IM/IV, identificar causas reversibles (infección, hipoxia, medicamentos), evitar antipsicóticos atípicos en final de vida.");
+    }
+    if (sedacionPaliativa) {
+      tx_farmaco.push("Sedación paliativa indicada: midazolam 0.5-1mg/mL infusión SC/IV, titular según nivel de conciencia deseado.");
+    }
+    if (constipacion) {
+      tx_farmaco.push("Constipación por opioides: laxante estimulante (bisacodilo 10mg/día o picosulfato de sodio 5-10mg/día) + laxante osmótico (lactulosa, polietilenglicol).");
+    }
+
+    tx_nofarmaco.push("Higiene y confort: baño de esponja tibio, ropa limpia y cómoda, ambiente tranquilo.");
+    tx_nofarmaco.push("Cambios posturales: cada 2 horas para prevenir úlceras de presión, uso de cojines especializados.");
+    tx_nofarmaco.push("Medidas ambientales: luz natural, música relajante, presencia de seres queridos.");
+    tx_nofarmaco.push("Nutrición: alimentos preferidos en pequeñas cantidades, facilitar comer sin obligar, hidratación según tolerancia.");
+    tx_nofarmaco.push("Apoyo psicológico: escucha activa, validar emociones, discutir miedos y preocupaciones.");
+    tx_nofarmaco.push("Apoyo espiritual: según tradición religiosa/existencial, facilitar presencia de capellán si desea.");
+    if (apoyoEspiritual) {
+      tx_nofarmaco.push("Apoyo espiritual/religioso solicitado: documentado, facilitar recursos según fe.");
+    }
+    tx_nofarmaco.push("Anticipatory guidance: preparar familia para cambios inminentes (respiración agonal, cambios de consciencia, muerte).");
+
+    seguimiento.push(`Frecuencia de visitas según contexto: hospitalario [diaria], domiciliario [2-3 veces/semana], hospicio [según necesidad].`);
+    seguimiento.push("Monitoreo de síntomas a cada contacto: dolor, disnea, náusea, nivel de consciencia.");
+    seguimiento.push("Titulación de opioides según respuesta analgésica y tolabilidad.");
+    seguimiento.push("Evaluación de efectividad de medicamentos para síntomas específicos.");
+    seguimiento.push("Reasignación de metas de atención si cambios clínicos significativos.");
+    seguimiento.push("Anticipación de síntomas terminales: reconocimiento de signos de muerte inminente.");
+    seguimiento.push("Apoyo post-mortem a familia: espacios de duelo, derivación a grupos de duelo si necesario.");
+
+    return {
+      sintomas: sintomas.join("\n"),
+      exfisica: exfisica.join("\n"),
+      estudios: estudios.join("\n"),
+      impresion: impresion.join("\n"),
+      tx_farmaco: tx_farmaco.join("\n"),
+      tx_nofarmaco: tx_nofarmaco.join("\n"),
+      seguimiento: seguimiento.join("\n")
+    };
+  }
+});
+
+["oncologia_solida", "onco_hemato", "cuidados_paliativos"].forEach(m => IMPLEMENTED_MODULES.add(m));
+
+Object.assign(TEMPLATE_MODULES, {
+  pediatria_general: {
+    label: "Pediatría General",
+    diagnostico: "Control de salud del niño/a sano, evaluación de crecimiento y desarrollo psicomotor según edad. Revisión de esquema de vacunación y antecedentes perinatales relevantes. Valoración de parámetros antropométricos con interpretación de percentiles. Asesoramiento anticipado según grupo etario.",
+    sintomas: "Presencia de síntomas agudos o quejas específicas en la consulta. Evaluación de fiebre actual (≥38°C) o síntomas respiratorios/gastrointestinales. Tolerancia a la alimentación y patrón de sueño. Cambios en comportamiento o desarrollo psicomotor. Exposiciones ambientales o infecciones recientes en familia.",
+    exfisica: "Peso, talla, perímetro cefálico (menores de 3 años) con cálculo de percentiles. Índice de masa corporal con interpretación según edad. Frecuencia cardíaca, frecuencia respiratoria, saturación de oxígeno y temperatura. Exploración neurológica enfocada en desarrollo motor, lenguaje y social. Revisión de piel, mucosas y linfonodos.",
+    estudios: "Valoración del esquema de vacunación según CENSIA. Determinación de antígenos/anticuerpos si corresponde. Estudios de laboratorio solo si hay indicación clínica por síntomas agudos. Estudios de imagenología solo en caso de sospecha clínica documentada. Tamizaje metabólico neonatal revisado en menores de 1 año.",
+    impresion: "Resumen del estado de salud general: crecimiento y desarrollo acorde a edad. Interpretación de percentiles de peso, talla e IMC con identificación de factores de riesgo. Evaluación del desarrollo psicomotor con identificación de retrasos si existen. Posología de lactancia/alimentación actual. Necesidad de referencia especializada según hallazgos.",
+    tx_farmaco: "Profilaxis vitamínica (vitamina D, hierro) según edad y riesgo. Medicamentos para síntomas agudos si aplica (antitérmicos, mucolíticos). Dosis calculadas según peso del niño/a. Instrucciones claras de administración y duración del tratamiento. Reacciones adversas esperadas y cuándo consultar nuevamente.",
+    tx_nofarmaco: "Asesoramiento sobre crianza y cuidados del desarrollo. Orientación en lactancia materna o alimentación complementaria según edad. Actividad física y limitación de pantallas recomendadas por edad. Medidas de seguridad en el hogar (prevención de accidentes). Información sobre signos de alerta que requieren consulta urgente.",
+    seguimiento: "Próxima cita según cronograma de control sano (cada 3 meses <1 año, cada 6 meses 1-3 años, anual >3 años). Seguimiento de parámetros antropométricos y curvas de crecimiento. Control de esquema de vacunación pendiente. Referencia a especialidad (neurodesarrollo, endocrinología) si hay retrasos o alteraciones antropométricas severas. Educación continua sobre prevención de enfermedades prevalentes."
+  },
+  neonato: {
+    label: "Neonatología / Recién Nacido",
+    diagnostico: "Evaluación integral del recién nacido en periodo neonatal. Clasificación por edad gestacional y peso al nacer con determinación de factores de riesgo. Documentación de complicaciones neonatales presentadas durante hospitalización. Valoración de adaptación a vida extrauterina y necesidad de apoyos terapéuticos. Capacidad de alimentación y estabilidad hemodinámica.",
+    sintomas: "Dificultad respiratoria al nacer o durante internación. Hipoglucemia sintomática o requiriendo intervención. Signos de sepsis neonatal (letargo, irritabilidad, intolerancia a la alimentación). Ictericia progresiva requiriendo fototerapia o exanguinotransfusión. Apneas o bradicardia en monitor cardiaco. Distensión abdominal o residuos gástricos excesivos.",
+    exfisica: "Peso al nacer, peso actual, talla y perímetro cefálico. Evaluación de edad gestacional (Ballard, capilares) si no está documentada. Puntuación de APGAR a 1 y 5 minutos. Exploración física completa: piel, cabeza, cuello, cardiopulmonar, abdominal, neurológica. Evaluación de reflejos primitivos (Moro, prensión, succión). Búsqueda de malformaciones congénitas evidentes.",
+    estudios: "Biometría hemática inicial y seguimiento según clínica. Gasometría arterial o capilar si hay dificultad respiratoria. Bilirrubina total y directa, repetida si requiere fototerapia. Hemocultivo en caso de sospecha de sepsis. Radiografía de tórax si hay síndrome de dificultad respiratorio. Ecografía cerebral en pretérminos o complicaciones perinatales.",
+    impresion: "Resumen de neonatología: edad gestacional, clasificación de peso y adecuación a la edad. Complicaciones neonatales documentadas y grado de severidad. Estado respiratorio actual: requiere oxígeno suplementario o asistencia ventilatoria. Estado nutricional y vía de alimentación (pecho, fórmula, nutrición parenteral). Necesidad de rehospitalización o seguimiento intensivo.",
+    tx_farmaco: "Profilaxis de oftalmitis gonocócica (tetraciclina oftálmica). Vitamina K1 IM al nacimiento (profilaxis enfermedad hemorrágica). Cefotaxima o gentamicina según protocolos si hay antibióticos empíricos. Fototerapia con seguimiento de niveles de bilirrubina según edad gestacional. Apoyo inotrópico o vasoactivo si requiere.",
+    tx_nofarmaco: "Mantener normotermia: incubadora o panel radiante según necesidad. Posicionamiento para prevención de deformidades y úlceras por presión. Manejo del dolor en procedimientos (sacarosa, contención). Apoyo respiratorio no invasivo (CPAP nasal, oxígeno) según indicación. Lactancia materna o alimentación con fórmula según tolerancia.",
+    seguimiento: "Control del neonatólogo/pediatra en guardería dentro de 24-48 horas post-alta. Seguimiento de bilirrubina si hubo fototerapia (control en 24-72 horas). Evaluación de lactancia materna en consulta especializada si hay dificultades. Seguimiento de neurodesarrollo para pretérminos (edad corregida) cada 3 meses hasta 2 años. Referencia inmediata si presenta cambios en patrón respiratorio, apneas, rechazo alimentario o fiebre."
+  },
+  pediatria_infecciosa: {
+    label: "Infectología Pediátrica",
+    diagnostico: "Diagnóstico presuntivo de infección pediátrica según presentación clínica y edad. Identificación de presencia/ausencia de criterios de sepsis pediátrica (SIRS adaptado). Valoración de foco infeccioso primario: respiratorio, gastrointestinal, urinario, meníngeo, otro. Determinación de severidad mediante escalas validadas (PEWS, Yale). Evaluación de factores de riesgo locales y epidemiológicos.",
+    sintomas: "Fiebre con duración en días y temperatura máxima registrada. Síntomas respiratorios (tos, sibilancias, tiraje) o dificultad respiratoria. Síntomas gastrointestinales (diarrea, vómito, dolor abdominal) con valoración de deshidratación. Signos meníngeos (cefalea, fotofobia, rigidez de nuca) si aplica. Letargo, irritabilidad o cambios en estado de alerta. Exantema petequial o maculopapular si presente.",
+    exfisica: "Frecuencia cardíaca, respiratoria, presión arterial, temperatura máxima y saturación de oxígeno. Escala PEWS (Pediatric Early Warning Score) calculada. Exploración cardiopulmonar: presencia de estertores, sibilancias, soplos. Exploración abdominal: hepatomegalia, esplenomegalia, distensión, defensa. Evaluación de signos meníngeos (Kernig, Brudzinski) si se sospecha meningitis. Valoración clínica de deshidratación: mucosas, turgencia de piel, llenado capilar.",
+    estudios: "Hemocultivo tomado antes de antibiótico empírico si hay sospecha de bacteremia. Urocultivo mediante cateterización en menores de 3 años o punción suprapúbica. Hemoglobina, hematocrito, recuento de leucocitos con diferencial. Lactato arterial o capilar si hay signos de sepsis. Proteína C reactiva y procalcitonina para estratificación de riesgo. Radiografía de tórax si síntomas respiratorios. Punción lumbar si hay sospecha de meningitis.",
+    impresion: "Resumen del diagnóstico presuntivo y foco infeccioso identificado. Estratificación de severidad: bajo, moderado o alto riesgo mediante PEWS y Yale Observation Scale. Evaluación de deshidratación con grado de severidad (leve, moderado, severo). Presencia/ausencia de criterios de sepsis pediátrica y lactato si fue medido. Indicación de hospitalización versus manejo ambulatorio. Necesidad de referencia a unidad de cuidados intensivos pediátricos.",
+    tx_farmaco: "Antibiótico empírico seleccionado y dosis calculada por peso (mg/kg). Duración esperada del antibiótico y fecha de reevaluación. Antitérmicos a dosis adecuadas (paracetamol o ibuprofeno según edad/peso). Antieméticos si hay vómito refractario a rehidratación. Medicamentos para síntomas específicos según infección (ej: corticoides en croup). Instrucciones claras sobre intervalo de dosis y duración.",
+    tx_nofarmaco: "Hidratación: rehidratación oral con solución electrolítica si es tolerable, IV si hay deshidratación severa (bolo 20 mL/kg SSN en 20 min). Aislamiento respiratorio si hay sospecha de neumonía atípica, meningitis o tuberculosis. Monitoreo continuo de signos vitales y estado de conciencia si hay alto riesgo. Control de temperatura con medidas físicas (desabrigarse) además de antitérmicos. Oxígeno suplementario si saturación <92%.",
+    seguimiento: "Control de respuesta clínica a antibiótico en 48-72 horas. Reevaluación de hemocultivos si estaban pendientes. Seguimiento de lactato y parámetros de perfusión si hubo sepsis. Seguimiento de etiología específica confirmada por cultivos. Referencia a especialista (infectólogo, intensivista) según evolución. Alta del servicio con instrucciones de signos de alerta y cita de control en 1 semana."
+  }
+});
+
+Object.assign(WIZARD_SCHEMA, {
+  pediatria_general: {
+    title: "Pediatría General",
+    sections: [
+      {
+        title: "Datos Demográficos y Antropométricos",
+        fields: [
+          { id: "edad_años", label: "Edad", type: "number", unit: "años" },
+          { id: "edad_meses", label: "Edad (meses)", type: "number", unit: "meses", dependsOn: { field: "edad_años", value: 0 } },
+          { id: "peso", label: "Peso", type: "number", unit: "kg" },
+          { id: "talla", label: "Talla", type: "number", unit: "cm" },
+          { id: "imc_percentil", label: "IMC - Percentil", type: "select", options: ["<3 (Bajo peso severo)", "3-15 (Bajo peso)", "15-85 (Normal)", "85-97 (Sobrepeso)", ">97 (Obesidad)"] },
+          { id: "talla_percentil", label: "Talla - Percentil", type: "select", options: ["<3 (Talla baja severa)", "3-15 (Talla baja)", "15-85 (Normal)", "85-97 (Talla alta)", ">97 (Talla muy alta)"] },
+          { id: "perimetro_cefalico", label: "Perímetro Cefálico", type: "number", unit: "cm", dependsOn: { field: "edad_años", value: 0 } },
+          { id: "pc_percentil", label: "PC - Percentil", type: "select", options: ["<3", "3-15", "15-85", "85-97", ">97"], dependsOn: { field: "edad_años", value: 0 } }
+        ]
+      },
+      {
+        title: "Desarrollo Psicomotor",
+        fields: [
+          { id: "desarrollo_motor", label: "Desarrollo Motor", type: "select", options: ["Normal", "Retraso leve", "Retraso moderado", "Retraso severo"] },
+          { id: "desarrollo_lenguaje", label: "Desarrollo Lenguaje", type: "select", options: ["Normal", "Retraso leve", "Retraso moderado", "Retraso severo"] },
+          { id: "desarrollo_social", label: "Desarrollo Social", type: "select", options: ["Normal", "Retraso leve", "Retraso moderado", "Retraso severo"] }
+        ]
+      },
+      {
+        title: "Vacunación y Nutrición",
+        fields: [
+          { id: "esquema_vacunal", label: "Esquema Vacunal", type: "select", options: ["Completo para la edad", "Incompleto", "Desconocido"] },
+          { id: "vacunas_pendientes", label: "Vacunas Pendientes", type: "textarea" },
+          { id: "lactancia", label: "Alimentación Actual", type: "select", options: ["Lactancia materna exclusiva", "Lactancia mixta", "Fórmula", "Alimentación complementaria iniciada", "Alimentación normal"] }
+        ]
+      },
+      {
+        title: "Antecedentes y Motivo de Consulta",
+        fields: [
+          { id: "antecedente_perinatal", label: "Antecedentes Perinatales", type: "textarea" },
+          { id: "motivo_consulta", label: "Motivo de Consulta", type: "select", options: ["Control sano", "Enfermedad aguda", "Seguimiento", "Referencia especialidad"] }
+        ]
+      },
+      {
+        title: "Signos Vitales",
+        fields: [
+          { id: "fiebre", label: "¿Fiebre actual (≥38°C)?", type: "checkbox" },
+          { id: "temp", label: "Temperatura", type: "number", unit: "°C", dependsOn: { field: "fiebre", value: true } },
+          { id: "sat_o2", label: "Saturación O₂", type: "number", unit: "%" },
+          { id: "fr", label: "Frecuencia Respiratoria", type: "number", unit: "rpm" }
+        ]
+      }
+    ]
+  },
+  neonato: {
+    title: "Neonatología / Recién Nacido",
+    sections: [
+      {
+        title: "Datos del Nacimiento",
+        fields: [
+          { id: "edad_gestacional", label: "Edad Gestacional", type: "number", unit: "semanas" },
+          { id: "peso_nacer", label: "Peso al Nacer", type: "number", unit: "g" },
+          { id: "apgar_1", label: "APGAR 1 min", type: "number", unit: "/10" },
+          { id: "apgar_5", label: "APGAR 5 min", type: "number", unit: "/10" },
+          { id: "tipo_parto", label: "Tipo de Parto", type: "select", options: ["Eutócico", "Cesárea (electiva)", "Cesárea (urgencia)", "Instrumentado (fórceps/vacuum)"] }
+        ]
+      },
+      {
+        title: "Clasificación Neonatal",
+        fields: [
+          { id: "clasificacion_eg", label: "Clasificación por EG", type: "select", options: ["Pretérmino extremo (<28s)", "Pretérmino severo (28-31s)", "Pretérmino moderado (32-33s)", "Pretérmino tardío (34-36s)", "Término (37-41s)", "Postérmino (≥42s)"] },
+          { id: "clasificacion_peso", label: "Clasificación por Peso", type: "select", options: ["MBPN (<1500g)", "BPN (1500-2499g)", "APN (2500-3999g)", "Macrosómico (≥4000g)"] },
+          { id: "adecuacion_eg", label: "Adecuación Peso/EG", type: "select", options: ["PEG (pequeño para EG)", "AEG (adecuado para EG)", "GEG (grande para EG)"] }
+        ]
+      },
+      {
+        title: "Complicaciones Neonatales",
+        fields: [
+          { id: "complicacion_neonatal", label: "Complicaciones Presentes", type: "checkbox-group", options: ["SDR/membrana hialina", "Sepsis neonatal", "Hipoglucemia", "Hiperbilirrubinemia", "ECN (enterocolitis necrotizante)", "HIV intracraneana", "Asfixia perinatal", "Apneas", "Cardiopatía congénita"] }
+        ]
+      },
+      {
+        title: "Estado Respiratorio y Oxígeno",
+        fields: [
+          { id: "oxigeno_suplementario", label: "¿Requiere O₂ suplementario?", type: "checkbox" },
+          { id: "modalidad_o2", label: "Modalidad de O₂", type: "select", options: ["Puntas nasales", "CPAP nasal", "VNI", "Ventilación mecánica"], dependsOn: { field: "oxigeno_suplementario", value: true } }
+        ]
+      },
+      {
+        title: "Bilirrubina y Fototerapia",
+        fields: [
+          { id: "fototerapia", label: "¿Fototerapia activa?", type: "checkbox" },
+          { id: "bilirrubina_total", label: "Bilirrubina Total", type: "number", unit: "mg/dL", dependsOn: { field: "fototerapia", value: true } }
+        ]
+      },
+      {
+        title: "Nutrición y Acceso Vascular",
+        fields: [
+          { id: "nutricion_neonatal", label: "Tipo de Nutrición", type: "select", options: ["LME", "Fórmula para prematuro", "Nutrición parenteral", "Mixta"] },
+          { id: "acceso_vascular", label: "Acceso Vascular Central", type: "select", options: ["Catéter umbilical", "PICC", "Vena periférica", "Sin acceso central"] },
+          { id: "alta_neonatal", label: "¿Alta a domicilio?", type: "checkbox" }
+        ]
+      }
+    ]
+  },
+  pediatria_infecciosa: {
+    title: "Infectología Pediátrica",
+    sections: [
+      {
+        title: "Diagnóstico y Presentación",
+        fields: [
+          { id: "dx_infeccioso", label: "Diagnóstico Presuntivo", type: "select", options: ["Neumonía adquirida comunidad", "Meningitis bacteriana", "ITU pediátrica", "Sepsis pediátrica", "Gastroenteritis aguda/deshidratación", "IVAS grave/croup", "Dengue pediátrico", "COVID-19 pediátrico", "MIS-C", "Otro"] },
+          { id: "edad_años", label: "Edad", type: "number", unit: "años" },
+          { id: "fiebre_dias", label: "Días de Fiebre", type: "number", unit: "días" },
+          { id: "temp_max", label: "Temperatura Máxima", type: "number", unit: "°C" }
+        ]
+      },
+      {
+        title: "Signos Vitales y Antropometría",
+        fields: [
+          { id: "sat_o2", label: "Saturación O₂", type: "number", unit: "%" },
+          { id: "fr", label: "Frecuencia Respiratoria", type: "number", unit: "rpm" },
+          { id: "fc", label: "Frecuencia Cardíaca", type: "number", unit: "lpm" },
+          { id: "peso", label: "Peso", type: "number", unit: "kg" }
+        ]
+      },
+      {
+        title: "Deshidratación y Sepsis",
+        fields: [
+          { id: "deshidratacion", label: "Grado de Deshidratación", type: "select", options: ["Sin deshidratación", "Leve (3-5%)", "Moderada (6-9%)", "Severa (≥10%)"] },
+          { id: "pews_score", label: "PEWS - Pediatric Early Warning Score", type: "select", options: ["Bajo riesgo (0-2)", "Riesgo moderado (3-5)", "Alto riesgo (≥6)"] },
+          { id: "sepsis_pediatrica", label: "¿Criterios de Sepsis Pediátrica?", type: "checkbox" },
+          { id: "lactato", label: "Lactato", type: "number", unit: "mmol/L", dependsOn: { field: "sepsis_pediatrica", value: true } }
+        ]
+      },
+      {
+        title: "Estudios y Cultivos",
+        fields: [
+          { id: "cultivo_tomado", label: "¿Hemocultivo/cultivo tomado?", type: "checkbox" },
+          { id: "score_yale", label: "Yale Observation Scale", type: "select", options: ["Bajo riesgo", "Riesgo moderado", "Alto riesgo"] }
+        ]
+      },
+      {
+        title: "Tratamiento Antibiótico",
+        fields: [
+          { id: "atb_iniciado", label: "¿Antibiótico iniciado?", type: "checkbox" },
+          { id: "atb_nombre", label: "Antibiótico y Dosis", type: "text", dependsOn: { field: "atb_iniciado", value: true } }
+        ]
+      },
+      {
+        title: "Manejo Complementario",
+        fields: [
+          { id: "hidratacion_iv", label: "¿Hidratación IV iniciada?", type: "checkbox" },
+          { id: "hospitalizacion", label: "¿Criterios de Hospitalización?", type: "checkbox" }
+        ]
+      }
+    ]
+  }
+});
+
+Object.assign(WIZARD_BUILDERS, {
+  pediatria_general: (mk) => {
+    const sintomas = [];
+    const exfisica = [];
+    const estudios = [];
+    const impresion = [];
+    const tx_farmaco = [];
+    const tx_nofarmaco = [];
+    const seguimiento = [];
+
+    const edad_años = wv(mk, 'edad_años');
+    const edad_meses = wv(mk, 'edad_meses');
+    const imc_percentil = wv(mk, 'imc_percentil');
+    const talla_percentil = wv(mk, 'talla_percentil');
+    const desarrollo_motor = wv(mk, 'desarrollo_motor');
+    const desarrollo_lenguaje = wv(mk, 'desarrollo_lenguaje');
+    const desarrollo_social = wv(mk, 'desarrollo_social');
+    const esquema_vacunal = wv(mk, 'esquema_vacunal');
+    const lactancia = wv(mk, 'lactancia');
+    const motivo_consulta = wv(mk, 'motivo_consulta');
+    const fiebre = wv(mk, 'fiebre');
+    const temp = wn(mk, 'temp', '°C');
+    const sat_o2 = wn(mk, 'sat_o2', '%');
+    const fr = wn(mk, 'fr', 'rpm');
+
+    if (fiebre === true) {
+      sintomas.push(`Fiebre actual ${temp}.`);
+    }
+    if (motivo_consulta) {
+      sintomas.push(`Motivo de consulta: ${motivo_consulta}.`);
+    }
+
+    exfisica.push(`Peso actual: ${wn(mk, 'peso', 'kg')}`);
+    exfisica.push(`Talla: ${wn(mk, 'talla', 'cm')}`);
+    if (edad_años == 0 && edad_meses < 36) {
+      exfisica.push(`Perímetro cefálico: ${wn(mk, 'perimetro_cefalico', 'cm')} (percentil ${wv(mk, 'pc_percentil')})`);
+    }
+    exfisica.push(`Saturación O₂: ${sat_o2}`);
+    exfisica.push(`Frecuencia respiratoria: ${fr}`);
+
+    impresion.push(`Control de salud del niño/a de ${edad_años || edad_meses} años/meses.`);
+
+    if (imc_percentil === ">97 (Obesidad)") {
+      impresion.push("⚠️ Obesidad (IMC >p97): evaluar comorbilidades metabólicas (tensión arterial, glucosa, perfil lipídico).");
+    } else {
+      impresion.push(`Índice de masa corporal: ${imc_percentil}.`);
+    }
+
+    if (talla_percentil === "<3 (Talla baja severa)") {
+      impresion.push("⚠️ Talla baja severa (<p3): descartar causas orgánicas — referir endocrinología pediátrica.");
+    } else {
+      impresion.push(`Talla: ${talla_percentil}.`);
+    }
+
+    if (desarrollo_motor === "Retraso moderado" || desarrollo_motor === "Retraso severo") {
+      impresion.push(`Retraso del desarrollo motor: referir neurodesarrollo/terapia física.`);
+    } else {
+      impresion.push(`Desarrollo motor: ${desarrollo_motor}.`);
+    }
+
+    if (desarrollo_lenguaje === "Retraso moderado" || desarrollo_lenguaje === "Retraso severo") {
+      impresion.push(`Retraso del desarrollo del lenguaje: referir logopedia/neurodesarrollo.`);
+    }
+
+    if (desarrollo_social === "Retraso moderado" || desarrollo_social === "Retraso severo") {
+      impresion.push(`Retraso del desarrollo social: valorar apoyo psicosocial.`);
+    }
+
+    if (esquema_vacunal === "Incompleto") {
+      impresion.push("⚠️ Esquema vacunal incompleto — actualizar según CENSIA/programa nacional.");
+    } else {
+      impresion.push(`Esquema de vacunación: ${esquema_vacunal}.`);
+    }
+
+    if (fiebre === true && parseInt(edad_años) < 3) {
+      tx_nofarmaco.push("⚠️ Fiebre en menor de 3 años: considerar estudios para descartar infección seria.");
+    }
+
+    tx_nofarmaco.push(`Alimentación actual: ${lactancia}.`);
+    tx_nofarmaco.push("Asesoramiento sobre crianza según edad del niño/a.");
+    tx_nofarmaco.push("Información sobre signos de alerta que requieren consulta urgente.");
+
+    seguimiento.push(`Control sano próximo según edad (cada 3 meses <1 año, cada 6 meses 1-3 años, anual >3 años).`);
+    if (esquema_vacunal === "Incompleto") {
+      seguimiento.push("Completar esquema de vacunación según cronograma CENSIA.");
+    }
+
+    return {
+      sintomas: sintomas.join('\n'),
+      exfisica: exfisica.join('\n'),
+      estudios: estudios.join('\n'),
+      impresion: impresion.join('\n'),
+      tx_farmaco: tx_farmaco.join('\n'),
+      tx_nofarmaco: tx_nofarmaco.join('\n'),
+      seguimiento: seguimiento.join('\n')
+    };
+  },
+  neonato: (mk) => {
+    const sintomas = [];
+    const exfisica = [];
+    const estudios = [];
+    const impresion = [];
+    const tx_farmaco = [];
+    const tx_nofarmaco = [];
+    const seguimiento = [];
+
+    const edad_gestacional = wn(mk, 'edad_gestacional', 'semanas');
+    const peso_nacer = wn(mk, 'peso_nacer', 'g');
+    const apgar_1 = wn(mk, 'apgar_1', '/10');
+    const apgar_5 = wn(mk, 'apgar_5', '/10');
+    const tipo_parto = wv(mk, 'tipo_parto');
+    const clasificacion_eg = wv(mk, 'clasificacion_eg');
+    const clasificacion_peso = wv(mk, 'clasificacion_peso');
+    const adecuacion_eg = wv(mk, 'adecuacion_eg');
+    const complicacion_neonatal = wv(mk, 'complicacion_neonatal');
+    const oxigeno_suplementario = wv(mk, 'oxigeno_suplementario');
+    const modalidad_o2 = wv(mk, 'modalidad_o2');
+    const fototerapia = wv(mk, 'fototerapia');
+    const bilirrubina_total = wn(mk, 'bilirrubina_total', 'mg/dL');
+    const nutricion_neonatal = wv(mk, 'nutricion_neonatal');
+    const acceso_vascular = wv(mk, 'acceso_vascular');
+    const alta_neonatal = wv(mk, 'alta_neonatal');
+
+    if (complicacion_neonatal && complicacion_neonatal.includes('SDR/membrana hialina')) {
+      sintomas.push("Dificultad respiratoria por síndrome de membrana hialina.");
+    }
+    if (complicacion_neonatal && complicacion_neonatal.includes('Sepsis neonatal')) {
+      sintomas.push("Signos de sepsis neonatal (letargo, intolerancia alimentaria).");
+    }
+    if (complicacion_neonatal && complicacion_neonatal.includes('Hipoglucemia')) {
+      sintomas.push("Hipoglucemia sintomática requiriendo intervención.");
+    }
+    if (complicacion_neonatal && complicacion_neonatal.includes('Hiperbilirrubinemia')) {
+      sintomas.push("Ictericia progresiva requiriendo fototerapia.");
+    }
+    if (!sintomas.length) {
+      sintomas.push("Recién nacido sin complicaciones neonatales evidentes.");
+    }
+
+    exfisica.push(`Edad gestacional: ${edad_gestacional}`);
+    exfisica.push(`Peso al nacer: ${peso_nacer}`);
+    exfisica.push(`APGAR 1 min: ${apgar_1}, APGAR 5 min: ${apgar_5}`);
+    exfisica.push(`Tipo de parto: ${tipo_parto}`);
+    exfisica.push(`Clasificación: ${clasificacion_eg}, ${clasificacion_peso}`);
+    exfisica.push(`Adecuación peso/edad gestacional: ${adecuacion_eg}`);
+
+    impresion.push(`Neonato clasificado como ${clasificacion_eg.toLowerCase()} con ${clasificacion_peso.toLowerCase()}.`);
+
+    if (apgar_5 < 7) {
+      impresion.push("⚠️ APGAR <7 a 5 min: valorar hipotermia terapéutica (si EG ≥36s y <6h de vida).");
+    }
+
+    impresion.push(`Adecuación: ${adecuacion_eg}.`);
+
+    if (adecuacion_eg === "PEG (pequeño para EG)") {
+      impresion.push("PEG: riesgo de hipoglucemia e hipotermia — monitoreo intensivo.");
+    }
+
+    if (complicacion_neonatal && complicacion_neonatal.length > 0) {
+      impresion.push(`Complicaciones neonatales: ${complicacion_neonatal.join(', ')}.`);
+    }
+
+    if (oxigeno_suplementario === true) {
+      impresion.push(`Requiere oxígeno suplementario: ${modalidad_o2}.`);
+    }
+
+    if (fototerapia === true && bilirrubina_total) {
+      if (parseFloat(bilirrubina_total) >= 20) {
+        impresion.push("⚠️ Hiperbilirrubinemia severa (≥20 mg/dL): considerar exanguinotransfusión.");
+      } else {
+        impresion.push(`Fototerapia activa por hiperbilirrubinemia (${bilirrubina_total}).`);
+      }
+    }
+
+    impresion.push(`Nutrición actual: ${nutricion_neonatal}. Acceso vascular: ${acceso_vascular}.`);
+
+    if (alta_neonatal === true) {
+      impresion.push("Alta a domicilio con seguimiento ambulatorio.");
+    }
+
+    tx_farmaco.push("Profilaxis oftalmitis gonocócica (tetraciclina oftálmica).");
+    tx_farmaco.push("Vitamina K1 IM (profilaxis enfermedad hemorrágica neonatal).");
+    if (oxigeno_suplementario === true) {
+      tx_farmaco.push(`Oxígeno suplementario via ${modalidad_o2} según saturación.`);
+    }
+    if (fototerapia === true) {
+      tx_farmaco.push("Fototerapia continua — monitoreo de bilirrubina cada 4-6 horas.");
+    }
+
+    tx_nofarmaco.push("Mantener normotermia con incubadora o panel radiante.");
+    tx_nofarmaco.push("Posicionamiento para prevención de deformidades.");
+    tx_nofarmaco.push(`Alimentación: ${nutricion_neonatal} según tolerancia.`);
+    if (nutricion_neonatal.includes('LME')) {
+      tx_nofarmaco.push("Apoyo en lactancia materna — contacto piel a piel.");
+    }
+
+    seguimiento.push("Control del neonatólogo/pediatra en guardería dentro de 24-48 horas post-alta.");
+    if (fototerapia === true) {
+      seguimiento.push("Control de bilirrubina en 24-72 horas post-alta.");
+    }
+    if (clasificacion_eg.includes('Pretérmino')) {
+      seguimiento.push("Seguimiento de neurodesarrollo para pretérmino (edad corregida) cada 3 meses hasta 2 años.");
+    }
+    seguimiento.push("Referencia inmediata si cambios en patrón respiratorio, apneas, rechazo alimentario o fiebre.");
+
+    return {
+      sintomas: sintomas.join('\n'),
+      exfisica: exfisica.join('\n'),
+      estudios: estudios.join('\n'),
+      impresion: impresion.join('\n'),
+      tx_farmaco: tx_farmaco.join('\n'),
+      tx_nofarmaco: tx_nofarmaco.join('\n'),
+      seguimiento: seguimiento.join('\n')
+    };
+  },
+  pediatria_infecciosa: (mk) => {
+    const sintomas = [];
+    const exfisica = [];
+    const estudios = [];
+    const impresion = [];
+    const tx_farmaco = [];
+    const tx_nofarmaco = [];
+    const seguimiento = [];
+
+    const dx_infeccioso = wv(mk, 'dx_infeccioso');
+    const edad_años = wn(mk, 'edad_años', 'años');
+    const fiebre_dias = wn(mk, 'fiebre_dias', 'días');
+    const temp_max = wn(mk, 'temp_max', '°C');
+    const sat_o2 = wn(mk, 'sat_o2', '%');
+    const fr = wn(mk, 'fr', 'rpm');
+    const fc = wn(mk, 'fc', 'lpm');
+    const peso = wn(mk, 'peso', 'kg');
+    const deshidratacion = wv(mk, 'deshidratacion');
+    const pews_score = wv(mk, 'pews_score');
+    const sepsis_pediatrica = wv(mk, 'sepsis_pediatrica');
+    const lactato = wn(mk, 'lactato', 'mmol/L');
+    const cultivo_tomado = wv(mk, 'cultivo_tomado');
+    const atb_iniciado = wv(mk, 'atb_iniciado');
+    const atb_nombre = wv(mk, 'atb_nombre');
+    const hidratacion_iv = wv(mk, 'hidratacion_iv');
+    const score_yale = wv(mk, 'score_yale');
+    const hospitalizacion = wv(mk, 'hospitalizacion');
+
+    sintomas.push(`Diagnóstico presuntivo: ${dx_infeccioso}.`);
+    sintomas.push(`Fiebre de ${fiebre_dias} con temperatura máxima ${temp_max}.`);
+
+    exfisica.push(`Edad: ${edad_años}`);
+    exfisica.push(`Peso: ${peso}`);
+    exfisica.push(`Signos vitales: FC ${fc}, FR ${fr}, SatO₂ ${sat_o2}`);
+    exfisica.push(`PEWS: ${pews_score}`);
+    exfisica.push(`Grado de deshidratación: ${deshidratacion}`);
+
+    if (sepsis_pediatrica === true) {
+      exfisica.push(`Lactato: ${lactato}`);
+    }
+
+    estudios.push("Hemograma completo con diferencial.");
+    if (cultivo_tomado === true) {
+      estudios.push("Hemocultivo/cultivo tomado antes de antibiótico empírico.");
+    }
+    estudios.push("Proteína C reactiva.");
+    if (sepsis_pediatrica === true) {
+      estudios.push("Lactato arterial o capilar.");
+    }
+    if (dx_infeccioso.includes('Neumonía')) {
+      estudios.push("Radiografía de tórax.");
+    }
+    if (dx_infeccioso.includes('Meningitis')) {
+      estudios.push("Punción lumbar para cultivo y análisis de LCR.");
+    }
+    if (dx_infeccioso.includes('ITU')) {
+      estudios.push("Urocultivo mediante cateterización o punción suprapúbica.");
+    }
+
+    impresion.push(`Diagnóstico presuntivo: ${dx_infeccioso}.`);
+    impresion.push(`Estratificación de severidad: ${pews_score}, Yale Observation Scale: ${score_yale}.`);
+
+    if (deshidratacion === "Severa (≥10%)") {
+      impresion.push("⚠️ Deshidratación severa: requiere reposición IV agresiva.");
+    } else if (deshidratacion) {
+      impresion.push(`Deshidratación ${deshidratacion.toLowerCase()}.`);
+    }
+
+    if (sepsis_pediatrica === true) {
+      impresion.push("✓ Criterios de sepsis pediátrica presentes.");
+      if (lactato && parseFloat(lactato) >= 2) {
+        impresion.push("⚠️ Sepsis pediátrica con lactato ≥2: aplicar bundle HORA-1 inmediatamente.");
+      }
+    }
+
+    if (pews_score === "Alto riesgo (≥6)") {
+      impresion.push("⚠️ PEWS alto riesgo: activar equipo de respuesta rápida pediátrica.");
+    }
+
+    if (sat_o2 && parseFloat(sat_o2) < 92) {
+      impresion.push("⚠️ SatO₂ <92%: requiere O₂ suplementario urgente.");
+    }
+
+    if (atb_iniciado === true) {
+      tx_farmaco.push(`Antibiótico iniciado: ${atb_nombre} (dosis calculada por peso ${peso}).`);
+    } else {
+      tx_farmaco.push(`Antibiótico empírico recomendado según dx: ${dx_infeccioso} y edad ${edad_años}.`);
+    }
+    tx_farmaco.push("Antitérmicos a dosis adecuadas por peso.");
+
+    if (deshidratacion === "Severa (≥10%)") {
+      tx_nofarmaco.push("⚠️ HIDRATACIÓN: Bolo 20 mL/kg SSN en 20 minutos — repetir según respuesta clínica.");
+    } else if (deshidratacion === "Moderada (6-9%)") {
+      tx_nofarmaco.push("Hidratación IV 10 mL/kg en 1 hora — valorar perfusión.");
+    } else {
+      tx_nofarmaco.push("Rehidratación oral con solución electrolítica si es tolerada.");
+    }
+
+    if (sat_o2 && parseFloat(sat_o2) < 92) {
+      tx_nofarmaco.push("Oxígeno suplementario para mantener SatO₂ >94%.");
+    }
+
+    if (dx_infeccioso.includes('Meningitis')) {
+      tx_nofarmaco.push("Aislamiento respiratorio estricto por 48 horas post-antibiótico.");
+    }
+
+    tx_nofarmaco.push("Monitoreo continuo de signos vitales si hay alto riesgo.");
+
+    seguimiento.push("Evaluación de respuesta clínica a antibiótico en 48-72 horas.");
+    if (cultivo_tomado === true) {
+      seguimiento.push("Seguimiento de resultados de hemocultivo/cultivo.");
+    }
+    if (sepsis_pediatrica === true) {
+      seguimiento.push("Reevaluación de lactato y parámetros de perfusión.");
+    }
+    if (hospitalizacion === true) {
+      seguimiento.push("Ingreso a hospitalización con seguimiento diario.");
+    } else {
+      seguimiento.push("Seguimiento ambulatorio en 24 horas. Instrucciones claras de signos de alerta.");
+    }
+
+    return {
+      sintomas: sintomas.join('\n'),
+      exfisica: exfisica.join('\n'),
+      estudios: estudios.join('\n'),
+      impresion: impresion.join('\n'),
+      tx_farmaco: tx_farmaco.join('\n'),
+      tx_nofarmaco: tx_nofarmaco.join('\n'),
+      seguimiento: seguimiento.join('\n')
+    };
+  }
+});
+
+['pediatria_general', 'neonato', 'pediatria_infecciosa'].forEach(m => IMPLEMENTED_MODULES.add(m));
+
 </script>
 </body>
 </html>
