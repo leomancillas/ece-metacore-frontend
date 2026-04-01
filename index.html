@@ -1400,6 +1400,7 @@ async function viewPatient(id) {
         <button class="btn btn-secondary btn-sm" onclick="renderPatients()">← Volver</button>
         <div class="section-title" style="margin:0">${pat.nombre} ${pat.apellido_paterno} ${pat.apellido_materno || ''}</div>
         <span class="badge badge-blue">${pat.expediente}</span>
+        ${renderSpecialtyBadges(pat.id)}
         <div style="margin-left:auto;display:flex;gap:8px">
           <button class="btn btn-secondary btn-sm no-print" onclick="openVitalsModal()" style="background:#0891b2;color:white;border:none">📏 Signos vitales</button>
           ${isMedico() ? `<button class="btn btn-secondary btn-sm no-print" onclick="generateEpicrisis()" style="background:#7c3aed;color:white;border:none">📋 Epicrisis</button>` : ''}
@@ -5878,6 +5879,364 @@ window.viewPatientShared = async function(id, isShared = false) {
     if (mainContent) { mainContent.insertAdjacentHTML('afterend', modalHTML); }
     else { document.body.insertAdjacentHTML('beforeend', modalHTML); }
   }
+})();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ECE META CORE — MULTI-SPECIALTY PATIENT PROFILES
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── 1. SPECIALTY CATALOG ──────────────────────────────────────────────────────
+const SPECIALTY_CONFIGS = [
+  { id:'medicina_general',    label:'Medicina General',          icon:'🏥', color:'#38b2ac', textColor:'#134e4a', wizard_modules:['hipertension','dm2','dislipidemia','hipotiroidismo','epoc','vacunacion'] },
+  { id:'endocrinologia',      label:'Endocrinología',            icon:'🧬', color:'#48bb78', textColor:'#276749', wizard_modules:['scrm','obesidad','dm2','dislipidemia','hipotiroidismo','hipertiroidismo','nodulos','ca_tiroides','osteoporosis','hiperparatiroidismo','insuficiencia_suprarrenal','cushing','acromegalia'] },
+  { id:'ginecologia',         label:'Ginecología y Obstetricia', icon:'🌸', color:'#ed64a6', textColor:'#702459', wizard_modules:['gineco_obst','embarazo_ar','climaterio','cancer_cervix','cancer_mama','sti_infecciones'] },
+  { id:'pediatria',           label:'Pediatría',                 icon:'👶', color:'#f6ad55', textColor:'#7c2d12', wizard_modules:['recien_nacido','desarrollo_psicomotor','vacunacion_pediatrica','dm1_pediatrico','desnutricion','tdah','asma_pediatrico','cardiopatia_congenita'] },
+  { id:'psiquiatria',         label:'Psiquiatría',               icon:'🧠', color:'#9f7aea', textColor:'#44337a', wizard_modules:['depresion','trastorno_bipolar','esquizofrenia','ansiedad_tea','tdah_adulto','tca','addiction','psicogeriatria'] },
+  { id:'cardiologia',         label:'Cardiología',               icon:'❤️', color:'#fc8181', textColor:'#742a2a', wizard_modules:['insuficiencia_cardiaca','cardiopatia_isquemica','arritmias','hta_secundaria','valvulopatia','hipertension_pulmonar'] },
+  { id:'reumatologia',        label:'Reumatología',              icon:'🦴', color:'#f6ad55', textColor:'#7c2d12', wizard_modules:['artritis_reumatoide','lupus','espondiloartritis','gota','fibromialgia','vasculitis','osteoporosis'] },
+  { id:'nefrologia',          label:'Nefrología',                icon:'💧', color:'#63b3ed', textColor:'#1a365d', wizard_modules:['erc','dialisis','trasplante_renal','glomerulonefritis','lio_acido_base','hipertension_renovascular'] },
+  { id:'neumologia',          label:'Neumología',                icon:'🫁', color:'#76e4f7', textColor:'#065666', wizard_modules:['epoc','asma','fibrosis_pulmonar','sas','hipertension_pulmonar','tubo_bronquial'] },
+  { id:'neurologia',          label:'Neurología',                icon:'🧩', color:'#7f9cf5', textColor:'#1e3a5f', wizard_modules:['epilepsia','cefalea','ictus_evc','enfermedad_parkinson','esclerosis_multiple','demencia','neuropatia_periferica'] },
+  { id:'cirugia_general',     label:'Cirugía General',           icon:'🔪', color:'#a0aec0', textColor:'#1a202c', wizard_modules:['pre_operatorio','post_operatorio','trauma_abdomen','colecistitis','hernia','colorrectal','mastologia'] },
+  { id:'gastroenterologia',   label:'Gastroenterología',         icon:'🫃', color:'#f6e05e', textColor:'#744210', wizard_modules:['eii_crohn_colitis','cirrosis','reflujo_gerd','hepatitis','sii','pancreatitis','cancer_colon'] },
+  { id:'infectologia',        label:'Infectología',              icon:'🦠', color:'#68d391', textColor:'#1c4532', wizard_modules:['vih_sida','tuberculosis','hepatitis_viral','ets','sepsis','parasitosis','infeccion_nosocomial'] },
+  { id:'medicina_interna',    label:'Medicina Interna',          icon:'🩺', color:'#a0aec0', textColor:'#1a202c', wizard_modules:['hipertension','dm2','dislipidemia','hipotiroidismo','epoc','insuficiencia_cardiaca','erc','cirrosis','sepsis','equilibrio_electrolitico'] },
+  { id:'oncologia',           label:'Oncología',                 icon:'🎗️', color:'#fc8181', textColor:'#742a2a', wizard_modules:['cancer_tiroides','cancer_mama','cancer_colon','cancer_pulmon','linfoma','leucemia','cancer_cervix'] }
+];
+
+// ── 2. MODULE LABELS MAP ──────────────────────────────────────────────────────
+// Maps module id → [icon, human-readable label]
+const MODULE_LABELS = {
+  scrm:['🫀','S. Cardio-Renal-Metabólico'], obesidad:['⚖️','Obesidad / Adiposidad'], dm2:['🩸','Diabetes Mellitus tipo 2'],
+  dislipidemia:['🧈','Dislipidemia'], hipotiroidismo:['🟡','Hipotiroidismo'], hipertiroidismo:['🔴','Hipertiroidismo'],
+  nodulos:['🔬','Nódulos Tiroideos'], ca_tiroides:['🏥','Cáncer de Tiroides'], osteoporosis:['💀','Osteoporosis'],
+  hiperparatiroidismo:['🦴','Hiperparatiroidismo'], insuficiencia_suprarrenal:['⚡','Insuf. Suprarrenal'],
+  cushing:['🌙','Sínd. de Cushing'], acromegalia:['📐','Acromegalia'],
+  hipertension:['🩺','Hipertensión Arterial'], epoc:['💨','EPOC'], vacunacion:['💉','Vacunación'],
+  gineco_obst:['🌸','Historia Gineco-Obstétrica'], embarazo_ar:['🤰','Embarazo Alto Riesgo'], climaterio:['🌺','Climaterio/Menopausia'],
+  cancer_cervix:['🎗️','Cáncer de Cérvix'], cancer_mama:['🎀','Cáncer de Mama'], sti_infecciones:['🔬','ITS/Infecciones'],
+  recien_nacido:['👶','Recién Nacido'], desarrollo_psicomotor:['🧸','Desarrollo Psicomotor'], vacunacion_pediatrica:['💉','Vacunación Pediátrica'],
+  dm1_pediatrico:['🩸','DM1 Pediátrico'], desnutricion:['🥗','Desnutrición'], tdah:['⚡','TDAH Pediátrico'],
+  asma_pediatrico:['🌬️','Asma Pediátrico'], cardiopatia_congenita:['❤️','Cardiopatía Congénita'],
+  depresion:['🌧️','Depresión'], trastorno_bipolar:['🔄','Trastorno Bipolar'], esquizofrenia:['🧩','Esquizofrenia'],
+  ansiedad_tea:['🌊','Ansiedad / TEA'], tdah_adulto:['⚡','TDAH Adulto'], tca:['🍽️','T. Conducta Alimentaria'],
+  addiction:['⛓️','Adicciones'], psicogeriatria:['👴','Psicogeriatría'],
+  insuficiencia_cardiaca:['💔','Insuf. Cardíaca'], cardiopatia_isquemica:['❤️‍🔥','Cardiopatía Isquémica'],
+  arritmias:['📡','Arritmias'], hta_secundaria:['🩺','HTA Secundaria'], valvulopatia:['🔧','Valvulopatía'], hipertension_pulmonar:['🫁','HTP'],
+  artritis_reumatoide:['🦴','Artritis Reumatoide'], lupus:['🦋','Lupus'], espondiloartritis:['🔩','Espondiloartritis'],
+  gota:['💎','Gota'], fibromialgia:['⚡','Fibromialgia'], vasculitis:['🌊','Vasculitis'],
+  erc:['💧','Enf. Renal Crónica'], dialisis:['🔄','Diálisis'], trasplante_renal:['🏥','Trasplante Renal'],
+  glomerulonefritis:['🔬','Glomerulonefritis'], lio_acido_base:['⚗️','Equil. Ácido-Base'], hipertension_renovascular:['🩺','HTA Renovascular'],
+  asma:['🌬️','Asma'], fibrosis_pulmonar:['🫁','Fibrosis Pulmonar'], sas:['😴','Sínd. Apnea-Sueño'], tubo_bronquial:['🫁','Patol. Bronquial'],
+  epilepsia:['⚡','Epilepsia'], cefalea:['🤯','Cefalea/Migraña'], ictus_evc:['🧠','Ictus/EVC'],
+  enfermedad_parkinson:['🤝','Parkinson'], esclerosis_multiple:['🧩','Esclerosis Múltiple'], demencia:['🧠','Demencia'], neuropatia_periferica:['⚡','Neuropatía Periférica'],
+  pre_operatorio:['📋','Valoración Preoperatoria'], post_operatorio:['🏥','Seguimiento Postop.'], trauma_abdomen:['🔧','Trauma Abdominal'],
+  colecistitis:['💛','Colecistitis/Colelitiasis'], hernia:['🔩','Hernia'], colorrectal:['🔬','Colorrectal'], mastologia:['🎀','Mastología'],
+  eii_crohn_colitis:['🔬','EII / Crohn-Colitis'], cirrosis:['🟡','Cirrosis'], reflujo_gerd:['🔥','Reflujo/GERD'],
+  hepatitis:['🟠','Hepatitis'], sii:['🫃','S. Intestino Irritable'], pancreatitis:['⚠️','Pancreatitis'], cancer_colon:['🎗️','Cáncer de Colon'],
+  vih_sida:['🦠','VIH/SIDA'], tuberculosis:['🫁','Tuberculosis'], hepatitis_viral:['🟠','Hepatitis Viral'],
+  ets:['🔬','ETS/ITS'], sepsis:['🚨','Sepsis'], parasitosis:['🦠','Parasitosis'], infeccion_nosocomial:['🏥','Inf. Nosocomial'],
+  cancer_tiroides:['🎗️','Cáncer de Tiroides'], cancer_pulmon:['🫁','Cáncer de Pulmón'], linfoma:['🔴','Linfoma'],
+  leucemia:['🩸','Leucemia'], equilibrio_electrolitico:['⚗️','Equil. Electrolítico']
+};
+
+// ── 3. GITHUB PROFILES STORAGE ───────────────────────────────────────────────
+const GH_PROFILES_API = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/data/patient_profiles.json`;
+let _profilesData = null;
+let _profilesSha = null;
+
+async function loadPatientProfiles(forceRefresh = false) {
+  if (_profilesData !== null && !forceRefresh) return _profilesData;
+  try {
+    const res = await fetch(GH_PROFILES_API + '?t=' + Date.now(), { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+    if (res.ok) {
+      const meta = await res.json();
+      _profilesData = JSON.parse(_b64decode(meta.content));
+      _profilesSha = meta.sha;
+    } else {
+      _profilesData = {};
+      _profilesSha = null;
+    }
+  } catch {
+    _profilesData = {};
+    _profilesSha = null;
+  }
+  return _profilesData;
+}
+
+async function savePatientProfiles(data) {
+  let pat = localStorage.getItem(GH_PAT_KEY);
+  if (!pat) {
+    pat = prompt('Para guardar perfiles de especialidad, ingresa tu token de GitHub (PAT con permiso de escritura):');
+    if (!pat) throw new Error('Token requerido para guardar perfiles.');
+    localStorage.setItem(GH_PAT_KEY, pat);
+  }
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+  const payload = { message: 'Update patient specialty profiles', content, branch: 'main' };
+  if (_profilesSha) payload.sha = _profilesSha;
+  const res = await fetch(GH_PROFILES_API, {
+    method: 'PUT',
+    headers: { 'Authorization': `token ${pat}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) { const e = await res.json().catch(()=>null); throw new Error((e && e.message) || `GitHub error: ${res.status}`); }
+  const result = await res.json();
+  _profilesSha = result.content.sha;
+  _profilesData = data;
+}
+
+function getPatientProfile(patientId) {
+  if (!_profilesData || !patientId) return { perfil_primario: null, perfiles_activos: [] };
+  const p = _profilesData[patientId];
+  return p ? { perfil_primario: p.perfil_primario || null, perfiles_activos: Array.isArray(p.perfiles_activos) ? p.perfiles_activos : [] }
+           : { perfil_primario: null, perfiles_activos: [] };
+}
+
+async function setPatientProfile(patientId, perfil_primario, perfiles_activos) {
+  if (_profilesData === null) await loadPatientProfiles();
+  _profilesData[patientId] = { perfil_primario: perfil_primario || null, perfiles_activos: perfiles_activos || [] };
+  await savePatientProfiles(_profilesData);
+}
+
+function getSpecialtyConfig(id) { return SPECIALTY_CONFIGS.find(s => s.id === id) || null; }
+function getActiveSpecialtyConfigs(activos) {
+  if (!activos || !activos.length) return [getSpecialtyConfig('endocrinologia')].filter(Boolean);
+  return activos.map(id => getSpecialtyConfig(id)).filter(Boolean);
+}
+function getModulesForProfiles(activos) {
+  const seen = new Set(), all = [];
+  getActiveSpecialtyConfigs(activos).forEach(cfg => (cfg.wizard_modules || []).forEach(m => { if (!seen.has(m)) { seen.add(m); all.push(m); } }));
+  return all;
+}
+
+// ── 4. DYNAMIC MODULE PANEL ───────────────────────────────────────────────────
+// Modules that have full wizard definitions in TEMPLATE_MODULES
+const IMPLEMENTED_MODULES = new Set(['scrm','obesidad','dm2','dislipidemia','hipotiroidismo','hipertiroidismo','nodulos','ca_tiroides','osteoporosis']);
+
+function buildModulePanel(patientId) {
+  const profile = getPatientProfile(patientId);
+  const activos = profile.perfiles_activos || [];
+  const activeConfigs = getActiveSpecialtyConfigs(activos);
+  const otherConfigs = SPECIALTY_CONFIGS.filter(s => !activos.includes(s.id));
+
+  // Human-readable specialty names for the panel header
+  const specialtyNames = activeConfigs.length
+    ? activeConfigs.map(c => c.icon + ' ' + c.label).join(' · ')
+    : '🧬 Endocrinología';
+
+  let moduleCardsHTML = '';
+  const renderedModules = new Set();
+
+  // Active specialties first, with colored section headers
+  activeConfigs.forEach(spec => {
+    const mods = spec.wizard_modules || [];
+    moduleCardsHTML += `<div style="margin-bottom:6px;padding:4px 0 2px;font-size:0.7rem;font-weight:700;color:${spec.color};text-transform:uppercase;letter-spacing:0.04em;border-left:3px solid ${spec.color};padding-left:6px">${spec.icon} ${spec.label}</div>`;
+    mods.forEach(moduleId => {
+      if (renderedModules.has(moduleId)) return;
+      renderedModules.add(moduleId);
+      const [mIcon, mLabel] = MODULE_LABELS[moduleId] || ['📋', moduleId];
+      const implemented = IMPLEMENTED_MODULES.has(moduleId);
+      moduleCardsHTML += `<label class="module-card" id="mc-${moduleId}" style="${!implemented?'opacity:0.5;cursor:not-allowed;':''}">`
+        + `<input type="checkbox" value="${moduleId}" ${implemented?`onchange="toggleModuleCard('${moduleId}')"`:' disabled'}> `
+        + `${mIcon} ${mLabel}${!implemented ? ' <small style="color:#a0aec0">(próx.)</small>' : ''}</label>`;
+    });
+  });
+
+  // "Otros módulos" collapsed section
+  let otherHTML = '';
+  otherConfigs.forEach(spec => {
+    const newMods = (spec.wizard_modules || []).filter(m => !renderedModules.has(m));
+    if (!newMods.length) return;
+    otherHTML += `<div style="margin-top:6px;padding:2px 0 2px 6px;font-size:0.7rem;font-weight:700;color:#a0aec0;border-left:3px solid #e2e8f0;text-transform:uppercase">${spec.icon} ${spec.label}</div>`;
+    newMods.forEach(moduleId => {
+      renderedModules.add(moduleId);
+      const [mIcon, mLabel] = MODULE_LABELS[moduleId] || ['📋', moduleId];
+      const implemented = IMPLEMENTED_MODULES.has(moduleId);
+      otherHTML += `<label class="module-card" id="mc-${moduleId}" style="${!implemented?'opacity:0.5;cursor:not-allowed;':''}">`
+        + `<input type="checkbox" value="${moduleId}" ${implemented?`onchange="toggleModuleCard('${moduleId}')"`:' disabled'}> `
+        + `${mIcon} ${mLabel}${!implemented ? ' <small style="color:#a0aec0">(próx.)</small>' : ''}</label>`;
+    });
+  });
+
+  return `<div id="templatesPanel" style="display:none;background:linear-gradient(135deg,#f0fff4,#e6fffa);border:1.5px solid #9ae6b4;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+    <div style="font-size:0.82rem;font-weight:700;color:var(--primary);margin-bottom:4px">🧩 Módulos clínicos — ${specialtyNames}</div>
+    <div style="font-size:0.75rem;color:#4a5568;margin-bottom:10px">Combina uno o más módulos para generar la nota SOAP. Los módulos del perfil activo del paciente aparecen primero.</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;margin-bottom:12px" id="moduleCheckboxes">
+      ${moduleCardsHTML}
+    </div>
+    ${otherHTML ? `<details style="margin-bottom:10px"><summary style="font-size:0.78rem;font-weight:600;color:#718096;cursor:pointer;user-select:none">📦 Otros módulos disponibles</summary><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;margin-top:8px">${otherHTML}</div></details>` : ''}
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="applySelectedModules()">✅ Aplicar módulos seleccionados</button>
+      <button class="btn btn-secondary btn-sm" onclick="clearModuleSelection()">🗑 Limpiar selección</button>
+      <span id="moduleCount" style="font-size:0.8rem;color:var(--primary);font-style:italic"></span>
+    </div>
+  </div>`;
+}
+
+function refreshModulePanel(patientId) {
+  const existing = document.getElementById('templatesPanel');
+  if (existing) existing.outerHTML = buildModulePanel(patientId || (window.currentPatient && window.currentPatient.id));
+}
+
+// ── 5. SPECIALTY SELECTOR UI ─────────────────────────────────────────────────
+function renderSpecialtySelector(currentPrimario, currentActivos) {
+  const activos = currentActivos || [];
+  const primario = currentPrimario || null;
+  let chips = SPECIALTY_CONFIGS.map(s => {
+    const isActive = activos.includes(s.id);
+    const isPrimary = primario === s.id;
+    const bg = isActive ? s.color : '#ffffff';
+    const txt = isActive ? s.textColor : '#4a5568';
+    const border = isActive ? 'none' : '1px solid #e2e8f0';
+    return `<div class="specialty-chip" data-sid="${s.id}" onclick="toggleSpecialtyChip('${s.id}')"
+      style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;background:${bg};color:${txt};border:${border};font-size:0.8rem;cursor:pointer;user-select:none;position:relative;transition:all 0.15s">
+      <span>${s.icon}</span><span>${s.label}</span>
+      ${isPrimary ? `<span style="position:absolute;top:-5px;right:-5px;background:#ffd700;color:#744210;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,0.2)" title="Perfil primario">★</span>` : ''}
+    </div>`;
+  }).join('');
+  return `<div class="form-group" id="specialtySelector">
+    <label style="font-weight:600;font-size:0.9rem">🏥 Perfiles clínicos del expediente</label>
+    <div style="font-size:0.8rem;color:#718096;margin-bottom:10px">Selecciona uno o más especialidades. Doble clic para marcar como perfil primario (★).</div>
+    <div id="specialtyChipsContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:8px;margin-bottom:8px">${chips}</div>
+    <input type="hidden" id="f_perfil_primario" value="${primario || ''}">
+    <input type="hidden" id="f_perfiles_activos" value="${JSON.stringify(activos)}">
+  </div>`;
+}
+
+function initSpecialtySelector(currentPrimario, currentActivos) {
+  // Remove existing selector to prevent duplicates
+  const existing = document.getElementById('specialtySelector');
+  if (existing) existing.remove();
+  // Find antecedentes group
+  const groups = Array.from(document.querySelectorAll('#patientModal .form-group'));
+  const antGroup = groups.find(g => { const lbl = g.querySelector('label'); return lbl && lbl.textContent.includes('Antecedentes'); });
+  const html = renderSpecialtySelector(currentPrimario, currentActivos);
+  if (antGroup) { antGroup.insertAdjacentHTML('afterend', html); }
+  else { const err = document.getElementById('modalError'); if (err) err.insertAdjacentHTML('beforebegin', html); }
+  // Double-click to set primary
+  const container = document.getElementById('specialtyChipsContainer');
+  if (container) {
+    container.addEventListener('dblclick', e => {
+      const chip = e.target.closest('.specialty-chip');
+      if (chip) { e.preventDefault(); setPrimarySpecialty(chip.dataset.sid); }
+    });
+  }
+}
+
+function toggleSpecialtyChip(specialtyId) {
+  const pIn = document.getElementById('f_perfil_primario');
+  const aIn = document.getElementById('f_perfiles_activos');
+  if (!pIn || !aIn) return;
+  let activos = JSON.parse(aIn.value || '[]');
+  let primario = pIn.value || null;
+  if (activos.includes(specialtyId)) {
+    activos = activos.filter(id => id !== specialtyId);
+    if (primario === specialtyId) primario = activos[0] || null;
+  } else {
+    activos.push(specialtyId);
+    if (!primario) primario = specialtyId; // auto-set first as primary
+  }
+  pIn.value = primario || '';
+  aIn.value = JSON.stringify(activos);
+  _updateSpecialtyChipsUI(primario, activos);
+}
+
+function setPrimarySpecialty(specialtyId) {
+  const pIn = document.getElementById('f_perfil_primario');
+  const aIn = document.getElementById('f_perfiles_activos');
+  if (!pIn || !aIn) return;
+  let activos = JSON.parse(aIn.value || '[]');
+  if (!activos.includes(specialtyId)) activos.push(specialtyId);
+  pIn.value = specialtyId;
+  aIn.value = JSON.stringify(activos);
+  _updateSpecialtyChipsUI(specialtyId, activos);
+}
+
+function _updateSpecialtyChipsUI(primario, activos) {
+  const container = document.getElementById('specialtyChipsContainer');
+  if (!container) return;
+  container.innerHTML = SPECIALTY_CONFIGS.map(s => {
+    const isActive = activos.includes(s.id);
+    const isPrimary = primario === s.id;
+    const bg = isActive ? s.color : '#ffffff';
+    const txt = isActive ? s.textColor : '#4a5568';
+    const border = isActive ? 'none' : '1px solid #e2e8f0';
+    return `<div class="specialty-chip" data-sid="${s.id}" onclick="toggleSpecialtyChip('${s.id}')"
+      style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;background:${bg};color:${txt};border:${border};font-size:0.8rem;cursor:pointer;user-select:none;position:relative;transition:all 0.15s">
+      <span>${s.icon}</span><span>${s.label}</span>
+      ${isPrimary ? `<span style="position:absolute;top:-5px;right:-5px;background:#ffd700;color:#744210;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700">★</span>` : ''}
+    </div>`;
+  }).join('');
+  // Re-bind dblclick
+  container.addEventListener('dblclick', e => {
+    const chip = e.target.closest('.specialty-chip');
+    if (chip) { e.preventDefault(); setPrimarySpecialty(chip.dataset.sid); }
+  });
+}
+
+function getSelectedProfiles() {
+  const pIn = document.getElementById('f_perfil_primario');
+  const aIn = document.getElementById('f_perfiles_activos');
+  return { perfil_primario: (pIn && pIn.value) || null, perfiles_activos: JSON.parse((aIn && aIn.value) || '[]') };
+}
+
+// ── 6. SPECIALTY BADGES FOR PATIENT VIEW ─────────────────────────────────────
+function renderSpecialtyBadges(patientId) {
+  const profile = getPatientProfile(patientId);
+  if (!profile || !profile.perfiles_activos || !profile.perfiles_activos.length) return '';
+  return profile.perfiles_activos.map(id => {
+    const s = getSpecialtyConfig(id);
+    if (!s) return '';
+    const star = profile.perfil_primario === id ? ' ★' : '';
+    return `<span style="display:inline-block;background:${s.color};color:${s.textColor};padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;margin-right:4px">${s.icon} ${s.label}${star}</span>`;
+  }).join('');
+}
+
+// ── 7. PATCH openNewPatient / editPatient ─────────────────────────────────────
+{
+  const _origONP = window.openNewPatient;
+  window.openNewPatient = function() {
+    _origONP && _origONP();
+    setTimeout(() => initSpecialtySelector(null, []), 80);
+  };
+  const _origEP = window.editPatient;
+  window.editPatient = function(id) {
+    _origEP && _origEP(id);
+    setTimeout(() => {
+      const p = getPatientProfile(id);
+      initSpecialtySelector(p.perfil_primario, p.perfiles_activos);
+    }, 80);
+  };
+}
+
+// ── 8. PATCH savePatient TO SAVE PROFILES ────────────────────────────────────
+{
+  const _origSP = window.savePatient;
+  window.savePatient = async function() {
+    // Get profiles BEFORE calling original (modal may close after)
+    const profiles = getSelectedProfiles();
+    await _origSP();
+    // After save, editingPatientId holds id for edits; for new patients we need to reload list
+    if (editingPatientId && (profiles.perfil_primario || profiles.perfiles_activos.length)) {
+      setPatientProfile(editingPatientId, profiles.perfil_primario, profiles.perfiles_activos)
+        .catch(e => console.warn('[Profiles] Could not save profile:', e.message));
+    }
+  };
+}
+
+// ── 9. PATCH openNoteModal TO REFRESH MODULE PANEL ───────────────────────────
+{
+  const _origONM = window.openNoteModal;
+  window.openNoteModal = function(patientId) {
+    _origONM && _origONM(patientId);
+    // Rebuild module panel for this patient's active profiles (after DOM ready)
+    setTimeout(() => refreshModulePanel(patientId), 60);
+  };
+}
+
+// ── 10. INIT: LOAD PROFILES ON PAGE LOAD ─────────────────────────────────────
+(function() {
+  loadPatientProfiles().catch(e => console.warn('[Profiles] Could not preload:', e.message));
 })();
 </script>
 </body>
