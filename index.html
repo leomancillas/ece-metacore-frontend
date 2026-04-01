@@ -8235,6 +8235,961 @@ Object.assign(WIZARD_BUILDERS, {
 
 ['reflujo_gerd', 'cirrosis', 'eii_crohn_colitis'].forEach(m => IMPLEMENTED_MODULES.add(m));
 
+
+// ════════════════════════════════════════════════════════════════════
+// TIER 3 SPECIALTY WIZARDS — Psiquiatría, Reumatología, Neurología
+// ════════════════════════════════════════════════════════════════════
+// ============================================================================
+// ECE META CORE - Módulos de Especialidad: PSIQUIATRÍA
+// Depresión Mayor | Trastorno Bipolar | Ansiedad / TEA
+// ============================================================================
+
+Object.assign(TEMPLATE_MODULES, {
+  depresion: {
+    label: 'Depresión Mayor',
+    diagnostico: 'Trastorno depresivo mayor, episodio único/recurrente (F32.1 / F33.1)',
+    sintomas: 'Síntomas depresivos (criterios DSM-5): estado de ánimo deprimido casi todos los días | anhedonia (pérdida de interés/placer) | cambio de peso: ganancia/pérdida en últimas semanas | insomnio de conciliación/mantenimiento/despertar precoz | hipersomnia | agitación/inhibición psicomotriz | fatiga intensa | sentimientos de inutilidad/culpa excesiva | dificultad de concentración | pensamientos recurrentes de muerte. Número de síntomas criterio presentes. Duración del episodio actual. PHQ-9 score (leve 5-9 / moderado 10-14 / moderadamente severo 15-19 / severo ≥20). Episodios previos. Antecedente familiar de TDM/TB. Ideación suicida: evaluación de riesgo completada.',
+    exfisica: 'Aspecto general (adecuado / descuido en higiene). Actitud (cooperadora / inhibida / agitada). Contacto visual (normal/reducido). Expresión facial (neutra/triste/tensa). Psicomotricidad (normal / inhibición psicomotriz / agitación). Habla (fluencia normal / disminuida / monotonía afectiva). Pensamiento (curso normal / lentificado / rumiativo). Afecto (eutímico / deprimido / embotado). Juicio y crítica (conservados/disminuidos). Orientación (conservada). Memoria (normal / quejas subjetivas).',
+    estudios: 'Laboratorio: TSH (descartar hipotiroidismo) · T4L · Hemograma (Hb, VCM — anemia macrocítica) · Glucosa · BUN/Cr · Función hepática · Vitamina B12 · Ácido fólico · Vitamina D 25-OH. Escalas: PHQ-9 · GAD-7 · MADRS · HAM-D17. EEG si atipicidad clínica. Niveles de antidepresivo si monitoreo.',
+    impresion: 'TDM [episodio único/recurrente] — severidad [leve/moderado/moderadamente severo/severo] — PHQ-9. Características especiales (síntomas melancólicos/atípicos/psicóticos/posparto/perimenopáusico/estacional). Respuesta al tratamiento actual. Riesgo suicida actual [bajo / moderado con plan de seguridad / alto — derivación urgente]. Comorbilidades psiquiátricas. Comorbilidades médicas relevantes.',
+    tx_farmaco: 'Primera línea: Sertralina 50-200 mg/día | Escitalopram 10-20 mg/día | Fluoxetina 20-60 mg/día | Venlafaxina XR 75-225 mg/día | Duloxetina 30-60 mg/día. Potenciación si respuesta parcial en 8 semanas: Aripiprazol 2-5 mg/día | Quetiapina XR 50 mg/noche | Buspirona 15-30 mg/día | Litio 300-600 mg/día | L-metifolato 15 mg/día. Mirtazapina 15-30 mg/noche si insomnio severo + anorexia. Bupropión XL 150-300 mg si fatiga/hipersomnia. Evitar IMAO sin supervisión especializada.',
+    tx_nofarmaco: 'Psicoterapia cognitivo-conductual (TCC) ≥16 sesiones. Activación conductual. Ejercicio aeróbico ≥30 min 3× semana. Higiene del sueño. TMS (si no respuesta a 2 AD adecuados por ≥8 semanas). TEC (si refractariedad/síntomas psicóticos/riesgo suicida alto/catatonia). Plan de seguridad escrito si ideación suicida.',
+    seguimiento: 'PHQ-9 en cada visita. Meta: reducción ≥50% a las 8 semanas. Respuesta: >50% mejoría. Remisión: PHQ-9 <5. Mantener AD al menos 6-9 meses (primer episodio) / indefinido si ≥2 episodios. Ajuste a las 2 semanas si nula respuesta. Cambio de AD si no respuesta a 4-6 semanas con dosis óptima. Derivar a psiquiatra si TDM severo/psicótico/riesgo suicida/no respuesta a 2 AD.'
+  },
+  trastorno_bipolar: {
+    label: 'Trastorno Bipolar',
+    diagnostico: 'Trastorno bipolar tipo I (F31.9) / tipo II (F31.81) / ciclotimia (F34.0)',
+    sintomas: 'Fase actual (eutimia / episodio depresivo / episodio hipomaníaco / episodio maníaco / episodio mixto / ciclación rápida). Síntomas de la fase actual: tristeza/anhedonia (depresiva) | euforia/grandiosidad/irritabilidad (maníaca) | energía aumentada/disminuida | insomnio/hipersomnia | pensamientos acelerados/lentos | impulsividad/conductas de riesgo | agitación/inhibición. Episodios a lo largo de la vida: depresivos/maníacos/hipomaníacos/mixtos. Hospitalizaciones psiquiátricas previas. Ciclación rápida (≥4 episodios/año). Ciclos actuales por año. Adherencia a estabilizadores del ánimo. Abuso de sustancias (activo: sí/no). Ideación suicida actual.',
+    exfisica: 'Examen del estado mental: Aspecto (adecuado/eufórico-excitado/deteriorado). Psicomotricidad (normal/aumentada maníaca/inhibida depresiva). Habla (normal/taquipsiquia-logorrea maníaca/bradilalia depresiva). Pensamiento (normal/fuga de ideas maníaca/rumiativo depresivo). Afecto (eutímico/expansivo-eufórico/deprimido/disfórico-mixto/lábil). Juicio/crítica (conservados/disminuidos maníaca). Sueño referido (normal / reducido sin cansancio maníaco / insomnio con fatiga depresivo / hipersomnia).',
+    estudios: 'Laboratorio (monitoreo): Litemia (meta 0.6-1.0 mantenimiento / 0.8-1.2 manía aguda — tóxico si >1.5) · Función renal (Cr, TFGe) · Tiroides (TSH, T4L) — hipotiroidismo en 20-40% con litio. Ácido valproico (meta 50-100 / manía aguda 85-125 μg/mL). Lamotrigina. Hemograma, hepático. ECG (QTc prolongado por antipsicóticos/litio). YMRS (manía ≥12). MADRS/PHQ-9 en fase depresiva. Neuroimagen si primer episodio o atipicidad.',
+    impresion: 'TB [tipo I / tipo II / ciclotimia / NE] — Fase actual [eutimia / depresión / hipomanía / manía / mixto]. Severidad actual [leve/moderada/grave]. Número de episodios totales (depresivos/maníacos). Ciclación rápida [sí/no]. Riesgo suicida [bajo/moderado/alto — plan de seguridad]. Adherencia a tratamiento [buena/regular/mala]. Nivel de funcionamiento psicosocial [conservado/deteriorado]. Abuso de sustancias activo [sí/no].',
+    tx_farmaco: 'Estabilizador del ánimo base: Litio (inicio 300 mg c/8h → litemia 0.6-1.0 mEq/L — control renal+TSH c/6m) | Ácido valproico (500-2000 mg/día, nivel 50-100 μg/mL — control hepático+hemograma) | Lamotrigina (inicio 25 mg → 100-200 mg/día, escalar muy lentamente — riesgo SJS). Antipsicótico atípico si manía o ciclación: Quetiapina 300-800 mg/día | Aripiprazol 15-30 mg/día | Olanzapina 10-20 mg/día | Risperidona 2-4 mg/día. Fase depresiva bipolar: Quetiapina 300 mg/noche ó Cariprazina 1.5-3 mg/día. EVITAR antidepresivos en monoterapia (inducen ciclación/virage).',
+    tx_nofarmaco: 'Psicoeducación sobre la enfermedad (fundamental para adherencia). Rutinas estrictas de sueño (desajuste precipita episodios). Identificación de señales de alarma tempranas (carta de alerta personal). Terapia cognitivo-conductual para TB. Grupos de apoyo. Reducción de alcohol/cannabis. Plan de manejo de crisis escrito. Evitar turnos nocturnos/jet lag. Apoyo familiar psicoeducativo.',
+    seguimiento: 'YMRS + MADRS en cada visita. Litemia c/3 meses (estable) / c/1 mes (ajuste). TSH + Cr + Ca c/6-12 meses si litio. Hepático + hemograma c/6 meses si valproato. Peso + glucosa + perfil lipídico si antipsicótico atípico. Consulta urgente si: manía/depresión severa / ideación suicida activa / comportamiento de riesgo grave.'
+  },
+  ansiedad_tea: {
+    label: 'Ansiedad / TEA',
+    diagnostico: 'Trastorno de ansiedad generalizada (F41.1) / Trastorno de pánico (F41.0) / TEA (F84.0)',
+    sintomas: 'Tipo de trastorno: TAG (preocupación excesiva e incontrolable ≥6 meses) | Trastorno de pánico (ataques recurrentes inesperados + miedo a nuevos ataques) | Fobia social (miedo a situaciones sociales/evaluación) | TEPT (reexperiencia/evitación/hipervigilancia tras trauma) | TEA (rigidez/intereses restringidos/comunicación alterada) | Mixto TAG+TP. Síntomas de ansiedad: preocupación excesiva/incontrolable | tensión muscular | fatigabilidad | dificultad de concentración | irritabilidad | insomnio de conciliación | taquicardia | diaforesis | disnea | mareo | parestesias | desrealización. Ataques de pánico: frecuencia y intensidad. Evitación agorafóbica. GAD-7 score (leve 5-9 / moderado 10-14 / severo ≥15). Impacto funcional (laboral/social/académico). Tiempo de evolución.',
+    exfisica: 'Examen del estado mental: Aspecto (adecuado/tenso-vigilante). Contacto visual (normal/reducido especialmente TEA). Comunicación (normal/dificultad pragmática/ecolalia TEA). Intereses restringidos (ausentes/presentes). Comportamientos repetitivos/estereotipados. Hiper/hiposensibilidad sensorial (visual/auditiva/táctil/vestibular). Psicomotricidad (normal/inquietud motora/estereotipias). Afecto (eutímico/ansioso/tenso/constreñido). Cognición si TEA (ADOS-2/ADI-R si evaluación diagnóstica).',
+    estudios: 'GAD-7 · PHQ-9 (comorbilidad depresiva) · PDSS (pánico). Laboratorio: TSH (hipertiroidismo) · Glucosa (hipoglucemia) · Cortisol matutino · Catecolaminas/metanefrinas si HTA+palpitaciones. ECG (QTc antes de ISRS/IRSN/antipsicóticos). ADHD-RS si TDAH comórbido. Para TEA: evaluación neuropsicológica, ADOS-2, pruebas de inteligencia, evaluación del lenguaje. EEG si convulsiones comórbidas en TEA.',
+    impresion: '[TAG / TP / Fobia social / TEPT / TEA / Mixto] — severidad [leve/moderada/severa] — GAD-7. Impacto funcional [laboral/académico/social]. Respuesta al tratamiento actual [no tratado / respondedor parcial / en remisión]. Comorbilidades (TDM / TDAH / insomnio crónico / uso de sustancias). Para TEA: nivel de soporte requerido (DSM-5 nivel 1/2/3). Causa orgánica descartada [sí/no pendiente].',
+    tx_farmaco: 'TAG/TP primera línea: Escitalopram 10-20 mg/día | Sertralina 50-200 mg/día | Paroxetina CR 25-62.5 mg/día | Venlafaxina XR 75-225 mg/día. Segunda línea: Buspirona 15-60 mg/día (solo TAG) | Pregabalina 150-600 mg/día | Duloxetina 60-120 mg/día. Benzodiazepinas (solo corto plazo ≤4 semanas / crisis): Clonazepam 0.5-1 mg c/12h | Alprazolam 0.25-0.5 mg c/8h — RIESGO DEPENDENCIA. Betabloqueador (ansiedad de ejecución): Propranolol 10-40 mg antes evento. Para TEA: Risperidona 0.5-2 mg/día si irritabilidad/agresividad | Aripiprazol 2-15 mg/día | Melatonina 3-10 mg si insomnio.',
+    tx_nofarmaco: 'TCC con exposición progresiva (gold standard TP/fobias/TEPT). TCC para TAG + mindfulness-based stress reduction (MBSR). Técnicas relajación (respiración diafragmática, relajación muscular progresiva). Ejercicio regular. Reducir cafeína y alcohol. Para TEA: Terapia de integración sensorial, ABA (análisis de conducta aplicado), TEACCH, acompañamiento terapéutico, psicoeducación familiar, inclusión educativa adaptada.',
+    seguimiento: 'GAD-7 en cada visita. Meta: GAD-7 <5. No suspender ISRS abruptamente (síndrome discontinuación). Discontinuar benzodiazepinas gradualmente si >4 semanas. Derivar a psicólogo para TCC. Para TEA: equipo multidisciplinario (psiquiatría + neurología + psicología + terapia ocupacional + logopedia). Monitorear peso/glucosa si antipsicótico en TEA.'
+  }
+});
+
+Object.assign(WIZARD_SCHEMA, {
+  depresion: {
+    title: '🌧️ Depresión Mayor',
+    sections: [
+      {
+        title: 'PHQ-9 y Síntomas Depresivos',
+        fields: [
+          { id: 'phq9_rango', type: 'select', label: 'Severidad PHQ-9', options: ['PHQ-9 <5 — Sin depresión', 'PHQ-9 5-9 — Leve', 'PHQ-9 10-14 — Moderado', 'PHQ-9 15-19 — Mod. severo', 'PHQ-9 ≥20 — Severo'] },
+          { id: 'phq9_score', type: 'number', label: 'PHQ-9 Score (0-27)', min: 0, max: 27, step: 1 },
+          { id: 'semanas_episodio', type: 'number', label: 'Duración del episodio (semanas)', min: 1, max: 260, step: 1 },
+          { id: 'episodios_previos', type: 'select', label: 'Historia de episodios', options: ['Primer episodio', '1 episodio previo', '2 episodios previos', '≥3 episodios recurrentes'] }
+        ]
+      },
+      {
+        title: 'Características Clínicas',
+        fields: [
+          { id: 'anhedonia_presente', type: 'checkbox', label: 'Anhedonia (pérdida de interés/placer)' },
+          { id: 'cambio_peso_significativo', type: 'checkbox', label: 'Cambio de peso significativo' },
+          { id: 'insomnio_severo', type: 'checkbox', label: 'Insomnio severo o hipersomnia' },
+          { id: 'agitacion_inhibicion_psicomotriz', type: 'checkbox', label: 'Agitación o inhibición psicomotriz' },
+          { id: 'fatiga_severa', type: 'checkbox', label: 'Fatiga intensa / pérdida de energía' },
+          { id: 'culpa_inutilidad', type: 'checkbox', label: 'Sentimientos de culpa excesiva / inutilidad' },
+          { id: 'dificultad_concentracion', type: 'checkbox', label: 'Dificultad de concentración' },
+          { id: 'caracteristicas_especiales', type: 'select', label: 'Características especiales del episodio', options: ['Sin características especiales', 'Con síntomas melancólicos', 'Con síntomas atípicos', 'Con síntomas psicóticos', 'Inicio posparto', 'Patrón estacional'] }
+        ]
+      },
+      {
+        title: 'Evaluación de Riesgo y Comorbilidades',
+        fields: [
+          { id: 'riesgo_suicida', type: 'select', label: 'Riesgo suicida', options: ['Sin ideación suicida', 'Ideación pasiva — sin plan', 'Ideación activa sin plan', 'Ideación activa con plan — URGENTE'] },
+          { id: 'plan_seguridad_aplicado', type: 'checkbox', label: 'Plan de seguridad aplicado' },
+          { id: 'comorbilidad_ansiedad', type: 'checkbox', label: 'Comorbilidad: TAG/Ansiedad' },
+          { id: 'comorbilidad_sustancias', type: 'checkbox', label: 'Comorbilidad: Abuso de sustancias' },
+          { id: 'comorbilidad_tdah', type: 'checkbox', label: 'Comorbilidad: TDAH' },
+          { id: 'ahf_psiquiatrico', type: 'select', label: 'Antecedente familiar psiquiátrico', options: ['Sin AHF', 'AHF de TDM', 'AHF de Trastorno Bipolar', 'AHF de psicosis', 'AHF de suicidio'] }
+        ]
+      },
+      {
+        title: 'Tratamiento Actual',
+        fields: [
+          { id: 'ad_actual', type: 'select', label: 'Antidepresivo actual', options: ['Sin antidepresivo', 'ISRS', 'IRSN', 'NaSSA (mirtazapina)', 'NDRI (bupropión)', 'Tricíclico', 'Otro'] },
+          { id: 'respuesta_ad', type: 'select', label: 'Respuesta al tratamiento', options: ['Sin tratamiento', 'No iniciado', 'Respondedor parcial ≥25%', 'Respondedor >50%', 'Remisión (PHQ-9 <5)', 'No respondedor', 'Intolerante'] },
+          { id: 'potenciacion_activa', type: 'checkbox', label: 'Con potenciación farmacológica' },
+          { id: 'psicoterapia_activa', type: 'checkbox', label: 'En psicoterapia TCC / otra' },
+          { id: 'tms_tec_indicado', type: 'checkbox', label: 'TMS / TEC indicado o en curso' }
+        ]
+      }
+    ]
+  },
+
+  trastorno_bipolar: {
+    title: '🔄 Trastorno Bipolar',
+    sections: [
+      {
+        title: 'Tipo y Fase Actual',
+        fields: [
+          { id: 'tipo_tb', type: 'select', label: 'Tipo de Trastorno Bipolar', options: ['TB Tipo I', 'TB Tipo II', 'Ciclotimia', 'TB No Especificado'] },
+          { id: 'fase_actual_tb', type: 'select', label: 'Fase actual', options: ['Eutimia', 'Episodio depresivo', 'Hipomanía', 'Manía', 'Estado mixto', 'Ciclación rápida'] },
+          { id: 'ymrs_score', type: 'number', label: 'YMRS Score (0-60)', min: 0, max: 60, step: 1 },
+          { id: 'severidad_fase', type: 'select', label: 'Severidad de la fase actual', options: ['Leve', 'Moderada', 'Grave', 'En remisión'] }
+        ]
+      },
+      {
+        title: 'Historia de Episodios y Riesgo',
+        fields: [
+          { id: 'episodios_depresivos', type: 'number', label: 'Total episodios depresivos a lo largo de vida', min: 0, max: 100, step: 1 },
+          { id: 'episodios_maniacos', type: 'number', label: 'Total episodios maníacos/hipomaníacos', min: 0, max: 100, step: 1 },
+          { id: 'hospitalizaciones_psiq', type: 'number', label: 'Hospitalizaciones psiquiátricas previas', min: 0, max: 50, step: 1 },
+          { id: 'riesgo_suicida_tb', type: 'select', label: 'Riesgo suicida actual', options: ['Sin ideación suicida', 'Ideación pasiva', 'Ideación activa sin plan', 'Ideación activa con plan — URGENTE'] },
+          { id: 'ciclacion_rapida', type: 'checkbox', label: 'Ciclación rápida (≥4 episodios/año)' },
+          { id: 'sustancias_activo_tb', type: 'checkbox', label: 'Abuso de sustancias activo' }
+        ]
+      },
+      {
+        title: 'Laboratorio y Monitoreo',
+        fields: [
+          { id: 'litemia', type: 'number', label: 'Litemia (mEq/L)', min: 0, max: 3, step: 0.01 },
+          { id: 'litemia_en_rango', type: 'checkbox', label: 'Litemia en rango terapéutico (0.6-1.0)' },
+          { id: 'nivel_valproato', type: 'number', label: 'Nivel ácido valproico (μg/mL)', min: 0, max: 200, step: 1 },
+          { id: 'qtc_psiq', type: 'number', label: 'QTc (ms)', min: 300, max: 600, step: 1 },
+          { id: 'tsh_psiq', type: 'number', label: 'TSH (mIU/L)', min: 0, max: 20, step: 0.01 },
+          { id: 'tfge_psiq', type: 'number', label: 'TFGe (mL/min)', min: 0, max: 200, step: 1 },
+          { id: 'litio_hipotiroidismo', type: 'checkbox', label: 'Hipotiroidismo secundario a litio' }
+        ]
+      },
+      {
+        title: 'Tratamiento y Adherencia',
+        fields: [
+          { id: 'estabilizador_animo', type: 'select', label: 'Estabilizador del ánimo', options: ['Sin estabilizador', 'Litio', 'Ácido valproico', 'Lamotrigina', 'Carbamazepina', 'Combinación'] },
+          { id: 'antipsicótico_atipico_tb', type: 'checkbox', label: 'Antipsicótico atípico coadyuvante' },
+          { id: 'adherencia_tb', type: 'select', label: 'Adherencia al tratamiento', options: ['Buena adherencia', 'Adherencia irregular', 'Mal cumplimiento', 'Sin tratamiento'] },
+          { id: 'psicoeducacion_completada', type: 'checkbox', label: 'Psicoeducación completada' },
+          { id: 'plan_crisis_escrito', type: 'checkbox', label: 'Plan de manejo de crisis escrito' }
+        ]
+      }
+    ]
+  },
+
+  ansiedad_tea: {
+    title: '🌊 Ansiedad / TEA',
+    sections: [
+      {
+        title: 'Diagnóstico y Severidad',
+        fields: [
+          { id: 'tipo_ansiedad', type: 'select', label: 'Tipo de trastorno de ansiedad', options: ['TAG — Ansiedad Generalizada', 'Trastorno de Pánico', 'Fobia Social', 'TEPT', 'TEA — Espectro Autista', 'Mixto (TAG+TP)'] },
+          { id: 'severidad_ansiedad', type: 'select', label: 'Severidad actual', options: ['Sin síntomas o remisión', 'Leve', 'Moderada', 'Severa'] },
+          { id: 'gad7_score', type: 'number', label: 'GAD-7 Score (0-21)', min: 0, max: 21, step: 1 },
+          { id: 'gad7_rango', type: 'select', label: 'Rango GAD-7', options: ['GAD-7 <5 — Mínima / sin síntomas', 'GAD-7 5-9 — Leve', 'GAD-7 10-14 — Moderada', 'GAD-7 ≥15 — Severa'] }
+        ]
+      },
+      {
+        title: 'Síntomas Específicos e Impacto Funcional',
+        fields: [
+          { id: 'ataques_panico', type: 'checkbox', label: 'Ataques de pánico presentes' },
+          { id: 'evitacion_agorafobica', type: 'checkbox', label: 'Evitación agorafóbica' },
+          { id: 'insomnio_ansiedad', type: 'checkbox', label: 'Insomnio de conciliación relacionado a ansiedad' },
+          { id: 'sintomas_somaticos_ansiedad', type: 'checkbox', label: 'Síntomas somáticos prominentes (taquicardia/mareo/diaforesis)' },
+          { id: 'impacto_funcional', type: 'select', label: 'Impacto funcional', options: ['Sin deterioro', 'Deterioro leve', 'Deterioro moderado', 'Deterioro severo — incapacidad laboral'] }
+        ]
+      },
+      {
+        title: 'TEA — Espectro Autista (si aplica)',
+        fields: [
+          { id: 'tea_diagnostico_formal', type: 'checkbox', label: 'TEA — diagnóstico formal previo (ADOS-2/ADI-R)' },
+          { id: 'tea_nivel', type: 'select', label: 'Nivel de soporte requerido (DSM-5)', options: ['Nivel 1 — Soporte leve', 'Nivel 2 — Soporte sustancial', 'Nivel 3 — Soporte muy sustancial', 'No aplica'] },
+          { id: 'tea_intereses_restringidos', type: 'checkbox', label: 'Intereses restringidos / patrones de comportamiento rígidos' },
+          { id: 'tea_comunicacion_alterada', type: 'checkbox', label: 'Comunicación alterada (dificultad pragmática/social)' },
+          { id: 'tea_sensorialidad_alterada', type: 'checkbox', label: 'Sensorialidad alterada (hiper/hiposensibilidad)' },
+          { id: 'tea_aba_activo', type: 'checkbox', label: 'En terapia ABA / TEACCH / integración sensorial' }
+        ]
+      },
+      {
+        title: 'Tratamiento Farmacológico',
+        fields: [
+          { id: 'isrs_irsn_ansiedad', type: 'select', label: 'ISRS/IRSN actual', options: ['Sin ISRS/IRSN', 'Escitalopram', 'Sertralina', 'Paroxetina', 'Venlafaxina', 'Duloxetina', 'Otro'] },
+          { id: 'benzo_activo', type: 'checkbox', label: 'Benzodiazepina activa (≤4 semanas de uso)' },
+          { id: 'pregabalina_activo', type: 'checkbox', label: 'Pregabalina activa' },
+          { id: 'respuesta_tratamiento_ans', type: 'select', label: 'Respuesta al tratamiento', options: ['Sin tratamiento farmacológico', 'Respondedor parcial (<50%)', 'Respondedor >50%', 'En remisión (GAD-7 <5)', 'No respondedor'] },
+          { id: 'tcc_activo', type: 'checkbox', label: 'En TCC / psicoterapia con psicólogo' }
+        ]
+      }
+    ]
+  }
+});
+
+function buildDepresionNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const sintomas_presentes = [];
+  if (v('anhedonia_presente')) sintomas_presentes.push('anhedonia');
+  if (v('cambio_peso_significativo')) sintomas_presentes.push('cambio de peso');
+  if (v('insomnio_severo')) sintomas_presentes.push('insomnio/hipersomnia');
+  if (v('agitacion_inhibicion_psicomotriz')) sintomas_presentes.push('alteración psicomotriz');
+  if (v('fatiga_severa')) sintomas_presentes.push('fatiga severa');
+  if (v('culpa_inutilidad')) sintomas_presentes.push('culpa/inutilidad');
+  if (v('dificultad_concentracion')) sintomas_presentes.push('dificultad concentración');
+
+  const riesgo_suicida_texto = {
+    'Sin ideación suicida': 'Bajo',
+    'Ideación pasiva — sin plan': 'Bajo-moderado',
+    'Ideación activa sin plan': 'Moderado',
+    'Ideación activa con plan — URGENTE': 'Alto — REQUIERE INTERVENCIÓN URGENTE'
+  }[v('riesgo_suicida')] || 'No especificado';
+
+  const comorbilidades = [];
+  if (v('comorbilidad_ansiedad')) comorbilidades.push('TAG/Ansiedad');
+  if (v('comorbilidad_sustancias')) comorbilidades.push('Abuso de sustancias');
+  if (v('comorbilidad_tdah')) comorbilidades.push('TDAH');
+
+  return {
+    sintomas: `Síntomas depresivos presentes: ${sintomas_presentes.length > 0 ? sintomas_presentes.join(', ') : 'Ninguno documentado'}. PHQ-9: ${n('phq9_score')}/27 (${v('phq9_rango')}). Duración del episodio actual: ${n('semanas_episodio')} semanas. Patrón de episodios previos: ${v('episodios_previos')}.`,
+    impresion: `Trastorno Depresivo Mayor, ${v('episodios_previos')} (severidad: ${v('phq9_rango')}). Características especiales: ${v('caracteristicas_especiales')}. Respuesta al tratamiento: ${v('respuesta_ad')}. Riesgo suicida: ${riesgo_suicida_texto}. Comorbilidades psiquiátricas: ${comorbilidades.length > 0 ? comorbilidades.join(', ') : 'Sin comorbilidades documentadas'}. Antecedente familiar: ${v('ahf_psiquiatrico')}. Medicación: ${v('ad_actual')}. Estado actual de tratamiento: ${v('potenciacion_activa') ? 'En potenciación farmacológica. ' : ''}${v('psicoterapia_activa') ? 'En psicoterapia TCC. ' : ''}${v('tms_tec_indicado') ? 'TMS/TEC indicado.' : ''}`
+  };
+}
+
+function buildTrastornoBipolarNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const litemia_interpretacion = (() => {
+    const lit = parseFloat(wv(mk, 'litemia'));
+    if (isNaN(lit)) return 'Pendiente';
+    if (lit < 0.6) return `${lit} mEq/L — SUBTERAPEÚTICO`;
+    if (lit > 1.5) return `${lit} mEq/L — TÓXICO`;
+    if (lit >= 0.6 && lit <= 1.0) return `${lit} mEq/L — En rango (mantenimiento)`;
+    if (lit > 1.0) return `${lit} mEq/L — En rango superior (manía aguda)`;
+    return `${lit} mEq/L`;
+  })();
+
+  const riesgo_suicida_texto = {
+    'Sin ideación suicida': 'Bajo',
+    'Ideación pasiva': 'Bajo-moderado',
+    'Ideación activa sin plan': 'Moderado',
+    'Ideación activa con plan — URGENTE': 'Alto — REQUIERE INTERVENCIÓN URGENTE'
+  }[v('riesgo_suicida_tb')] || 'No especificado';
+
+  return {
+    sintomas: `Tipo: ${v('tipo_tb')}. Fase actual: ${v('fase_actual_tb')} (YMRS ${n('ymrs_score')}/60). Severidad: ${v('severidad_fase')}. Episodios a lo largo de vida: ${n('episodios_depresivos')} depresivos, ${n('episodios_maniacos')} maníacos/hipomaníacos. Hospitalizaciones previas: ${n('hospitalizaciones_psiq')}. Ciclación rápida: ${v('ciclacion_rapida') ? 'Sí' : 'No'}. Abuso de sustancias: ${v('sustancias_activo_tb') ? 'Activo' : 'Negado'}.`,
+    impresion: `Trastorno Bipolar ${v('tipo_tb')} en fase de ${v('fase_actual_tb')} (YMRS ${n('ymrs_score')}/60, severidad ${v('severidad_fase')}). Litemia: ${litemia_interpretacion}. TSH: ${n('tsh_psiq')} mIU/L${v('litio_hipotiroidismo') ? ' — Hipotiroidismo por litio documentado' : ''}. QTc: ${n('qtc_psiq')} ms. Riesgo suicida: ${riesgo_suicida_texto}. Adherencia: ${v('adherencia_tb')}. Estabilizador del ánimo: ${v('estabilizador_animo')}${v('antipsicótico_atipico_tb') ? ' + antipsicótico atípico' : ''}. ${v('plan_crisis_escrito') ? 'Plan de crisis documentado. ' : ''}${v('psicoeducacion_completada') ? 'Psicoeducación completada.' : ''}`
+  };
+}
+
+function buildAnsiedadTeaNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const sintomas_ansiedad = [];
+  if (v('ataques_panico')) sintomas_ansiedad.push('ataques de pánico');
+  if (v('evitacion_agorafobica')) sintomas_ansiedad.push('evitación agorafóbica');
+  if (v('insomnio_ansiedad')) sintomas_ansiedad.push('insomnio');
+  if (v('sintomas_somaticos_ansiedad')) sintomas_ansiedad.push('síntomas somáticos prominentes');
+
+  const tea_sintomas = [];
+  if (v('tea_intereses_restringidos')) tea_sintomas.push('intereses restringidos/rigidez');
+  if (v('tea_comunicacion_alterada')) tea_sintomas.push('comunicación alterada');
+  if (v('tea_sensorialidad_alterada')) tea_sintomas.push('sensorialidad alterada');
+
+  const nota_tea = v('tea_diagnostico_formal') ?
+    ` TEA diagnosticado formalmente (Nivel ${v('tea_nivel')}). Características: ${tea_sintomas.length > 0 ? tea_sintomas.join(', ') : 'Sin detalles'}. ${v('tea_aba_activo') ? 'En terapia ABA/TEACCH.' : ''}` : '';
+
+  return {
+    sintomas: `Tipo de trastorno de ansiedad: ${v('tipo_ansiedad')}. Severidad: ${v('severidad_ansiedad')}. GAD-7: ${n('gad7_score')}/21 (${v('gad7_rango')}). Síntomas presentes: ${sintomas_ansiedad.length > 0 ? sintomas_ansiedad.join(', ') : 'No especificados'}. Impacto funcional: ${v('impacto_funcional')}.${nota_tea}`,
+    impresion: `${v('tipo_ansiedad')} — Severidad ${v('severidad_ansiedad')} (GAD-7 ${n('gad7_score')}/21). Impacto funcional: ${v('impacto_funcional')}. Medicación: ${v('isrs_irsn_ansiedad')}${v('benzo_activo') ? ' + benzodiazepina (uso ≤4 sem)' : ''}${v('pregabalina_activo') ? ' + pregabalina' : ''}. Respuesta: ${v('respuesta_tratamiento_ans')}. ${v('tcc_activo') ? 'En psicoterapia TCC. ' : ''}${nota_tea}`
+  };
+}
+
+Object.assign(WIZARD_BUILDERS, {
+  depresion: buildDepresionNote,
+  trastorno_bipolar: buildTrastornoBipolarNote,
+  ansiedad_tea: buildAnsiedadTeaNote
+});
+
+['depresion', 'trastorno_bipolar', 'ansiedad_tea'].forEach(m => IMPLEMENTED_MODULES.add(m));
+
+// ECE META CORE - Módulos de Reumatología
+// Tres especialidades: Artritis Reumatoide, Lupus Eritematoso Sistémico, Gota
+
+Object.assign(TEMPLATE_MODULES, {
+  artritis_reumatoide: {
+    label: 'Artritis Reumatoide',
+    diagnostico: 'Artritis reumatoide, seropositiva (M05.79) / seronegativa (M06.09)',
+    sintomas: `Articulaciones afectadas: [metacarpofalángicas (MCF) / interfalángicas proximales (IFP) / muñecas / tobillos / rodillas / codos / hombros / pies / cervical — número total articulaciones: __]. Dolor articular: EVA __/10 · duración: desde hace __ meses/años. Rigidez matutina: __ minutos (>30 min = inflamatoria). Tumefacción articular: [no/sí — articulaciones: __]. Deformidades establecidas: [no/sí — tipo: desviación cubital/cuello de cisne/ojal de boutonnière/hallux valgus]. Síntomas sistémicos: [fatiga EVA __/10 / fiebre baja / pérdida de peso __ kg]. Manifestaciones extraarticulares: [nódulos reumatoides / queratoconjuntivitis sicca (SS secundario) / vasculitis reumatoide / EP intersticial / pericarditis / escleritis]. Adherencia a FAME: [buena/regular/mala — motivo: __].`,
+    exfisica: `Articulaciones exploradas (66/68 articulaciones): tumefactas: __ / dolorosas: __. DAS-28 (VSG o PCR): __. Articulaciones con mayor afección: [MCF 2°-3° / IFP / muñecas / rodillas]. Deformidades: [ausentes / desviación cubital / cuello de cisne / boutonnière / valgus tobillo]. Nódulos subcutáneos: [no/sí — localización olécranon/otros: __]. Signos sistémicos: [sicca — xeroftalmia/xerostomía / vasculitis cutánea — púrpura palpable / linfadenopatía].`,
+    estudios: `FR (factor reumatoide): __ UI/mL [neg <20 / positivo bajo 20-60 / positivo alto >60]. Anti-CCP: __ U/mL [neg <17 / positivo bajo 17-100 / positivo alto >100] (especificidad 95%, 10 años antes del diagnóstico). PCR: __ mg/L · VSG: __ mm/h · Hemograma: Hb __ (anemia inflamatoria). Función renal: Cr __ · TFGe __ (para ajuste de FAME). Hepático: ALT __ AST __ (metotrexate). Rx manos y pies (bilateral): [sin erosiones / erosiones periarticulares — localización: __ / estrechamiento del espacio articular / geodes]. USG articular: sinovitis [no/sí — articulaciones: __ / señal Power Doppler: grado __/3]. RMN manos si erosiones tempranas: [edema óseo / erosiones / sinovitis].`,
+    impresion: `AR [seropositiva FR+/CCP+ / seronegativa] — actividad DAS-28: [remisión <2.6 / actividad baja 2.6-3.2 / moderada 3.2-5.1 / alta >5.1] — DAS-28: __. Estadio radiológico Larsen: __/5. Manifestaciones extraarticulares: [presentes — tipo: __ / ausentes]. Respuesta a FAME actual: [en remisión / actividad baja — T2T alcanzado / actividad moderada-alta — requiere escalada]. Factores de mal pronóstico: [FR+ y/o CCP+ / erosiones tempranas / enfermedad poliarticular / comorbilidades / tabaquismo activo].`,
+    tx_farmaco: `FAME convencional (primera línea): Metotrexate 10-25 mg/sem VO o SC + ácido fólico 5 mg 24h post-MTX (reducir toxicidad) + Hidroxicloroquina 200-400 mg/día + Sulfasalazina 2-3 g/día (triple terapia si alto riesgo). Si contraindicación MTX: Leflunomida 20 mg/día. FAME biológico (si DAS-28 >3.2 tras 3-6 meses de MTX óptimo): Anti-TNF: [Adalimumab 40 mg SC c/2 sem / Etanercept 50 mg SC c/sem / Infliximab 3-5 mg/kg IV c/8 sem]. Anti-CD20: [Rituximab 2×1000 mg IV c/6 meses — si FR+/anti-CCP+]. Anti-IL-6: Tocilizumab 162 mg SC c/sem. JAK inhibidores (si fallo a biológico): Baricitinib 4 mg/día / Tofacitinib 5 mg c/12h / Upadacitinib 15 mg/día. Corticoide puente: Prednisona ≤10 mg/día (mínima dosis × mínimo tiempo) ó inyección intraarticular. AINEs: naproxeno/diclofenaco corto plazo para dolor.`,
+    tx_nofarmaco: `Rehabilitación: fisioterapia y terapia ocupacional (conservar función articular). Férulas en posición funcional para muñecas. Ejercicio en agua (menor impacto articular). Protección articular: adaptaciones ergonómicas. Cesación tabáquica (tabaco = factor de riesgo y peor respuesta al MTX). Vacunación antes de biológico: VHB + influenza + neumococo (VVZ si no inmune ANTES del biológico). Nutrición antiinflamatoria: dieta mediterránea + omega-3.`,
+    seguimiento: `DAS-28 en cada visita (meta: remisión DAS-28 <2.6 ó actividad baja <3.2 si comorbilidades). Laboratorio c/3 meses: hemograma + hepático + Cr (toxicidad MTX/leflunomida). Rx manos c/1-2 años. USG articular si duda sobre actividad clínica vs. daño estructural. Derivar urgente si: vasculitis/escleritis/EP intersticial/articulación cervical inestable.`
+  },
+  lupus: {
+    label: 'Lupus Eritematoso Sistémico',
+    diagnostico: 'Lupus eritematoso sistémico (M32.9) / con órgano afectado',
+    sintomas: `Manifestaciones actuales por órgano/sistema: [Constitucional: fiebre/fatiga/pérdida de peso / Musculoesquelético: artritis/artralgia/miositis / Cutáneo: rash malar/fotosensibilidad/úlceras orales/alopecia/vasculitis/livedo / Renal: proteinuria/hematuria/HAS/edema / Neuropsiquiátrico: cefalea/convulsiones/psicosis/accidente isquémico / Serositis: pleuritis/pericarditis / Hematológico: trombocitopenia/anemia hemolítica/linfopenia / Trombosis (antiSAF): TVP/TEP/ACV arterial]. SLEDAI-2K: __/105 (actividad: 0=sin actividad / 1-5=leve / 6-10=moderada / 11-19=severa / ≥20=muy severa). Brotes en último año: __ (leves/moderados/severos). Medicamentos actuales y adherencia: [HCQ __ mg/día — adherencia: buena/regular/mala / Prednisona __ mg/día — duración: __ meses / Inmunosupresor: __].`,
+    exfisica: `Peso: __ kg · TA: __/__ mmHg (HAS si nefritis lúpica). Piel/mucosas: rash malar (mejillas, respeta surco nasolabial): [no/sí] · Rash discoide: [no/sí — localización: __] · Úlceras orales/nasales: [no/sí — dolorosas/indoloras] · Alopecia no cicatrizal: [no/sí]. Articulaciones: tumefacción [no/sí — articulaciones: __] · Artropatía de Jaccoud (deformidades reductibles): [no/sí]. Serosas: roce pleural [no/sí] · roce pericárdico [no/sí]. Adenopatías: [no/sí — tamaño: __ cm]. Edema: [no/sí — grado: __ — distribución: __]. SNC: focalidad neurológica: [no/sí — descripción: __].`,
+    estudios: `ANA: [neg / positivo ≥1:80 — patrón: homogéneo/moteado/periférico/nucleolar] · Anti-dsDNA: __ UI/mL [neg/positivo — correlaciona con actividad renal] · Anti-Sm: [neg/positivo] · Anti-Ro/SSA: [neg/positivo] · Anti-La/SSB: [neg/positivo] · Anti-antifosfolípidos (aFL): [aCL IgG/IgM / Anti-β2GP1 / AL (anticoagulante lúpico)] · C3: __ mg/dL (VN 86-184) · C4: __ mg/dL (VN 20-59) — consumo complemento = actividad. Hemograma: leucopenia __ · trombocitopenia __ · anemia hemolítica (Coombs: +/−). TFGe: __ · Albuminuria: __ mg/g · Proteinuria 24h: __ g/día (nefritis si >0.5 g/día). Biopsia renal (si indicada): Clase ISN-RPS [I/II/III/IV/V/VI].`,
+    impresion: `LES [activo SLEDAI __ / inactivo]. Órganos comprometidos: [renal Clase __ / neuropsiquiátrico / hematológico / cutáneo / musculoesquelético / serositis]. Síndrome antifosfolípido secundario: [no/sí — trombosis previa: __]. SLEDAI-2K actual: __. Daño crónico (SDI): __/47. Control: [en meta — SLEDAI<4 sin esteroides o <6 con HCQ / actividad leve / brote moderado / brote severo — requiere escalada]. Función renal: TFGe __ + proteinuria __ — nefritis clase __.`,
+    tx_farmaco: `Hidroxicloroquina 200-400 mg/día (base de todo paciente con LES — antimalárico, reduce brotes y mortalidad). Inmunosupresor según órgano afectado: Nefritis clase III-IV: Micofenolato 2-3 g/día ó Ciclofosfamida IV EuroLupus (500 mg c/2 sem × 6 dosis) + Metilprednisolona IV pulsos + Prednisona 0.5 mg/kg/día → tapering. Clase V membranosa: Micofenolato + HCQ + prednisona. Manifestaciones no renales: Azatioprina 2-2.5 mg/kg/día ó MTX 10-25 mg/sem (cutáneo/musculoesquelético). Belimumab 200 mg SC c/4 sem (si LES activo no renal con fallo a inmunosupresor). Anifrolumab 300 mg IV c/4 sem (si LES moderado-severo cutáneo/musculoesquelético, anti-interferón). Anticoagulación si SAF: anticoagulación indefinida (warfarina INR 2-3 ó HBPM si embarazo).`,
+    tx_nofarmaco: `Fotoprotección estricta (SPF≥50, ropa protectora — la luz UV activa el LES). Evitar tabaco. Evitar estrógenos en altas dosis (ACO combinados con alta dosis de EE — preferir solo progestágeno o DIU). Vacunación (fuera de brote activo): influenza + neumococo + VHB + VVZ (si no inmune ANTES de inmunosupresión). Planificación del embarazo: remisión ≥6 meses antes de concebir, anti-Ro/La para monitoreo de BAV fetal. Educación sobre señales de brote y factores desencadenantes.`,
+    seguimiento: `SLEDAI en cada visita. Anti-dsDNA + C3/C4 + orina c/3 meses. TFGe + proteinuria si nefritis. Ajuste de HCQ por TA si peso cambia. Oftalmología anual por HCQ (maculopatía desde 5 años de uso). Densitometría si esteroides prolongados. Monitorear Cr si ciclofosfamida. LDL/TA/glucosa si esteroides (síndrome metabólico iatrogénico). Consulta urgente si: brote renal/neuropsiquiátrico/serositis/trombosis.`
+  },
+  gota: {
+    label: 'Gota / Hiperuricemia',
+    diagnostico: 'Gota (M10.00) / Hiperuricemia sin gota (E79.0)',
+    sintomas: `Ataques de gota: [primer ataque / recurrente — frecuencia: __ ataques/año]. Articulación(es) afectadas: [1ª MTF (podagra clásica: 90%) / tobillo / rodilla / muñeca / codo / tarso / bursa olécranon]. Tiempo de inicio y resolución del último ataque: inicio en __ horas, resolución en __ días sin/con tratamiento. Gota intercrítica: [asintomático entre ataques]. Gota tofácea: [no/sí — localización: pabellón auricular/codos/MCF/IFP/tendón de Aquiles/rodilla — número: __]. Síntomas del último ataque: dolor EVA __/10, eritema, calor, tumefacción marcada, impotencia funcional total. Factores precipitantes: [alcohol/cambio brusco de uricemia/ayuno/deshidratación/trauma/cirugía/fármacos: diuréticos tiazídicos/AAS dosis baja/ciclosporina/pirazinamida]. Ácido úrico previo a inicio de tratamiento hipouricemiante: __ mg/dL.`,
+    exfisica: `Articulación afectada en crisis: calor + eritema + edema + dolor a la palpación — 1a MTF [derecha/izquierda]. Gota intercrítica: articulación sin inflamación activa. Tofos: [no/sí — pabellón auricular D/I: sí/no — olécranon: sí/no — MCF/IFP: sí/no — tendón Aquiles: sí/no — descripción: blanquecinos, firmes, tamaño __ cm]. Piel supratofácea: [íntegra / ulcerada / drenando material blanquecino (tofo abierto)]. IMC: __ kg/m². Signos de ERC/HAS (comorbilidades frecuentes): __.`,
+    estudios: `Ácido úrico sérico (en intercrítico): __ mg/dL (hiperuricemia: H>7.0 / M>6.0 mg/dL — meta en tratamiento: <6.0 / <5.0 si tofos). Ácido úrico en orina 24h: __ mg/día (sobreproductor si >800 mg/día). Cr: __ mg/dL · TFGe: __ mL/min (ERC frecuente y ajuste de alopurinol). Hemograma, perfil lipídico, glucosa (comorbilidades metabólicas). PCR: __ / VSG: __ (actividad inflamatoria en crisis). Cristales en líquido sinovial (gold standard): cristales de urato monosódico (UMS) [birrefringencia negativa, forma aguja — diagnóstico definitivo]. USG articular: [doble contorno en cartílago articular — depósito de UMS / tofos intraarticulares / erosiones en sacabocados]. Rx: [geodos/erosiones en sacabocados periarticulares — gota tofácea].`,
+    impresion: `Gota [primo-crisis / recurrente __ ataques/año / tofácea / artritis gotosa crónica]. Ácido úrico: __ mg/dL — [en meta <6.0 mg/dL / fuera de meta — diferencia: __ mg/dL]. TFGe: __ — [normal / ERC estadio __]. Comorbilidades: [HAS / DM2 / dislipidemia / obesidad / ERC / litiasis renal por uratos]. Tratamiento hipouricemiante: [iniciado — adherencia: buena/regular/mala / no iniciado — indicación: sí/no]. Riesgo de nuevo ataque: [bajo si ácido úrico en meta / alto si >7 mg/dL / muy alto si tofos].`,
+    tx_farmaco: `Crisis aguda de gota: [Colchicina 1 mg al inicio + 0.5 mg 1 hora después (más segura que AINEs en ERC/anticoagulados) / Naproxeno 750 mg al inicio + 500 mg c/8h × 5 días / Prednisona 30-40 mg/día × 5 días si contraindicación a colchicina y AINEs]. INICIAR hipouricemiante NO durante la crisis (esperar 2-4 semanas). Tratamiento hipouricemiante (indicación: ≥2 ataques/año ó tofos ó artropatía crónica ó ERC+Gota ó litiasis): [Alopurinol: inicio 50-100 mg/día → aumentar 50-100 mg c/2-4 sem hasta meta <6.0 mg/dL / max 300 mg/día si TFGe >60 / ajustar por TFGe / HLA-B*5801 si riesgo de SJS (asiáticos/latinoamericanos)]. [Febuxostat 40-80 mg/día: si intolerancia a alopurinol; usar con precaución en ECV establecida]. Profilaxis de crisis durante inicio de hipouricemiante: Colchicina 0.5 mg/día × 3-6 meses (o hasta que meta de AU alcanzada 3-6 meses).`,
+    tx_nofarmaco: `Reducción de purinas (carnes rojas, vísceras, mariscos). Reducir/eliminar alcohol (especialmente cerveza y licores — purina + lactato inhibe excreción de AU). Reducir fructosa/bebidas azucaradas. Hidratación ≥2-3 L/día. Reducción de peso (reduce hiperuricemia y frecuencia de ataques). Revisar medicamentos hiperuricemiantes: tiazidas → cambiar a losartán (uricosúrico) / AAS dosis baja → mantener si necesario CV / ciclosporina → valorar alternativa. En crisis: reposo articular + hielo local.`,
+    seguimiento: `Ácido úrico c/1 mes durante ajuste de alopurinol → c/3-6 meses al alcanzar meta. TFGe c/6 meses. Meta AU: <6.0 mg/dL (todos) / <5.0 mg/dL si tofos. Reducción escalonada de alopurinol NO recomendada al alcanzar meta (continuar misma dosis indefinidamente). Evaluar resolución de tofos (USG c/6-12 meses). Derivar a reumatología si: tofos extensos / artropatía destructiva / hiperuricemia refractaria / sospecha de HPRT/PRPP.`
+  }
+});
+
+Object.assign(WIZARD_SCHEMA, {
+  artritis_reumatoide: {
+    title: '🦴 Artritis Reumatoide',
+    sections: [
+      {
+        name: 'Actividad',
+        fields: [
+          { id: 'das28_rango', type: 'select', label: 'Categoría de actividad DAS-28', options: ['Remisión (DAS-28 <2.6)', 'Actividad baja (DAS-28 2.6-3.2)', 'Actividad moderada (DAS-28 3.2-5.1)', 'Actividad alta (DAS-28 >5.1)'] },
+          { id: 'das28_valor', type: 'number', label: 'Valor DAS-28', min: 0, max: 10, step: 0.1 },
+          { id: 'articulaciones_tumefactas', type: 'number', label: 'Articulaciones tumefactas', min: 0, max: 28 },
+          { id: 'articulaciones_dolorosas', type: 'number', label: 'Articulaciones dolorosas', min: 0, max: 28 },
+          { id: 'rigidez_minutos', type: 'number', label: 'Rigidez matutina (minutos)', min: 0, max: 480 }
+        ]
+      },
+      {
+        name: 'Serología y laboratorio',
+        fields: [
+          { id: 'fr_valor', type: 'number', label: 'FR (UI/mL)', min: 0, max: 2000 },
+          { id: 'anti_ccp', type: 'number', label: 'Anti-CCP (U/mL)', min: 0, max: 500 },
+          { id: 'seropositividad', type: 'select', label: 'Seropositividad', options: ['Seronegativa', 'FR+ solo', 'Anti-CCP+ solo', 'Doble positivo (FR+ y CCP+)'] },
+          { id: 'pcr_ar', type: 'number', label: 'PCR (mg/L)', min: 0, max: 300, step: 0.1 },
+          { id: 'vsg_ar', type: 'number', label: 'VSG (mm/h)', min: 0, max: 150 },
+          { id: 'alt_ar', type: 'number', label: 'ALT (U/L)', min: 0, max: 500 }
+        ]
+      },
+      {
+        name: 'Daño estructural y extra-articular',
+        fields: [
+          { id: 'estadio_larsen', type: 'select', label: 'Estadio Larsen radiológico', options: ['Larsen 0 — Sin daño', 'Larsen I — Sin erosiones', 'Larsen II — Erosiones leves', 'Larsen III — Moderado', 'Larsen IV — Severo', 'Larsen V — Mutilante'] },
+          { id: 'erosiones_rx', type: 'checkbox', label: 'Erosiones radiológicas presentes' },
+          { id: 'nodulos_reumatoides', type: 'checkbox', label: 'Nódulos reumatoides' },
+          { id: 'manifestacion_extraarticular', type: 'checkbox', label: 'Manifestación extraarticular activa' },
+          { id: 'manifestacion_tipo', type: 'select', label: 'Tipo de manifestación extraarticular', options: ['No aplica', 'SS secundario (sicca)', 'Vasculitis', 'EPI-AR', 'Pericarditis', 'Escleritis'] }
+        ]
+      },
+      {
+        name: 'Tratamiento',
+        fields: [
+          { id: 'fame_conv', type: 'select', label: 'FAME convencional', options: ['Sin FAME', 'MTX solo', 'Triple terapia (MTX+HCQ+SSZ)', 'Leflunomida', 'MTX+Leflunomida'] },
+          { id: 'biologico_ar', type: 'checkbox', label: 'Biológico activo' },
+          { id: 'biologico_tipo_ar', type: 'select', label: 'Tipo de biológico', options: ['No aplica', 'Anti-TNF', 'Rituximab', 'Tocilizumab', 'Abatacept'] },
+          { id: 'jak_inhibidor_ar', type: 'checkbox', label: 'JAK inhibidor' },
+          { id: 'respuesta_fame', type: 'select', label: 'Respuesta a tratamiento', options: ['En remisión (T2T)', 'Actividad baja (T2T alcanzado)', 'Actividad moderada (considerar escalar)', 'Fallo a FAME convencional', 'Fallo a biológico'] }
+        ]
+      }
+    ]
+  },
+  lupus: {
+    title: '🦋 Lupus Eritematoso Sistémico',
+    sections: [
+      {
+        name: 'Actividad (SLEDAI)',
+        fields: [
+          { id: 'sledai', type: 'number', label: 'SLEDAI-2K score', min: 0, max: 105 },
+          { id: 'sledai_rango', type: 'select', label: 'Rango de actividad', options: ['Inactivo (0)', 'Leve (1-5)', 'Moderado (6-10)', 'Severo (11-19)', 'Muy severo (≥20)'] },
+          { id: 'brote_actual', type: 'select', label: 'Brote actual', options: ['Sin brote activo', 'Brote leve', 'Brote moderado', 'Brote severo (requiere escalada)'] },
+          { id: 'brotes_ano', type: 'number', label: 'Brotes en último año', min: 0, max: 20 }
+        ]
+      },
+      {
+        name: 'Órganos afectados',
+        fields: [
+          { id: 'nefritis_lupica', type: 'checkbox', label: 'Nefritis lúpica activa' },
+          { id: 'nefritis_clase', type: 'select', label: 'Clase de nefritis', options: ['No aplica', 'Clase I-II (mínima)', 'Clase III (focal)', 'Clase IV (difusa)', 'Clase V (membranosa)', 'Clase VI (esclerosante)'] },
+          { id: 'neuro_lupus', type: 'checkbox', label: 'Manifestación neuropsiquiátrica activa' },
+          { id: 'serositis_lupus', type: 'checkbox', label: 'Pleuritis/Pericarditis activa' },
+          { id: 'hematologico_lupus', type: 'checkbox', label: 'Citopenia activa' },
+          { id: 'cutaneo_activo', type: 'checkbox', label: 'Rash/lesión cutánea activa' },
+          { id: 'saf_secundario', type: 'checkbox', label: 'SAF secundario (trombosis)' }
+        ]
+      },
+      {
+        name: 'Laboratorio',
+        fields: [
+          { id: 'ana_patron', type: 'select', label: 'Patrón ANA', options: ['Negativo', 'ANA 1:80 — homogéneo', 'ANA 1:160+ — moteado', 'ANA 1:160+ — periférico', 'ANA negativo con ENA positivo'] },
+          { id: 'anti_dsdna', type: 'number', label: 'Anti-dsDNA (UI/mL)', min: 0, max: 2000 },
+          { id: 'c3_lupus', type: 'number', label: 'C3 (mg/dL)', min: 0, max: 300 },
+          { id: 'c4_lupus', type: 'number', label: 'C4 (mg/dL)', min: 0, max: 80 },
+          { id: 'proteinuria_24h', type: 'number', label: 'Proteinuria 24h (g/día)', min: 0, max: 20, step: 0.1 },
+          { id: 'tfge_lupus', type: 'number', label: 'TFGe (mL/min)', min: 0, max: 150 }
+        ]
+      },
+      {
+        name: 'Tratamiento',
+        fields: [
+          { id: 'hcq_activo', type: 'checkbox', label: 'Hidroxicloroquina activa (base)' },
+          { id: 'inmunosupresor_les', type: 'select', label: 'Inmunosupresor', options: ['Sin inmunosupresor', 'Azatioprina', 'Micofenolato', 'MTX', 'Ciclofosfamida', 'Ciclosporina'] },
+          { id: 'biologico_les', type: 'checkbox', label: 'Biológico (Belimumab/Anifrolumab)' },
+          { id: 'prednisona_les', type: 'number', label: 'Dosis de prednisona (mg/día)', min: 0, max: 120 },
+          { id: 'respuesta_les', type: 'select', label: 'Respuesta al tratamiento', options: ['Brote activo sin tratamiento', 'Brote en tratamiento', 'Actividad baja en tratamiento', 'Remisión'] }
+        ]
+      }
+    ]
+  },
+  gota: {
+    title: '💎 Gota / Hiperuricemia',
+    sections: [
+      {
+        name: 'Tipo y actividad',
+        fields: [
+          { id: 'tipo_gota', type: 'select', label: 'Tipo de gota', options: ['Hiperuricemia asintomática', 'Primo-crisis', 'Gota intercrítica recurrente', 'Gota tofácea', 'Artritis gotosa crónica'] },
+          { id: 'estado_actual_gota', type: 'select', label: 'Estado actual', options: ['Intercrítico (sin crisis)', 'Crisis aguda activa', 'Gota crónica activa'] },
+          { id: 'ataques_ano', type: 'number', label: 'Ataques en último año', min: 0, max: 50 },
+          { id: 'articulacion_principal', type: 'select', label: 'Articulación principal afectada', options: ['1ª MTF (podagra)', 'Tobillo', 'Rodilla', 'Muñeca', 'Múltiples articulaciones'] }
+        ]
+      },
+      {
+        name: 'Ácido úrico y función renal',
+        fields: [
+          { id: 'acido_urico', type: 'number', label: 'Ácido úrico (mg/dL)', min: 2, max: 20, step: 0.1 },
+          { id: 'au_en_meta', type: 'checkbox', label: 'AU en meta (<6 mg/dL)' },
+          { id: 'meta_au', type: 'select', label: 'Meta de ácido úrico', options: ['Meta AU <6.0 mg/dL', 'Meta AU <5.0 mg/dL (si tofos)', 'Aún sin meta definida'] },
+          { id: 'tfge_gota', type: 'number', label: 'TFGe (mL/min)', min: 0, max: 200 },
+          { id: 'pcr_gota', type: 'number', label: 'PCR (mg/L)', min: 0, max: 100, step: 0.1 },
+          { id: 'litiasis_urica', type: 'checkbox', label: 'Litiasis renal por uratos' }
+        ]
+      },
+      {
+        name: 'Tofos y daño',
+        fields: [
+          { id: 'tofos_presentes', type: 'checkbox', label: 'Tofos presentes' },
+          { id: 'tofos_extension', type: 'select', label: 'Extensión de tofos', options: ['Sin tofos', 'Tofos únicos pequeños', 'Tofos múltiples', 'Tofos extensos (funcional afectado)', 'Tofos ulcerados'] },
+          { id: 'num_tofos', type: 'number', label: 'Número de tofos', min: 0, max: 50 },
+          { id: 'erosiones_rx_gota', type: 'checkbox', label: 'Erosiones en sacabocados en Rx' },
+          { id: 'artropatia_cronica', type: 'checkbox', label: 'Artropatía gotosa crónica (daño)' }
+        ]
+      },
+      {
+        name: 'Tratamiento',
+        fields: [
+          { id: 'hipouricemiante', type: 'select', label: 'Tratamiento hipouricemiante', options: ['Sin tratamiento', 'Alopurinol', 'Febuxostat', 'Benzbromarona', 'Combinación'] },
+          { id: 'dosis_alopurinol', type: 'number', label: 'Dosis alopurinol (mg/día)', min: 50, max: 800, step: 50 },
+          { id: 'profilaxis_colchicina', type: 'checkbox', label: 'Profilaxis con colchicina activa' },
+          { id: 'respuesta_hipouricemiante', type: 'select', label: 'Respuesta hipouricemiante', options: ['Sin tratamiento', 'En ajuste de dosis', 'AU en meta', 'AU fuera de meta (ajustar)'] },
+          { id: 'adherencia_hipouricemiante', type: 'select', label: 'Adherencia al hipouricemiante', options: ['Buena', 'Regular', 'Mala', 'Sin tratamiento'] }
+        ]
+      }
+    ]
+  }
+});
+
+function buildArtritisReumatoideNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  return {
+    sintomas: `Actividad: ${v('das28_rango')} con DAS-28 de ${n('das28_valor')}. Articulaciones tumefactas: ${n('articulaciones_tumefactas')}, dolorosas: ${n('articulaciones_dolorosas')}. Rigidez matutina: ${n('rigidez_minutos')} minutos.`,
+    impresion: `Artritis reumatoide ${v('seropositividad')} con actividad ${v('das28_rango')}. FR: ${n('fr_valor')} UI/mL, Anti-CCP: ${n('anti_ccp')} U/mL. PCR: ${n('pcr_ar')} mg/L, VSG: ${n('vsg_ar')} mm/h. Estadio Larsen ${v('estadio_larsen')}. ${v('manifestacion_extraarticular') ? 'Con manifestación extraarticular: ' + v('manifestacion_tipo') : 'Sin manifestaciones extraarticulares'}.${v('biologico_ar') ? ' Con biológico ' + v('biologico_tipo_ar') : ''}. Tratamiento: ${v('fame_conv')}. Respuesta: ${v('respuesta_fame')}.`
+  };
+}
+
+function buildLupusNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  return {
+    sintomas: `SLEDAI-2K: ${n('sledai')}/105 — ${v('sledai_rango')}. ${v('brote_actual')}. Brotes en último año: ${n('brotes_ano')}.`,
+    impresion: `Lupus eritematoso sistémico activo SLEDAI ${n('sledai')} (${v('sledai_rango')}). ${v('nefritis_lupica') ? 'Con nefritis clase ' + v('nefritis_clase') : 'Sin nefritis'}. ${v('neuro_lupus') ? 'Afección neuropsiquiátrica. ' : ''}${v('hematologico_lupus') ? 'Citopenia activa. ' : ''}Anti-dsDNA: ${n('anti_dsdna')} UI/mL, ANA: ${v('ana_patron')}. C3: ${n('c3_lupus')} mg/dL, C4: ${n('c4_lupus')} mg/dL. TFGe: ${n('tfge_lupus')} mL/min. ${v('saf_secundario') ? 'Con SAF secundario. ' : ''}Tratamiento: HCQ ${v('hcq_activo') ? 'activo' : 'no usado'}, ${v('inmunosupresor_les')}, Prednisona ${n('prednisona_les')} mg/día. Respuesta: ${v('respuesta_les')}.`
+  };
+}
+
+function buildGotaNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  return {
+    sintomas: `${v('tipo_gota')} — ${v('estado_actual_gota')}. Ataques en último año: ${n('ataques_ano')}. Articulación principal: ${v('articulacion_principal')}. Ácido úrico: ${n('acido_urico')} mg/dL ${v('au_en_meta') ? '(en meta)' : '(fuera de meta)'}.`,
+    impresion: `${v('tipo_gota')} con ${v('estado_actual_gota')}. Ácido úrico: ${n('acido_urico')} mg/dL (meta: ${v('meta_au')}). TFGe: ${n('tfge_gota')} mL/min. ${v('tofos_presentes') ? 'Con tofos: ' + v('tofos_extension') + ' (número: ' + n('num_tofos') + '). ' : 'Sin tofos. '}${v('erosiones_rx_gota') ? 'Erosiones en sacabocados presentes. ' : ''}${v('artropatia_cronica') ? 'Artropatía gotosa crónica. ' : ''}Tratamiento: ${v('hipouricemiante')} ${v('hipouricemiante') !== 'Sin tratamiento' ? 'dosis ' + n('dosis_alopurinol') + ' mg/día' : ''}. Profilaxis: ${v('profilaxis_colchicina') ? 'Con colchicina' : 'Sin colchicina'}. Respuesta: ${v('respuesta_hipouricemiante')}. Adherencia: ${v('adherencia_hipouricemiante')}.`
+  };
+}
+
+Object.assign(WIZARD_BUILDERS, {
+  artritis_reumatoide: buildArtritisReumatoideNote,
+  lupus: buildLupusNote,
+  gota: buildGotaNote
+});
+
+['artritis_reumatoide', 'lupus', 'gota'].forEach(m => IMPLEMENTED_MODULES.add(m));
+
+// ============================================================================
+// NEUROLOGÍA MODULES: Cefalea, Epilepsia, Ictus/EVC
+// ============================================================================
+
+Object.assign(TEMPLATE_MODULES, {
+  cefalea: {
+    label: 'Cefalea / Migraña',
+    diagnostico: 'Migraña sin aura (G43.909) / con aura (G43.109) / Cefalea tensional (G44.209) / En racimos (G44.009)',
+    sintomas: `Tipo de cefalea (ICHD-3): Migraña sin aura / Migraña con aura (visual/sensitiva/motora) / Cefalea tensional episódica/crónica / Cefalea en racimos / Cefalea por sobreuso de analgésicos (≥10-15 días/mes) / Cefalea secundaria.
+Características: Localización [unilateral/bilateral] · Calidad [pulsátil/opresiva/urente] · Intensidad EVA __/10 · Duración [4-72h migraña / 30 min-7 días tensional / 15-180 min racimos] · Frecuencia __ ataques/mes.
+Síntomas asociados: [Náusea/vómito/foto/fonofobia (migraña) / Lagrimeo/ptosis/rinorrea ipsilateral (racimos) / Tensión pericraneal (tensional)].
+Aura: [No/Sí — tipo: visual/escotomas/hemianopsia/parestesias migratorias mano-cara/disfasia — duración __ min].
+Pródromos: [No/Sí — bostezo/cambios de humor/fotofobia 24-48h antes].
+Días con cefalea en último mes: __ (crónica si ≥15 días/mes durante >3 meses).
+Medicamentos de rescate y frecuencia: __ veces/semana (¡sobreuso si triptanes ≥10 días/mes ó AINEs ≥15 días/mes!).
+Discapacidad (MIDAS): __/90.`,
+    exfisica: `Examen neurológico: Nivel de consciencia [alerta].
+Pupilas: [Isocóricas, normorreactivas].
+Pares craneales: [Sin alteraciones / Paresia oculomotora].
+Fuerza: [5/5 en 4 extremidades / Déficit: __].
+Sensibilidad: [Sin alteraciones / Parestesias residuales post-aura].
+Coordinación: [Diadococinesia normal / Ataxia].
+Marcha: [Normal].
+Fondo de ojo: [Sin papiledema].
+Signos meníngeos: [Negativos / Rigidez nucal].
+Puntos gatillo pericraniales: [Dolorosos/No dolorosos].`,
+    estudios: `RM cerebral con y sin contraste (indicaciones: cefalea con focalidad / cambio de patrón / >50 años primer episodio / papiledema): [No realizada / Normal / Hallazgo: __].
+TAC cráneo sin contraste (urgencia: cefalea en trueno): [No realizada / Sin hemorragia / Hemorragia subaracnoidea].
+Punción lumbar (cefalea en trueno con TAC normal): [No realizada / LCR: xantocromía: sí/no].
+MIDAS score: __/90.
+HIT-6 score: __/78.
+Diario de cefalea: Días con cefalea __ / Días con rescate __ (último mes).`,
+    impresion: `Tipo: [Migraña sin aura / Migraña con aura / Cefalea tensional / Cefalea en racimos / Hemicrania continua / Cefalea por sobreuso].
+Frecuencia: [Episódica <15 días/mes / Crónica ≥15 días/mes].
+MIDAS: Grado __ (discapacidad: ninguna/leve/moderada/severa).
+Control: [Bien controlada — <4 ataques/mes / Parcialmente / No controlada — >8 ataques/mes].
+Sobreuso de medicamentos: [No / Sí — tipo: __ / Requiere suspensión].
+Indicación de profilaxis: [Sí — criterios: ≥4 ataques/mes ó MIDAS>11 / No].`,
+    tx_farmaco: `RESCATE DE MIGRAÑA:
+Triptanes (primera línea): Sumatriptán 50-100 mg VO ó 6 mg SC / Rizatriptán 10 mg VO / Eletriptán 40 mg VO / Zolmitriptán 2.5 mg VO — máx 2 dosis/24h, máx 2 días/sem.
+Gepantes: Rimegepant 75 mg VO ó Ubrogepant 50-100 mg VO.
+AINEs: Naproxeno 550 mg + Metoclopramida 10 mg VO.
+
+PROFILAXIS (≥4 ataques/mes):
+Topiramato 25-100 mg/día / Propranolol 80-160 mg/día / Amitriptilina 10-75 mg/noche / Valproato 500-1500 mg/día / Venlafaxina XR 75-150 mg/día.
+Anti-CGRP mAb: Erenumab 70-140 mg SC/mes / Fremanezumab 225 mg SC/mes / Galcanezumab 240 mg SC (inicio) → 120 mg/mes.
+
+CEFALEA EN RACIMOS:
+Sumatriptán 6 mg SC + O2 al 100% 12 L/min x 15 min (rescate).
+Verapamilo 240-960 mg/día (profilaxis).`,
+    tx_nofarmaco: `Identificar y evitar desencadenantes (diario): [Sueño irregular / Ayuno / Estrés / Alcohol / Cambios hormonales / Cafeína / Luz brillante].
+Regularidad de horarios de sueño y comidas.
+Ejercicio aeróbico regular.
+Técnicas de biofeedback y manejo de estrés.
+Si sobreuso: suspensión abrupta del fármaco (puede empeorar 2-4 semanas) + hospitalización si severo.
+Acupuntura: evidencia moderada como profilaxis.
+Neuromodulación: TENS supraorbital (Cefaly).`,
+    seguimiento: `Diario de cefalea mensual (días con cefalea, días con rescate, intensidad).
+MIDAS en cada visita.
+Meta profilaxis: reducción ≥50% de frecuencia en 3 meses.
+Si no respuesta tras 3 meses: cambiar profilaxis.
+Anti-CGRP: evaluar respuesta a 3 meses.
+Niveles de topiramato si duda de adherencia o toxicidad.`
+  },
+
+  epilepsia: {
+    label: 'Epilepsia',
+    diagnostico: 'Epilepsia focal (G40.109) / generalizada (G40.309) / síndrome epiléptico',
+    sintomas: `Tipo de crisis: Focal inicio → [Sin alteración de consciencia (sensitiva/motora/autonómica) / Con alteración de consciencia / Evolución a bilateral convulsiva].
+Generalizada inicio → [Tonicoclónica generalizada / Ausencia típica/atípica / Mioclónica / Atónica / Tónica / Clónica].
+
+Semiología detallada: [Aura previa — tipo: __ / Postura tónica / Movimientos clónicos — duración __ seg / Automatismos: orolabiales/manuales / Incontinencia / Mordedura lateral de lengua / Confusión posictal — duración __ min].
+Frecuencia de crisis: __ crisis/mes (última crisis: fecha __).
+Factores desencadenantes: [Sueño insuficiente / Alcohol / Estrés / Fiebre / Ciclo menstrual / Fotoestimulación / Omisión de medicamentos].
+Medicamento anticrisis actual: [FAE 1: __ __ mg/día / FAE 2: __ __ mg/día] — Adherencia: buena/regular/mala.
+Estado epiléptico previo: [No/Sí — fecha: __ / Tratado con: __].
+Lesión/trauma previo: [No/Sí — tipo: __].`,
+    exfisica: `Nivel de consciencia: [Alerta / Postictal confuso — tiempo desde crisis: __ min].
+Signos focales: [Ausentes / Hemiparesia postictal (Todd) — duración __ min-h].
+Pares craneales: [Sin alteraciones / Parálisis facial central].
+Fuerza: [5/5 sin déficit / Postictal: __].
+Reflejos: [Simétricos / Babinski +/− / Clono: no/sí].
+Signos de lesión subyacente: [Dismorfias / Nevos / Manchas café con leche / Adenomas sebáceos].
+Escala de Glasgow: __ (si postictal o urgencia).`,
+    estudios: `EEG (en vigilia/sueño): [Normal / Anormalidades epileptiformes — tipo: puntas-onda 3Hz (ausencia) / Polipuntas (mioclónica) / Descarga focal temporal/frontal/occipital / Estado epiléptico].
+EEG post-privación de sueño si sospecha y EEG normal.
+RM cerebral (protocolo epilepsia): [Normal / Esclerosis hipocampal D/I / Displasia focal/hamartoma/gliosis / Lesión tumoral / Cavernoma / Lesión vascular].
+Niveles de FAEs: FAE 1: __ (rango terapéutico: __) · FAE 2: __.
+Genética (síndromes): [No realizada / Mutación KCNQ2/SCN1A/otros — resultado: __].`,
+    impresion: `Epilepsia [Focal — temporal/frontal/parietal/occipital / Generalizada / Desconocida].
+Etiología: [Estructural (lesión en RM) / Genética / Infecciosa / Metabólica / Inmune / Desconocida].
+Síndrome epiléptico: [Temporal mesial / JTME / Mioclónica juvenil / Ausencias infantiles / Lennox-Gastaut / Dravet / Sin síndrome definido].
+Control de crisis: [Libre de crisis ≥12 meses / Bien controlada — esporádicas <1/año / Parcialmente controlada / Farmacorresistente — ≥2 FAE fallidos].
+Indicación de cirugía: [No / Evaluar — candidato / En evaluación prequirúrgica].`,
+    tx_farmaco: `PRIMERA LÍNEA FOCAL:
+Levetiracetam 500-3000 mg/día en 2 dosis / Lamotrigina 100-400 mg/día / Lacosamida 200-400 mg/día / Oxcarbazepina 600-2400 mg/día.
+
+PRIMERA LÍNEA GENERALIZADA TCG:
+Ácido valproico 1000-3000 mg/día / Levetiracetam 1000-3000 mg/día / Lamotrigina 200-500 mg/día.
+
+AUSENCIAS:
+Ácido valproico ó Etosuximida 500-2000 mg/día ó Lamotrigina.
+
+MIOCLÓNICA JUVENIL:
+Ácido valproico ó Levetiracetam ó Lacosamida (EVITAR carbamazepina/oxcarbazepina).
+
+ESTADO EPILÉPTICO:
+Lorazepam 0.1 mg/kg IV → Levetiracetam/Valproato/Lacosamida IV → Intubación + Midazolam/Propofol.`,
+    tx_nofarmaco: `Higiene de sueño estricta (principal desencadenante).
+Evitar alcohol.
+Precauciones de seguridad: [Conducir — legislación según tiempo libre de crisis: generalmente ≥6-12 meses / No nadar solo / Cocinar con precaución / Cuidado en alturas].
+Dispositivo de alerta de crisis (acelerometría).
+Si farmacorresistente: evaluar cirugía / dieta cetogénica / ENV / estimulación cerebral profunda.
+Rehabilitación neuropsicológica si deterioro cognitivo.`,
+    seguimiento: `Frecuencia de crisis en cada visita (diario de crisis).
+Niveles de FAE si duda de adherencia o toxicidad.
+Hemograma + hepático si valproato/carbamazepina (c/6 meses).
+Densitometría si FAE enzimáticos por largo plazo (osteoporosis).
+EEG anual si ajuste de diagnóstico o crisis recurrentes.
+Planificación de embarazo: consultar teratogenicidad de FAE (valproato — riesgo más alto; lamotrigina — más segura).`
+  },
+
+  ictus_evc: {
+    label: 'Ictus / EVC',
+    diagnostico: 'Infarto cerebral (I63.9) / Hemorragia intracerebral (I61.9) / AIT (G45.9)',
+    sintomas: `Tipo de evento: [Isquémico (80%): trombótico/embólico/lacunar / Hemorrágico: intracerebral/subaracnoideo / AIT: duración <24h].
+Fecha del evento: __.
+Tiempo desde inicio síntomas hasta atención: __ horas (ventana trombolisis: <4.5h).
+Déficit neurológico al debut: [Hemiparesia D/I / Hemiplejía / Afasia (Broca/Wernicke/global) / Disartria / Hemianopsia / Diplopia / Ataxia / Disfagia / Alteración de consciencia].
+NIHSS al ingreso: __/42.
+Déficit actual residual: [Resolución completa (AIT) / Déficit estable / Progresivo — causa: __].
+Factores de riesgo: [FA/HAS/DM2/Dislipidemia/Tabaquismo/Obesidad/Cardiopatía/Hiperhomocisteinemia/Trombofilia/ACO-combinados].
+Evento cerebrovascular previo: [No/Sí — fecha: __ / Déficit previo: __].`,
+    exfisica: `NIHSS actual: __/42.
+Nivel de consciencia: [Alerta/Somnoliento/Estuporoso/Comatoso — GCS: __/15].
+Lenguaje/habla: [Normal / Afasia Broca / Afasia Wernicke / Afasia global / Disartria — inteligible/ininteligible].
+Pares craneales: [VII central D/I / III/VI (diplopia) / Parálisis mirada / Nistagmo / Sordera].
+Fuerza: MSD __ MSI __ MID __ MII __ (escala 0-5 MRC).
+Reflejo de Babinski: D: +/− · I: +/−.
+Hemiataxia: [No/Sí — hemisoma __].
+Sensibilidad: [Sin déficit / Hemianestesia D/I].
+Presión arterial: __/__ mmHg.`,
+    estudios: `Neuroimagen de urgencia:
+TAC cráneo sin contraste — [Sin lesión hiperdensa (isquémico/AIT) / Lesión hiperdensa — hemorragia: localización __ / Volumen __ mL / ASPECTS: __/10].
+RM cerebral-DWI: [Lesión difusión restringida: sí — localización/territorio vascular ACM/ACI/ACA/AB/PICA / tamaño: __ cm].
+Angio-TAC/Angio-RM: [Sin oclusión / Oclusión ACM M1 D/I — candidato trombectomía].
+ECG/Monitor cardíaco: [RS / FA / FA paroxística].
+Ecocardiograma transesofágico: [Sin fuente embolígena / Trombo auricular / FOP / Placa aórtica / Valvulopatía].
+Laboratorio: Glucosa __ / Na __ / K __ / Hemograma / Coagulación (TP, TTPa) / Perfil lipídico.
+Estudio de trombofilia (si joven <55a / recurrente / sin FR): [Proteínas C/S, AT-III, anticoagulante lúpico, homocisteína].`,
+    impresion: `EVC [Isquémico — TOAST: cardioembólico/aterosclerosis grande/pequeño vaso/criptogénico / Hemorrágico — hipertensivo/angiopatía amiloide/MAV / AIT].
+Territorio: [ACM D/I — córtico-subcortical / ACI / ACA / Vertebrobasilar / Lacunar].
+Déficit actual (mRS): [0 sin síntomas / 1 sin discapacidad / 2 leve / 3 moderada — sin ayuda / 4 moderada-severa / 5 grave / 6 muerte].
+NIHSS actual: __.
+FA como causa: [Presente / Descartada / En investigación].
+Riesgo recurrencia 90 días (ABCD2 para AIT): __.`,
+    tx_farmaco: `ISQUÉMICO AGUDO (<4.5h):
+tPA IV (alteplase 0.9 mg/kg, máx 90 mg): 10% bolo, resto en 60 min — [administrado: sí/no — contraindicación: __].
+Trombectomía mecánica (gran vaso, ASPECTS≥6, <24h): [Realizada — TICI: __ / No candidato — causa: __].
+
+ANTIAGREGACIÓN:
+AAS 300 mg inicial → 100 mg/día (isquémico no cardioembólico).
+Doble antiagregación (AAS + Clopidogrel 75 mg) primeras 3 semanas si AIT alto riesgo ó infarto pequeño.
+
+ANTICOAGULACIÓN (FA):
+Inicio 4-14 días post-ictus según tamaño — ACOD: Apixabán 5 mg c/12h / Rivaroxabán 20 mg cena / Dabigatrán 150 mg c/12h.
+
+OTRAS:
+Estatina alta intensidad: Atorvastatina 80 mg/día (meta LDL <70 mg/dL).
+Antihipertensivo: >24h post-isquémico; meta <130/80; hemorrágico agudo: <140 sistólica.
+FAE solo si crisis comprobadas.`,
+    tx_nofarmaco: `Rehabilitación neurológica PRECOZ (iniciar 24-48h si estable):
+Fisioterapia motora + Terapia ocupacional + Logopedia (disfagia/afasia).
+Evaluación de deglución antes de dieta oral.
+Movilización precoz contra TVP/neumonía/úlceras de decúbito.
+Control estricto de HAS (factor de riesgo más importante).
+Cesación tabáquica.
+Cirugía: [Hemicraniectomía descompresiva si infarto maligno ACM / Clipaje/embolización si aneurisma/MAV].`,
+    seguimiento: `mRS en cada visita (meta: recuperación funcional máxima).
+Ecocardiograma + Holter 30 días si criptogénico.
+LDL c/4-6 semanas post-inicio estatina.
+TA en cada visita — meta <130/80 a largo plazo.
+Rehabilitación: evaluar progreso c/1-3 meses.
+Screening depresión post-ictus (PHQ-9 c/3 meses).
+Riesgo recurrencia 5-10% primer año.`
+  }
+});
+
+Object.assign(WIZARD_SCHEMA, {
+  cefalea: {
+    title: '🤯 Cefalea / Migraña',
+    sections: [
+      {
+        name: 'Tipo y características',
+        fields: [
+          { id: 'tipo_cefalea', type: 'select', label: 'Tipo de cefalea', options: ['Migraña sin aura', 'Migraña con aura', 'Cefalea tensional episódica', 'Cefalea tensional crónica', 'Cefalea en racimos', 'Cefalea por sobreuso', 'Otra'] },
+          { id: 'frecuencia_cefalea', type: 'select', label: 'Frecuencia', options: ['Episódica — <4 días/mes', 'Episódica moderada — 4-8 días/mes', 'Episódica frecuente — 8-14 días/mes', 'Crónica — ≥15 días/mes'] },
+          { id: 'dias_cefalea_mes', type: 'number', label: 'Días con cefalea en último mes', min: 0, max: 31 },
+          { id: 'dias_rescate_mes', type: 'number', label: 'Días con medicamento de rescate/mes', min: 0, max: 31 }
+        ]
+      },
+      {
+        name: 'Síntomas y discapacidad',
+        fields: [
+          { id: 'aura_visual', type: 'checkbox', label: 'Aura visual' },
+          { id: 'aura_sensitiva', type: 'checkbox', label: 'Aura sensitiva' },
+          { id: 'nausea_vomito_migrana', type: 'checkbox', label: 'Náusea/vómito (migraña)' },
+          { id: 'foto_fonofobia', type: 'checkbox', label: 'Fotofobia/fonofobia' },
+          { id: 'ptosis_lagrimeo_racimos', type: 'checkbox', label: 'Ptosis + lagrimeo (racimos)' },
+          { id: 'midas_grado', type: 'select', label: 'MIDAS grado', options: ['MIDAS 0-5 — Sin discapacidad', 'MIDAS 6-10 — Leve', 'MIDAS 11-20 — Moderada', 'MIDAS >20 — Severa'] },
+          { id: 'midas_score', type: 'number', label: 'MIDAS score numérico', min: 0, max: 90 },
+          { id: 'sobreuso_analgesicos', type: 'checkbox', label: 'Sobreuso de medicamentos ≥10-15 días/mes' }
+        ]
+      },
+      {
+        name: 'Examen neurológico',
+        fields: [
+          { id: 'examen_neuro_normal', type: 'checkbox', label: 'Examen neurológico normal' },
+          { id: 'papiledema_ausente', type: 'checkbox', label: 'Sin papiledema' },
+          { id: 'signos_meningeos_negativos', type: 'checkbox', label: 'Signos meníngeos negativos' },
+          { id: 'neuroimagen_resultado', type: 'select', label: 'Resultado neuroimagen', options: ['No realizada', 'Normal — sin lesión', 'Lesión vascular crónica', 'Lesión estructural significativa', 'Hemorragia — urgente'] },
+          { id: 'cefalea_alarma', type: 'checkbox', label: 'Cefalea con signos de alarma (cambio patrón/focalidad/trueno)' }
+        ]
+      },
+      {
+        name: 'Tratamiento',
+        fields: [
+          { id: 'triptan_actual', type: 'select', label: 'Triptán actual', options: ['Sin triptán', 'Sumatriptán', 'Rizatriptán', 'Eletriptán', 'Zolmitriptán', 'Gepante — rimegepant'] },
+          { id: 'profilaxis_actual', type: 'select', label: 'Profilaxis actual', options: ['Sin profilaxis', 'Topiramato', 'Propranolol', 'Amitriptilina', 'Valproato', 'Anti-CGRP mAb', 'Verapamilo — racimos'] },
+          { id: 'respuesta_profilaxis', type: 'select', label: 'Respuesta profilaxis', options: ['Sin profilaxis', 'Reducción ≥50% ataques — respondedor', 'Reducción 25-50% — parcial', 'Sin respuesta', 'En evaluación inicial'] }
+        ]
+      }
+    ]
+  },
+
+  epilepsia: {
+    title: '⚡ Epilepsia',
+    sections: [
+      {
+        name: 'Tipo de epilepsia',
+        fields: [
+          { id: 'clasificacion_epilepsia', type: 'select', label: 'Clasificación', options: ['Focal — temporal', 'Focal — frontal', 'Focal — parietal/occipital', 'Generalizada TCG', 'Generalizada ausencias', 'Generalizada mioclónica', 'Generalizada atónica', 'Desconocida'] },
+          { id: 'etiologia_epilepsia', type: 'select', label: 'Etiología', options: ['Estructural — lesión en RM', 'Genética', 'Metabólica', 'Inmune', 'Infecciosa', 'Desconocida'] },
+          { id: 'sindrome_epileptico', type: 'select', label: 'Síndrome epiléptico', options: ['Sin síndrome definido', 'Epilepsia temporal mesial', 'EMJ — Mioclónica Juvenil', 'Ausencias infantiles', 'Lennox-Gastaut', 'Síndrome de Dravet', 'Otro'] }
+        ]
+      },
+      {
+        name: 'Control de crisis',
+        fields: [
+          { id: 'control_crisis', type: 'select', label: 'Control de crisis', options: ['Libre de crisis ≥12 meses', 'Libre de crisis 6-12 meses', 'Bien controlada — <1 crisis/año', 'Parcialmente controlada', 'Farmacorresistente — ≥2 FAE fallidos'] },
+          { id: 'crisis_mes', type: 'number', label: 'Crisis en último mes', min: 0, max: 500 },
+          { id: 'meses_libre_crisis', type: 'number', label: 'Meses desde última crisis', min: 0, max: 600 },
+          { id: 'estado_epileptico_previo', type: 'checkbox', label: 'Estado epiléptico previo' },
+          { id: 'lesion_rm_causal', type: 'checkbox', label: 'Lesión causal en RM' }
+        ]
+      },
+      {
+        name: 'Laboratorio',
+        fields: [
+          { id: 'nivel_fae1', type: 'number', label: 'Nivel FAE 1 (μg/mL)', min: 0, max: 300 },
+          { id: 'nivel_fae2', type: 'number', label: 'Nivel FAE 2 si aplica (μg/mL)', min: 0, max: 300 },
+          { id: 'fae1_nivel_terapeutico', type: 'checkbox', label: 'FAE 1 en rango terapéutico' },
+          { id: 'efectos_adversos_fae', type: 'checkbox', label: 'Efectos adversos al FAE actual (cognitivos/hepáticos/hematológicos)' },
+          { id: 'eeg_actual', type: 'select', label: 'EEG actual', options: ['Normal', 'Anormalidades epileptiformes focales', 'Anormalidades generalizadas', 'Estado epiléptico en EEG'] }
+        ]
+      },
+      {
+        name: 'Tratamiento',
+        fields: [
+          { id: 'fae1_nombre', type: 'select', label: 'FAE 1 actual', options: ['Levetiracetam', 'Lamotrigina', 'Valproato', 'Oxcarbazepina', 'Lacosamida', 'Carbamazepina', 'Brivaracetam', 'Zonisamida', 'Otro'] },
+          { id: 'fae2_nombre', type: 'select', label: 'FAE 2 si aplica', options: ['Sin FAE2', 'Levetiracetam', 'Lamotrigina', 'Lacosamida', 'Otro'] },
+          { id: 'politerapia', type: 'checkbox', label: 'Politerapia — ≥2 FAEs' },
+          { id: 'candidato_cirugia', type: 'checkbox', label: 'Candidato evaluación quirúrgica' },
+          { id: 'dieta_cetogenica_activa', type: 'checkbox', label: 'Dieta cetogénica activa' },
+          { id: 'env_implantado', type: 'checkbox', label: 'Estimulador del nervio vago implantado' }
+        ]
+      }
+    ]
+  },
+
+  ictus_evc: {
+    title: '🧠 Ictus / EVC',
+    sections: [
+      {
+        name: 'Tipo y territorio',
+        fields: [
+          { id: 'tipo_evc', type: 'select', label: 'Tipo de EVC', options: ['AIT — Ataque Isquémico Transitorio', 'Isquémico — pequeño vaso', 'Isquémico — gran vaso', 'Isquémico — cardioembólico (FA)', 'Isquémico — criptogénico', 'Hemorrágico — hipertensivo', 'Hemorrágico — subaracnoideo'] },
+          { id: 'territorio_evc', type: 'select', label: 'Territorio afectado', options: ['ACM izquierda', 'ACM derecha', 'ACA', 'ACI', 'Sistema vertebrobasilar', 'Lacunar', 'Múltiple', 'No determinado'] },
+          { id: 'dias_desde_evc', type: 'number', label: 'Días desde el evento', min: 0, max: 3650 },
+          { id: 'fase_evc', type: 'select', label: 'Fase del evento', options: ['Aguda — <72h', 'Subaguda — 3-30 días', 'Crónica — >30 días', 'Secuelas estables'] }
+        ]
+      },
+      {
+        name: 'Escala NIHSS y déficit',
+        fields: [
+          { id: 'nihss', type: 'number', label: 'NIHSS actual', min: 0, max: 42 },
+          { id: 'mrs', type: 'select', label: 'mRS (Modified Rankin Scale)', options: ['mRS 0 — Sin síntomas', 'mRS 1 — Sin discapacidad', 'mRS 2 — Discapacidad leve', 'mRS 3 — Discapacidad moderada — sin ayuda', 'mRS 4 — Discapacidad moderada-severa', 'mRS 5 — Discapacidad severa', 'mRS 6 — Muerte'] },
+          { id: 'afasia_presente', type: 'checkbox', label: 'Afasia presente' },
+          { id: 'hemiparesia_residual', type: 'checkbox', label: 'Hemiparesia residual' },
+          { id: 'disfagia_presente', type: 'checkbox', label: 'Disfagia presente' },
+          { id: 'ataxia_presente', type: 'checkbox', label: 'Ataxia presente' },
+          { id: 'fa_como_causa', type: 'checkbox', label: 'FA identificada como causa' }
+        ]
+      },
+      {
+        name: 'Neuroimagen y estudios',
+        fields: [
+          { id: 'rm_tac_resultado', type: 'select', label: 'RM/TAC resultado', options: ['No realizada', 'Normal', 'Infarto agudo-subagudo', 'Infarto crónico', 'Hemorragia intracerebral', 'HSA', 'Lesión vascular crónica múltiple'] },
+          { id: 'aspects_score', type: 'select', label: 'ASPECTS score', options: ['ASPECTS <6 — mal pronóstico', 'ASPECTS 6-7', 'ASPECTS 8-10 — buen pronóstico', 'No aplica'] },
+          { id: 'trombosis_gran_vaso', type: 'checkbox', label: 'Trombosis de gran vaso' },
+          { id: 'trombo_auricular_eco', type: 'checkbox', label: 'Trombo auricular en ecocardiograma' },
+          { id: 'ldl_evc', type: 'number', label: 'LDL (mg/dL)', min: 0, max: 300 }
+        ]
+      },
+      {
+        name: 'Tratamiento y prevención secundaria',
+        fields: [
+          { id: 'tpa_administrado', type: 'checkbox', label: 'tPA administrado en agudo' },
+          { id: 'trombectomia_realizada', type: 'checkbox', label: 'Trombectomía mecánica realizada' },
+          { id: 'anticoagulacion_activa', type: 'checkbox', label: 'Anticoagulación activa (ACOD/warfarina para FA)' },
+          { id: 'antiagregacion', type: 'select', label: 'Antiagregación', options: ['Sin antiagregación', 'AAS 100 mg', 'Clopidogrel 75 mg', 'AAS + Clopidogrel doble', 'AAS + Ticagrelor'] },
+          { id: 'estatina_alta_intensidad', type: 'checkbox', label: 'Estatina alta intensidad activa' },
+          { id: 'rehabilitacion_neurologia', type: 'checkbox', label: 'En programa de rehabilitación' }
+        ]
+      }
+    ]
+  }
+});
+
+function buildCefaleaNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const tipo = v('tipo_cefalea') || 'No especificado';
+  const frecuencia = v('frecuencia_cefalea') || 'No especificada';
+  const dias = n('dias_cefalea_mes');
+  const midas = n('midas_score');
+  const sobreuso = v('sobreuso_analgesicos') ? ' [SOBREUSO DE ANALGÉSICOS]' : '';
+
+  const aura = [];
+  if (v('aura_visual')) aura.push('visual');
+  if (v('aura_sensitiva')) aura.push('sensitiva');
+  const auraStr = aura.length ? ' — Aura: ' + aura.join('/') : '';
+
+  const sintomas = [];
+  if (v('nausea_vomito_migrana')) sintomas.push('náusea/vómito');
+  if (v('foto_fonofobia')) sintomas.push('foto/fonofobia');
+  if (v('ptosis_lagrimeo_racimos')) sintomas.push('ptosis/lagrimeo');
+  const sintomasStr = sintomas.length ? ' — Síntomas: ' + sintomas.join(', ') : '';
+
+  const midas_grado = v('midas_grado') || '';
+  const alarma = v('cefalea_alarma') ? ' [SIGNOS DE ALARMA]' : '';
+  const neuroimagen = v('neuroimagen_resultado') || 'No realizada';
+
+  const triptan = v('triptan_actual') || 'Sin triptán';
+  const profilaxis = v('profilaxis_actual') || 'Sin profilaxis';
+  const respuesta = v('respuesta_profilaxis') || 'Sin evaluación';
+
+  return {
+    sintomas: `Tipo: ${tipo}${sobreuso}. Frecuencia: ${frecuencia} (${dias} días/mes). MIDAS: ${midas} (${midas_grado}).${auraStr}${sintomasStr}${alarma}`,
+    exfisica: v('examen_neuro_normal') ? 'Examen neurológico normal, sin papiledema, signos meníngeos negativos.' : 'Examen neurológico con hallazgos relevantes.',
+    estudios: `Neuroimagen: ${neuroimagen}.`,
+    impresion: `Migraña/${tipo}. Frecuencia: ${frecuencia}. Discapacidad: ${midas_grado}. Control: depende de respuesta profilaxis.`,
+    tx_farmaco: `Rescate: ${triptan}. Profilaxis: ${profilaxis} (respuesta: ${respuesta}).`,
+    tx_nofarmaco: 'Diario de cefalea, identificar desencadenantes, higiene de sueño regular, ejercicio aeróbico.',
+    seguimiento: 'MIDAS mensual, ajuste de profilaxis si respuesta inadecuada, meta reducción ≥50% en 3 meses.'
+  };
+}
+
+function buildEpilepsiaNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const clasificacion = v('clasificacion_epilepsia') || 'Desconocida';
+  const etiologia = v('etiologia_epilepsia') || 'Desconocida';
+  const sindrome = v('sindrome_epileptico') || 'Sin síndrome definido';
+
+  const control = v('control_crisis') || 'No especificado';
+  const crisis_mes = n('crisis_mes');
+  const meses_libre = n('meses_libre_crisis');
+  const lesion = v('lesion_rm_causal') ? ' [CON LESIÓN ESTRUCTURAL]' : '';
+  const estado_ep = v('estado_epileptico_previo') ? ' [ESTADO EPILÉPTICO PREVIO]' : '';
+
+  const fae1 = v('fae1_nombre') || 'No especificado';
+  const fae2 = v('fae2_nombre') || 'Sin FAE2';
+  const nivel_fae1 = n('nivel_fae1');
+  const nivel_fae2 = n('nivel_fae2');
+  const nivel_terapeutico = v('fae1_nivel_terapeutico') ? 'en rango' : 'fuera de rango';
+  const politerapia = v('politerapia') ? ' — Politerapia ≥2 FAE' : '';
+
+  const eeg = v('eeg_actual') || 'No realizado';
+  const candidato_ci = v('candidato_cirugia') ? ' — CANDIDATO A EVALUACIÓN QUIRÚRGICA' : '';
+  const dieta_ceto = v('dieta_cetogenica_activa') ? ' — Dieta cetogénica activa' : '';
+  const env = v('env_implantado') ? ' — ENV implantado' : '';
+
+  return {
+    sintomas: `Epilepsia ${clasificacion}. Etiología: ${etiologia}. Síndrome: ${sindrome}.${lesion}${estado_ep}. Crisis/mes: ${crisis_mes} (meses libre: ${meses_libre}).`,
+    exfisica: 'Examen neurológico valorado.',
+    estudios: `EEG: ${eeg}. Nivel FAE1: ${nivel_fae1} (${nivel_terapeutico}). Nivel FAE2: ${nivel_fae2}.`,
+    impresion: `Control: ${control}${candidato_ci}.`,
+    tx_farmaco: `FAE1: ${fae1} (${nivel_fae1}). FAE2: ${fae2}${politerapia}.`,
+    tx_nofarmaco: `Higiene de sueño estricta, evitar alcohol, precauciones de seguridad.${dieta_ceto}${env}`,
+    seguimiento: 'Diario de crisis mensual, niveles FAE si duda de adherencia, EEG anual si ajuste de diagnóstico.'
+  };
+}
+
+function buildIctusEvcNote(mk) {
+  const v = (f) => wv(mk, f);
+  const n = (f, u = '') => wn(mk, f, u);
+
+  const tipo = v('tipo_evc') || 'No especificado';
+  const territorio = v('territorio_evc') || 'No determinado';
+  const dias = n('dias_desde_evc');
+  const fase = v('fase_evc') || 'No especificada';
+
+  const nihss = n('nihss');
+  const mrs = v('mrs') || 'No evaluado';
+  const deficits = [];
+  if (v('afasia_presente')) deficits.push('afasia');
+  if (v('hemiparesia_residual')) deficits.push('hemiparesia');
+  if (v('disfagia_presente')) deficits.push('disfagia');
+  if (v('ataxia_presente')) deficits.push('ataxia');
+  const deficitStr = deficits.length ? ' — Déficits: ' + deficits.join(', ') : '';
+
+  const fa = v('fa_como_causa') ? ' [FA COMO CAUSA]' : '';
+  const neuroimagen = v('rm_tac_resultado') || 'No realizada';
+  const aspects = v('aspects_score') || 'No aplica';
+  const ldl = n('ldl_evc');
+  const gran_vaso = v('trombosis_gran_vaso') ? ' [GRAN VASO]' : '';
+  const trombo = v('trombo_auricular_eco') ? ' [TROMBO AURICULAR]' : '';
+
+  const tpa = v('tpa_administrado') ? 'Sí' : 'No';
+  const trombectomia = v('trombectomia_realizada') ? 'Sí' : 'No';
+  const anticoag = v('anticoagulacion_activa') ? 'Activa' : 'No';
+  const antiagregacion = v('antiagregacion') || 'No especificada';
+  const estatina = v('estatina_alta_intensidad') ? 'Sí' : 'No';
+  const rehab = v('rehabilitacion_neurologia') ? 'En programa' : 'Pendiente';
+
+  return {
+    sintomas: `Tipo: ${tipo}. Territorio: ${territorio}. Fase: ${fase} (${dias} días desde evento).${fa}${gran_vaso}${trombo}`,
+    exfisica: `NIHSS: ${nihss}/42. ${mrs}${deficitStr}`,
+    estudios: `Neuroimagen: ${neuroimagen}. ASPECTS: ${aspects}. LDL: ${ldl} mg/dL.`,
+    impresion: `EVC en fase ${fase}. Discapacidad: ${mrs}. Riesgo de recurrencia según etiología.`,
+    tx_farmaco: `tPA: ${tpa}. Trombectomía: ${trombectomia}. Anticoagulación: ${anticoag} (${tipo.includes('cardioembólico') || tipo.includes('FA') ? 'para FA' : 'N/A'}). Antiagregación: ${antiagregacion}. Estatina HI: ${estatina}.`,
+    tx_nofarmaco: `Rehabilitación: ${rehab}. Control HAS, fisioterapia, logopedia si afasia, evaluación de deglución.`,
+    seguimiento: 'mRS en cada visita, LDL c/6 semanas, TA meta <130/80, evaluación psicosocial (depresión post-ictus).'
+  };
+}
+
+Object.assign(WIZARD_BUILDERS, {
+  cefalea: buildCefaleaNote,
+  epilepsia: buildEpilepsiaNote,
+  ictus_evc: buildIctusEvcNote
+});
+
+['cefalea', 'epilepsia', 'ictus_evc'].forEach(m => IMPLEMENTED_MODULES.add(m));
+
 </script>
 </body>
 </html>
