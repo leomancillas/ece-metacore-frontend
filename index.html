@@ -661,6 +661,54 @@
       <div class="form-group"><label>Especialidad</label><input id="prof_esp" placeholder="Medicina Interna"></div>
     </div>
     <div class="form-group"><label>Institución</label><input id="prof_inst" placeholder="Hospital Zambrano Hellion, UANL..."></div>
+    <!-- Huso horario -->
+    <div class="form-group">
+      <label>🌐 Huso horario</label>
+      <select id="prof_tz">
+        <optgroup label="México">
+          <option value="America/Mexico_City">Ciudad de México / Monterrey / Guadalajara (CST/CDT)</option>
+          <option value="America/Monterrey">Monterrey — Nuevo León (CST/CDT)</option>
+          <option value="America/Tijuana">Tijuana — Baja California (PST/PDT)</option>
+          <option value="America/Hermosillo">Hermosillo — Sonora (MST sin cambio)</option>
+          <option value="America/Chihuahua">Chihuahua — Chihuahua (MST/MDT)</option>
+          <option value="America/Cancun">Cancún — Quintana Roo (EST sin cambio)</option>
+          <option value="America/Mazatlan">Mazatlán — Sinaloa / Nayarit (MST/MDT)</option>
+          <option value="America/Merida">Mérida — Yucatán (CST/CDT)</option>
+        </optgroup>
+        <optgroup label="Latinoamérica">
+          <option value="America/Bogota">Bogotá — Colombia (COT)</option>
+          <option value="America/Lima">Lima — Perú (PET)</option>
+          <option value="America/Santiago">Santiago — Chile (CLT)</option>
+          <option value="America/Argentina/Buenos_Aires">Buenos Aires — Argentina (ART)</option>
+          <option value="America/Caracas">Caracas — Venezuela (VET)</option>
+          <option value="America/La_Paz">La Paz — Bolivia (BOT)</option>
+          <option value="America/Asuncion">Asunción — Paraguay (PYT)</option>
+          <option value="America/Montevideo">Montevideo — Uruguay (UYT)</option>
+          <option value="America/Guayaquil">Guayaquil — Ecuador (ECT)</option>
+          <option value="America/Guatemala">Guatemala (CST)</option>
+          <option value="America/Costa_Rica">San José — Costa Rica (CST)</option>
+          <option value="America/Havana">La Habana — Cuba (CST/CDT)</option>
+          <option value="America/Panama">Ciudad de Panamá (EST)</option>
+          <option value="America/Santo_Domingo">Santo Domingo (AST)</option>
+          <option value="America/Sao_Paulo">São Paulo — Brasil (BRT)</option>
+        </optgroup>
+        <optgroup label="Estados Unidos / Canadá">
+          <option value="America/New_York">Nueva York — Eastern (EST/EDT)</option>
+          <option value="America/Chicago">Chicago — Central (CST/CDT)</option>
+          <option value="America/Denver">Denver — Mountain (MST/MDT)</option>
+          <option value="America/Los_Angeles">Los Ángeles — Pacific (PST/PDT)</option>
+          <option value="America/Anchorage">Anchorage — Alaska (AKST)</option>
+          <option value="Pacific/Honolulu">Honolulu — Hawái (HST)</option>
+          <option value="America/Toronto">Toronto (EST/EDT)</option>
+          <option value="America/Vancouver">Vancouver (PST/PDT)</option>
+        </optgroup>
+        <optgroup label="Europa / Otros">
+          <option value="UTC">UTC / GMT</option>
+          <option value="Europe/Madrid">Madrid — España (CET/CEST)</option>
+          <option value="Europe/London">Londres (GMT/BST)</option>
+        </optgroup>
+      </select>
+    </div>
     <!-- Paleta de colores -->
     <div class="form-group">
       <label>Color del sistema</label>
@@ -1338,7 +1386,7 @@ async function viewPatient(id) {
     // ── Próxima cita
     const proxCita = (citas||[]).filter(c=>c.estado==='programada').sort((a,b)=>new Date(a.fecha_cita)-new Date(b.fecha_cita))[0];
     const proxCitaHtml = proxCita ? `<div class="stat-card">
-        <div class="stat-num" style="font-size:1.1rem">${new Date(proxCita.fecha_cita).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</div>
+        <div class="stat-num" style="font-size:1.1rem">${fmtDT(proxCita.fecha_cita,{day:'2-digit',month:'short',timeZone:getUserTZ()})}</div>
         <div class="stat-label">Próxima cita</div>
       </div>` : '';
 
@@ -1410,7 +1458,7 @@ async function viewPatient(id) {
                 <span><b>${l.nombre_estudio}:</b> ${l.resultado}${l.unidades?' '+l.unidades:''}</span>
                 <span style="display:flex;gap:8px;align-items:center">
                   ${l.interpretacion?`<span style="font-size:0.72rem;font-weight:700;color:${ic}">${l.interpretacion}</span>`:''}
-                  <small style="color:#a0aec0">${l.fecha_toma?.split('T')[0]||l.created_at?.split('T')[0]||''}</small>
+                  <small style="color:#a0aec0">${fmtDT(l.fecha_toma||l.created_at,'date')}</small>
                 </span>
               </div>`;
             }).join('') || '<p class="empty-state" style="padding:24px">Sin resultados de laboratorio</p>'}
@@ -1474,8 +1522,8 @@ function renderNotesList(notes, patId) {
   if (!notes || notes.length === 0) return '<p class="empty-state">Sin notas clinicas. Crea la primera nota de evolucion.</p>';
   return notes.map(n => {
     const meta = (() => { try { return typeof n.plan_tratamiento === 'string' && n.plan_tratamiento.startsWith('{') ? JSON.parse(n.plan_tratamiento) : null; } catch(e){ return null; } })();
-    const fecha = n.created_at?.split('T')[0] || '';
-    const hora = n.created_at?.split('T')[1]?.slice(0,5) || '';
+    const fecha = fmtDT(n.created_at, 'date');
+    const hora = fmtDT(n.created_at, 'time');
     if (meta && meta._tipo) return renderStructuredNote(n, meta, fecha, hora);
     return renderLegacyNote(n, fecha, hora);
   }).join('');
@@ -2214,7 +2262,7 @@ function openPrescriptionModal(patientId) {
   document.getElementById('rx_nombre').value = [pat.nombre, pat.apellido_paterno, pat.apellido_materno].filter(Boolean).join(' ');
   document.getElementById('rx_nacimiento').value = pat.fecha_nacimiento ? pat.fecha_nacimiento.split('T')[0] : '';
   document.getElementById('rx_edad').value = age;
-  document.getElementById('rx_fecha').value = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit', year:'numeric'});
+  document.getElementById('rx_fecha').value = fmtDT(new Date(), 'date');
   document.getElementById('rx_medicamentos').value = meta.tx_farmaco || '';
   document.getElementById('rx_diagnostico').value = meta.diagnostico || '';
   document.getElementById('rx_instrucciones').value = meta.tx_nofarmaco || '';
@@ -2550,10 +2598,47 @@ function renderNavAvatar() {
   }
 }
 
+// ── TIMEZONE HELPERS ─────────────────────────────────────────────────
+const TZ_KEY = 'ece_tz';
+
+function getUserTZ() {
+  return localStorage.getItem(TZ_KEY) || Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Mexico_City';
+}
+
+/**
+ * Format a date/time string using the user's timezone.
+ * opts: Intl.DateTimeFormat options object, or one of:
+ *   'date'      → día/mes/año
+ *   'time'      → hora:min
+ *   'datetime'  → fecha + hora
+ *   'short'     → día/mes + hora:min
+ */
+function fmtDT(isoOrDate, opts) {
+  if (!isoOrDate) return '—';
+  const d = new Date(isoOrDate);
+  if (isNaN(d)) return String(isoOrDate).split('T')[0] || '—';
+  const tz = getUserTZ();
+  const presets = {
+    date:     { day:'2-digit', month:'2-digit', year:'numeric' },
+    time:     { hour:'2-digit', minute:'2-digit', hour12: false },
+    datetime: { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', hour12: false },
+    short:    { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit', hour12: false },
+  };
+  const fmt = (typeof opts === 'string' ? presets[opts] : opts) || presets.date;
+  try {
+    return new Intl.DateTimeFormat('es-MX', { ...fmt, timeZone: tz }).format(d);
+  } catch {
+    return new Intl.DateTimeFormat('es-MX', fmt).format(d);
+  }
+}
+
 function openProfileModal() {
   document.getElementById('prof_name').value  = currentUser?.name || '';
   document.getElementById('prof_esp').value   = currentUser?.especialidad || '';
   document.getElementById('prof_inst').value  = currentUser?.institucion || '';
+  // Pre-select timezone
+  const tzSel = document.getElementById('prof_tz');
+  if (tzSel) tzSel.value = getUserTZ();
   document.getElementById('profileError').textContent = '';
   document.getElementById('profileOk').style.display = 'none';
   profileFotoBase64 = null;
@@ -2605,12 +2690,16 @@ async function saveProfile() {
   const name        = document.getElementById('prof_name').value.trim();
   const especialidad= document.getElementById('prof_esp').value.trim();
   const institucion = document.getElementById('prof_inst').value.trim();
+  const tzSel       = document.getElementById('prof_tz');
+  const tz          = tzSel ? tzSel.value : '';
   const body = {};
   if (name) body.name = name;
   if (especialidad) body.especialidad = especialidad;
   if (institucion)  body.institucion  = institucion;
   if (selectedColor) body.color_primario = selectedColor;
   if (profileFotoBase64) body.foto_url = profileFotoBase64;
+  // Save timezone locally (client preference — not a backend field)
+  if (tz) localStorage.setItem(TZ_KEY, tz);
   try {
     const updated = await api('/api/profile', { method:'PUT', body: JSON.stringify(body) });
     currentUser = { ...currentUser, ...updated };
@@ -2671,8 +2760,8 @@ function generateEpicrisis() {
 
   const age = pat.fecha_nacimiento
     ? Math.floor((Date.now() - new Date(pat.fecha_nacimiento)) / 31557600000) : '?';
-  const fmtDate = iso => iso ? new Date(iso).toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}) : '-';
-  const fmtDateTime = iso => iso ? new Date(iso).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) + ' ' + new Date(iso).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '-';
+  const fmtDate = iso => fmtDT(iso, 'date');
+  const fmtDateTime = iso => fmtDT(iso, 'datetime');
 
   // Unique diagnoses across all notes
   const allDiag = [...new Set(notes
@@ -2934,7 +3023,7 @@ function generateEpicrisis() {
       </div>
       <div style="text-align:right">
         <div>Documento generado</div>
-        <div style="font-weight:700;color:#1a202c">${new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})} · ${new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</div>
+        <div style="font-weight:700;color:#1a202c">${fmtDT(new Date(),'datetime')}</div>
         <div style="margin-top:4px;font-style:italic">ECE Meta Core · Sistema de Gestión Clínica</div>
       </div>
     </div>
