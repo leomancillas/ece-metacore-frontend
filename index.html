@@ -875,6 +875,14 @@
         <button class="btn-voice" title="Dictar medicamentos" onclick="toggleVoice('rx_medicamentos',this)">🎤</button>
       </div>
     </div>
+    <!-- Plantillas de prescripción frecuente -->
+    <div id="rxTemplatesPanel" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:0.78rem;font-weight:700;color:#6b21a8">📋 Mis prescripciones frecuentes</span>
+        <button onclick="rxSaveTemplate()" style="margin-left:auto;background:#f3e8ff;border:1px solid #d8b4fe;border-radius:6px;padding:3px 10px;font-size:0.72rem;font-weight:700;color:#6b21a8;cursor:pointer">+ Guardar actual</button>
+      </div>
+      <div id="rxTemplateList" style="display:flex;flex-wrap:wrap;gap:6px;min-height:28px"></div>
+    </div>
     <div class="rx-drug-lookup">
       <div style="font-size:0.78rem;font-weight:700;color:#276749;margin-bottom:6px">💊 Buscar instrucciones de medicamento</div>
       <input id="rx_lookup_input" placeholder="Escribe el nombre del medicamento..." oninput="rxLookupDrug(this.value)" autocomplete="off">
@@ -2317,7 +2325,64 @@ function openPrescriptionModal(patientId) {
   document.getElementById('rx_instrucciones').value = meta.tx_nofarmaco || '';
   document.getElementById('rx_show_diag').checked = true;
   selectRxConsultorio(1);
+  renderRxTemplates();
   document.getElementById('prescriptionModal').classList.add('open');
+}
+
+// ── Plantillas de prescripción frecuente ─────────────────────────────────
+function rxTplKey() {
+  return 'ece_rx_tpl_' + (currentUser?.id || currentUser?.email || 'default');
+}
+function getRxTemplates() {
+  try { return JSON.parse(localStorage.getItem(rxTplKey()) || '[]'); } catch { return []; }
+}
+function saveRxTemplates(tpls) {
+  localStorage.setItem(rxTplKey(), JSON.stringify(tpls));
+}
+function rxSaveTemplate() {
+  const meds = document.getElementById('rx_medicamentos').value.trim();
+  const diag = document.getElementById('rx_diagnostico').value.trim();
+  const instr = document.getElementById('rx_instrucciones').value.trim();
+  if (!meds) { alert('Escribe los medicamentos antes de guardar la plantilla.'); return; }
+  const firstLine = meds.split('\n')[0].replace(/^\d+[\.\-\)]\s*/, '').substring(0, 40);
+  const name = prompt('Nombre para esta plantilla:', firstLine || 'Mi plantilla');
+  if (!name) return;
+  const tpls = getRxTemplates();
+  tpls.unshift({ name: name.trim(), meds, diag, instr, ts: Date.now() });
+  if (tpls.length > 20) tpls.splice(20);
+  saveRxTemplates(tpls);
+  renderRxTemplates();
+}
+function rxLoadTemplate(idx) {
+  const tpls = getRxTemplates();
+  const t = tpls[idx];
+  if (!t) return;
+  if (document.getElementById('rx_medicamentos').value.trim() &&
+      !confirm('¿Reemplazar los medicamentos actuales con la plantilla "' + t.name + '"?')) return;
+  document.getElementById('rx_medicamentos').value = t.meds;
+  if (t.diag) document.getElementById('rx_diagnostico').value = t.diag;
+  if (t.instr) document.getElementById('rx_instrucciones').value = t.instr;
+}
+function rxDeleteTemplate(idx) {
+  const tpls = getRxTemplates();
+  if (!confirm('¿Eliminar la plantilla "' + (tpls[idx]?.name || '') + '"?')) return;
+  tpls.splice(idx, 1);
+  saveRxTemplates(tpls);
+  renderRxTemplates();
+}
+function renderRxTemplates() {
+  const list = document.getElementById('rxTemplateList');
+  if (!list) return;
+  const tpls = getRxTemplates();
+  if (!tpls.length) {
+    list.innerHTML = '<span style="font-size:0.75rem;color:#a0aec0;font-style:italic">Sin plantillas guardadas — prescribe y usa "+ Guardar actual"</span>';
+    return;
+  }
+  list.innerHTML = tpls.map((t, i) => `
+    <div style="display:inline-flex;align-items:center;gap:0;background:#f3e8ff;border:1px solid #d8b4fe;border-radius:20px;overflow:hidden;max-width:220px">
+      <button onclick="rxLoadTemplate(${i})" title="${t.meds.replace(/"/g,'&quot;').substring(0,120)}" style="background:none;border:none;padding:4px 10px;font-size:0.75rem;font-weight:600;color:#6b21a8;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">${t.name}</button>
+      <button onclick="rxDeleteTemplate(${i})" style="background:none;border:none;border-left:1px solid #d8b4fe;padding:4px 7px;color:#9333ea;cursor:pointer;font-size:0.7rem;flex-shrink:0" title="Eliminar">✕</button>
+    </div>`).join('');
 }
 
 function formatRxMeds(text) {
