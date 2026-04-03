@@ -1252,8 +1252,24 @@
     <!-- Existing account actions -->
     <div id="ppModalExisting" style="display:none">
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <button class="btn btn-secondary btn-sm" style="width:auto;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none" onclick="ppShowSendCredentials()">📧 Enviar credenciales</button>
         <button class="btn btn-secondary btn-sm" style="width:auto" onclick="ppResetPassword()">🔑 Resetear contraseña</button>
         <button class="btn btn-danger btn-sm" onclick="ppRevokeAccess()">🚫 Revocar acceso</button>
+      </div>
+      <!-- Send credentials panel -->
+      <div id="ppSendPanel" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px;margin-top:14px">
+        <div style="font-size:0.82rem;color:#1e40af;font-weight:600;margin-bottom:10px">📩 Enviar acceso al portal</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
+          <input type="text" id="ppSendPassword" placeholder="Contraseña temporal" oninput="ppUpdateSendPreview()" style="flex:1;font-size:0.85rem;padding:6px 10px;border:1px solid #93c5fd;border-radius:8px">
+          <button type="button" class="btn btn-secondary btn-sm" style="white-space:nowrap;font-size:0.8rem" onclick="ppGenSendPassword()">🔀 Generar</button>
+        </div>
+        <div id="ppSendPreview" style="background:#fff;border:1px solid #dbeafe;border-radius:8px;padding:10px;font-size:0.78rem;color:#374151;white-space:pre-wrap;margin-bottom:10px;min-height:60px;max-height:120px;overflow-y:auto"></div>
+        <p id="ppSendError" style="color:#c53030;font-size:0.78rem;margin-bottom:8px;min-height:16px"></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" style="width:auto;background:#16a34a;color:#fff;border:none;font-size:0.8rem" onclick="ppSendViaAction('copy')">📋 Copiar</button>
+          <button class="btn btn-secondary btn-sm" style="width:auto;background:#2563eb;color:#fff;border:none;font-size:0.8rem" onclick="ppSendViaAction('email')">📧 Email</button>
+          <button class="btn btn-secondary btn-sm" style="width:auto;background:#15803d;color:#fff;border:none;font-size:0.8rem" onclick="ppSendViaAction('whatsapp')">💬 WhatsApp</button>
+        </div>
       </div>
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
@@ -3898,7 +3914,16 @@ async function showAdminPanel() {
       ${rejected.length ? `<div class="card">
         <div class="card-header"><span class="card-title" style="color:#c53030">🚫 Rechazados / Desactivados (${rejected.length})</span></div>
         ${rejected.map(userRow).join('')}
-      </div>` : ''}`;
+      </div>` : ''}
+      <div class="card" style="margin-top:20px">
+        <div class="card-header"><span class="card-title">🏥 Portales de pacientes</span></div>
+        <p style="font-size:0.85rem;color:#4a5568;margin-bottom:12px">Busca un paciente para gestionar o enviar sus credenciales de acceso al portal.</p>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <input id="adminPortalSearch" placeholder="Nombre, apellido o expediente..." style="flex:1;font-size:0.9rem" onkeydown="if(event.key==='Enter')adminSearchPortalPatients()">
+          <button class="btn btn-secondary btn-sm" style="width:auto" onclick="adminSearchPortalPatients()">Buscar</button>
+        </div>
+        <div id="adminPortalResults" style="min-height:30px"></div>
+      </div>`;
   } catch(e) { c.innerHTML = `<p class="error-msg">${e.message}</p>`; }
 }
 
@@ -13086,6 +13111,11 @@ async function openPatientPortalModal() {
   existingEl.style.display = 'none';
   saveBtn.textContent = '🏥 Crear acceso';
   saveBtn.style.display = '';
+  // Reset send credentials panel
+  const sendPanel = document.getElementById('ppSendPanel');
+  if (sendPanel) sendPanel.style.display = 'none';
+  const sendErr = document.getElementById('ppSendError');
+  if (sendErr) sendErr.textContent = '';
   try {
     const res = await api('/api/patients/' + currentPatient.id + '/portal-account').catch(() => null);
     if (res?.exists) {
@@ -13155,6 +13185,116 @@ async function ppRevokeAccess() {
     closeModal('patientPortalModal');
     showToast('🚫 Acceso al portal revocado', 'warn');
   } catch(e) { showToast(e.message || 'Error', 'error'); }
+}
+
+// ── Portal: Send credentials panel ─────────────────────────────
+let _ppSendEmail = '';
+
+function ppShowSendCredentials() {
+  const panel = document.getElementById('ppSendPanel');
+  const isVisible = panel.style.display !== 'none';
+  panel.style.display = isVisible ? 'none' : 'block';
+  if (!isVisible) {
+    // Read email from the status element
+    const strongEl = document.querySelector('#ppModalStatus strong');
+    _ppSendEmail = strongEl ? strongEl.textContent.trim() : '';
+    document.getElementById('ppSendError').textContent = '';
+    ppGenSendPassword();
+  }
+}
+
+function ppGenSendPassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#';
+  const pw = Array.from({length: 10}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  document.getElementById('ppSendPassword').value = pw;
+  ppUpdateSendPreview();
+}
+
+function ppUpdateSendPreview() {
+  const pw = document.getElementById('ppSendPassword').value.trim();
+  const patName = currentPatient
+    ? [currentPatient.nombre, currentPatient.apellido_paterno].filter(Boolean).join(' ')
+    : 'Paciente';
+  const url = 'https://leomancillas.github.io/ece-metacore-frontend/';
+  const msg = 'Hola ' + patName + ', aquí están tus datos de acceso al portal médico ECE META CORE:\n\n'
+    + '🌐 Acceso: ' + url + '\n'
+    + '📧 Correo: ' + (_ppSendEmail || '—') + '\n'
+    + '🔑 Contraseña temporal: ' + (pw || '(ingresa una contraseña)') + '\n\n'
+    + 'Puedes cambiar tu contraseña desde tu perfil después de iniciar sesión.';
+  document.getElementById('ppSendPreview').textContent = msg;
+  return msg;
+}
+
+async function ppSendViaAction(method) {
+  const pw = document.getElementById('ppSendPassword').value.trim();
+  const errEl = document.getElementById('ppSendError');
+  errEl.textContent = '';
+  if (!pw || pw.length < 6) { errEl.textContent = 'Ingresa una contraseña de al menos 6 caracteres.'; return; }
+  // Update password via PATCH
+  try {
+    await api('/api/patients/' + currentPatient.id + '/portal-account', {
+      method: 'PATCH', body: JSON.stringify({ password: pw })
+    });
+  } catch(e) {
+    errEl.textContent = 'Error al actualizar contraseña: ' + (e.message || 'Intenta de nuevo.');
+    return;
+  }
+  const msg = ppUpdateSendPreview();
+  if (method === 'copy') {
+    try {
+      await navigator.clipboard.writeText(msg);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = msg; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+    }
+    showToast('📋 Credenciales copiadas al portapapeles', 'success');
+  } else if (method === 'email') {
+    const subj = encodeURIComponent('Acceso a tu portal médico ECE META CORE');
+    const body = encodeURIComponent(msg);
+    window.open('mailto:' + _ppSendEmail + '?subject=' + subj + '&body=' + body, '_blank');
+  } else if (method === 'whatsapp') {
+    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+  }
+}
+
+// ── Admin: portal patient search ────────────────────────────────
+const _adminPortalMap = {};   // id → patient object
+
+async function adminSearchPortalPatients() {
+  const q = document.getElementById('adminPortalSearch')?.value.trim() || '';
+  const el = document.getElementById('adminPortalResults');
+  if (!el) return;
+  el.innerHTML = '<p style="font-size:0.85rem;color:#718096">Buscando...</p>';
+  try {
+    const data = await api('/api/patients?limit=50' + (q ? '&search=' + encodeURIComponent(q) : ''));
+    const patients = data.patients || [];
+    if (!patients.length) {
+      el.innerHTML = '<p style="font-size:0.85rem;color:#718096">No se encontraron pacientes.</p>';
+      return;
+    }
+    patients.forEach(p => { _adminPortalMap[p.id] = p; });
+    el.innerHTML = patients.map(p => {
+      const fullName = [p.nombre, p.apellido_paterno, p.apellido_materno].filter(Boolean).join(' ');
+      const portalBadge = p.has_portal_access
+        ? '<span style="font-size:0.72rem;background:#d1fae5;color:#065f46;border-radius:4px;padding:2px 7px;font-weight:600">✅ Portal activo</span>'
+        : '<span style="font-size:0.72rem;background:#f3f4f6;color:#6b7280;border-radius:4px;padding:2px 7px">Sin portal</span>';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e2e8f0">'
+        + '<div><span style="font-weight:600;font-size:0.9rem">' + fullName + '</span>'
+        + ' <span class="badge badge-blue" style="font-size:0.75rem">' + p.expediente + '</span>'
+        + ' ' + portalBadge + '</div>'
+        + '<button class="btn btn-secondary btn-sm" style="width:auto;background:linear-gradient(135deg,#0d6b5e,#1a8a75);color:#fff;border:none;white-space:nowrap"'
+        + ' onclick="adminOpenPortal(\'' + p.id + '\')">🏥 Gestionar portal</button>'
+        + '</div>';
+    }).join('');
+  } catch(e) { el.innerHTML = '<p class="error-msg">' + e.message + '</p>'; }
+}
+
+function adminOpenPortal(patientId) {
+  const p = _adminPortalMap[patientId];
+  if (!p) return;
+  currentPatient = p;
+  openPatientPortalModal();
 }
 
 // ══════════════════════════════════════════════════════════════════
