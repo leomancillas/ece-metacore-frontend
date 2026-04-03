@@ -13116,6 +13116,7 @@ async function openPatientPortalModal() {
   if (sendPanel) sendPanel.style.display = 'none';
   const sendErr = document.getElementById('ppSendError');
   if (sendErr) sendErr.textContent = '';
+  _ppSkipPatch = false;
   try {
     const res = await api('/api/patients/' + currentPatient.id + '/portal-account').catch(() => null);
     if (res?.exists) {
@@ -13155,8 +13156,26 @@ async function ppCreatePortalAccess() {
     // Show portal toggle in note modal from now on
     const ptToggle = document.getElementById('notePortalToggle');
     if (ptToggle) ptToggle.style.display = 'flex';
-    closeModal('patientPortalModal');
-    showToast('✅ Acceso al portal creado para ' + email, 'success');
+
+    // ── Liga en automático: queda en el modal listo para enviar credenciales ──
+    // Cambia a vista de cuenta existente
+    document.getElementById('ppModalForm').style.display = 'none';
+    document.getElementById('ppModalSaveBtn').style.display = 'none';
+    document.getElementById('ppModalStatus').innerHTML =
+      '✅ <strong>' + email + '</strong> ya tiene acceso al portal.<br>'
+      + '<span style="color:#718096;font-size:0.8rem">Cuenta creada ahora mismo</span>';
+    document.getElementById('ppModalStatus').style.display = 'block';
+    document.getElementById('ppModalExisting').style.display = 'block';
+
+    // Pre-llena y abre el panel de enviar credenciales con la contraseña recién creada
+    _ppSendEmail = email;
+    _ppSkipPatch = true;   // no hace falta actualizar la contraseña, recién fue creada
+    document.getElementById('ppSendPanel').style.display = 'block';
+    document.getElementById('ppSendPassword').value = password;
+    document.getElementById('ppSendError').textContent = '';
+    ppUpdateSendPreview();
+
+    showToast('✅ Cuenta creada — ahora envía las credenciales al paciente', 'success');
   } catch(e) {
     errEl.textContent = e.message || 'Error al crear la cuenta.';
     btn.textContent = '🏥 Crear acceso'; btn.disabled = false;
@@ -13189,6 +13208,7 @@ async function ppRevokeAccess() {
 
 // ── Portal: Send credentials panel ─────────────────────────────
 let _ppSendEmail = '';
+let _ppSkipPatch = false;   // true right after account creation (password already set)
 
 function ppShowSendCredentials() {
   const panel = document.getElementById('ppSendPanel');
@@ -13230,15 +13250,18 @@ async function ppSendViaAction(method) {
   const errEl = document.getElementById('ppSendError');
   errEl.textContent = '';
   if (!pw || pw.length < 6) { errEl.textContent = 'Ingresa una contraseña de al menos 6 caracteres.'; return; }
-  // Update password via PATCH
-  try {
-    await api('/api/patients/' + currentPatient.id + '/portal-account', {
-      method: 'PATCH', body: JSON.stringify({ password: pw })
-    });
-  } catch(e) {
-    errEl.textContent = 'Error al actualizar contraseña: ' + (e.message || 'Intenta de nuevo.');
-    return;
+  // PATCH sólo si la contraseña NO es la misma que se acaba de crear
+  if (!_ppSkipPatch) {
+    try {
+      await api('/api/patients/' + currentPatient.id + '/portal-account', {
+        method: 'PATCH', body: JSON.stringify({ password: pw })
+      });
+    } catch(e) {
+      errEl.textContent = 'Error al actualizar contraseña: ' + (e.message || 'Intenta de nuevo.');
+      return;
+    }
   }
+  _ppSkipPatch = false;   // siguiente envío sí actualizará
   const msg = ppUpdateSendPreview();
   if (method === 'copy') {
     try {
