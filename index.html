@@ -682,11 +682,7 @@
       <div class="form-group"><label>Fecha de fin (opcional)</label><input id="med_fin" type="date"></div>
     </div>
     <div class="form-group"><label>Indicación / diagnóstico</label><input id="med_indica" placeholder="DM2, HTA, ERGE..."></div>
-    <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f0fffe;border:1px solid #81e6d9;border-radius:8px;cursor:pointer;user-select:none;margin-bottom:4px">
-      <input type="checkbox" id="med_portal_visible" checked style="width:16px;height:16px;accent-color:#0d6b5e;cursor:pointer">
-      <span style="font-size:0.85rem;color:#234e52;font-weight:500">👁 Visible al paciente en el portal</span>
-      <span style="font-size:0.75rem;color:#718096;margin-left:auto">Si está desactivado, el paciente no verá este medicamento</span>
-    </label>
+    <input type="hidden" id="med_portal_visible" value="true">
     <p id="medError" class="error-msg"></p>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
       <button class="btn btn-secondary" onclick="closeModal('medModal')">Cancelar</button>
@@ -4415,7 +4411,7 @@ function medRow(m) {
       ${m.indicacion ? `<div style="font-size:0.78rem;color:#718096">${m.indicacion}</div>` : ''}
       <div style="font-size:0.72rem;color:#a0aec0;display:flex;align-items:center;gap:8px">
         <span>Desde: ${m.fecha_inicio ? m.fecha_inicio.split('T')[0] : 'N/D'}${m.fecha_fin ? ' → '+m.fecha_fin.split('T')[0] : ''}</span>
-        ${m.portal_visible === false ? '<span style="background:#fed7d7;color:#c53030;font-size:0.68rem;padding:1px 6px;border-radius:4px;font-weight:600">🔒 No visible al paciente</span>' : '<span style="background:#c6f6d5;color:#276749;font-size:0.68rem;padding:1px 6px;border-radius:4px">👁 Visible</span>'}
+        <span style="background:#c6f6d5;color:#276749;font-size:0.68rem;padding:1px 6px;border-radius:4px">👁 Compartido con paciente</span>
       </div>
       ${instrHtml}
       ${nextDoseHtml}
@@ -4438,7 +4434,7 @@ function openMedModal(med) {
   document.getElementById('med_inicio').value    = med?.fecha_inicio?.split('T')[0] || '';
   document.getElementById('med_fin').value       = med?.fecha_fin?.split('T')[0] || '';
   document.getElementById('med_indica').value    = med?.indicacion || '';
-  document.getElementById('med_portal_visible').checked = med ? (med.portal_visible !== false) : true;
+  // portal_visible always true — medications auto-shared with patient
   document.getElementById('medModalTitle').textContent = med ? '✏️ Editar medicamento' : '💊 Agregar medicamento';
   document.getElementById('medError').textContent = '';
   document.getElementById('medModal').classList.add('open');
@@ -4470,7 +4466,7 @@ async function saveMed() {
     fecha_inicio:    document.getElementById('med_inicio').value || null,
     fecha_fin:       document.getElementById('med_fin').value || null,
     indicacion:      document.getElementById('med_indica').value.trim(),
-    portal_visible:  document.getElementById('med_portal_visible').checked,
+    portal_visible:  true,
   };
   try {
     const method = currentMedId ? 'PUT' : 'POST';
