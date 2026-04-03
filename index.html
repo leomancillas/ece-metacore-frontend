@@ -562,8 +562,20 @@
     <!-- Tabs -->
     <div class="pp-tabs">
       <button class="pp-tab active" onclick="ppShowTab('meds',this)">💊 Mis Medicamentos</button>
+      <button class="pp-tab" onclick="ppShowTab('citas',this)">📅 Mis Citas</button>
       <button class="pp-tab" onclick="ppShowTab('edu',this)">📚 Material Educativo</button>
       <button class="pp-tab" onclick="ppShowTab('files',this)">📎 Mis Archivos</button>
+    </div>
+    <!-- Tab: Citas -->
+    <div id="ppCitas" class="pp-section">
+      <div class="pp-card">
+        <h3>📅 Próximas citas <span class="pp-badge" id="ppCitasBadge">…</span></h3>
+        <div id="ppCitasUpcomingList"><div class="pp-empty"><div class="pp-empty-icon">⏳</div><p>Cargando…</p></div></div>
+      </div>
+      <div class="pp-card" id="ppCitasPastCard" style="display:none">
+        <h3>🗂 Citas anteriores</h3>
+        <div id="ppCitasPastList"></div>
+      </div>
     </div>
     <!-- Tab: Medicamentos -->
     <div id="ppMeds" class="pp-section active">
@@ -13342,13 +13354,15 @@ function initPatientPortal() {
   _ppPatientId = currentUser?.patient_id || null;
   if (!_ppPatientId) {
     document.getElementById('ppWelcomeSub').textContent = 'Tu cuenta aún no está vinculada a un expediente. Contacta a tu médico.';
-    ['ppMedsList','ppEduList','ppFilesList'].forEach(id => {
+    ['ppMedsList','ppEduList','ppFilesList','ppCitasUpcomingList'].forEach(id => {
       document.getElementById(id).innerHTML = '<div class="pp-empty"><div class="pp-empty-icon">🔗</div><p>Sin expediente vinculado</p></div>';
     });
     document.getElementById('ppMedsBadge').textContent = '–';
+    document.getElementById('ppCitasBadge').textContent = '–';
     return;
   }
   ppLoadMeds();
+  ppLoadCitas();
   ppLoadEdu();
   ppLoadFiles();
 }
@@ -13381,6 +13395,51 @@ async function ppLoadMeds() {
   } catch(e) {
     el.innerHTML = '<div class="pp-empty"><div class="pp-empty-icon">⚠️</div><p>Error al cargar medicamentos.</p></div>';
   }
+}
+
+// ── Citas ────────────────────────────────────────────────────────
+async function ppLoadCitas() {
+  const el = document.getElementById('ppCitasUpcomingList');
+  const elPast = document.getElementById('ppCitasPastList');
+  try {
+    const citas = await api('/api/patients/' + _ppPatientId + '/citas');
+    const now = new Date();
+    const upcoming = citas.filter(c => new Date(c.fecha_cita) >= now && c.estado !== 'cancelada')
+                         .sort((a,b) => new Date(a.fecha_cita) - new Date(b.fecha_cita));
+    const past = citas.filter(c => new Date(c.fecha_cita) < now || c.estado === 'cancelada')
+                      .sort((a,b) => new Date(b.fecha_cita) - new Date(a.fecha_cita));
+    document.getElementById('ppCitasBadge').textContent = upcoming.length ? upcoming.length + ' próximas' : 'Sin próximas';
+    if (!upcoming.length) {
+      el.innerHTML = '<div class="pp-empty"><div class="pp-empty-icon">📅</div><p>No tienes citas próximas programadas.</p></div>';
+    } else {
+      el.innerHTML = upcoming.map(c => ppCitaRow(c, true)).join('');
+    }
+    if (past.length) {
+      document.getElementById('ppCitasPastCard').style.display = '';
+      elPast.innerHTML = past.slice(0,5).map(c => ppCitaRow(c, false)).join('');
+    }
+  } catch(e) {
+    el.innerHTML = '<div class="pp-empty"><div class="pp-empty-icon">⚠️</div><p>Error al cargar citas.</p></div>';
+  }
+}
+
+function ppCitaRow(c, upcoming) {
+  const dt = new Date(c.fecha_cita);
+  const dateStr = dt.toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const timeStr = dt.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+  const estadoColor = { programada:'#276749', completada:'#2b6cb0', cancelada:'#c53030' };
+  const color = estadoColor[c.estado] || '#4a5568';
+  return `<div class="pp-med-row" style="align-items:flex-start">
+    <div class="pp-med-icon">📅</div>
+    <div style="flex:1">
+      <div class="pp-med-name">${c.motivo || 'Consulta médica'}</div>
+      <div class="pp-med-dose">${dateStr} · ${timeStr}</div>
+      ${c.especialidad ? `<div class="pp-med-notes">🩺 ${c.especialidad}</div>` : ''}
+      ${c.doctor_name ? `<div class="pp-med-notes">👨‍⚕️ Dr. ${c.doctor_name}</div>` : ''}
+      ${c.notas ? `<div class="pp-med-notes">📋 ${c.notas}</div>` : ''}
+      <div class="pp-med-status"><span class="pp-pill" style="background:${color}20;color:${color}">${c.estado || 'programada'}</span></div>
+    </div>
+  </div>`;
 }
 
 function ppMedRow(m, active) {
