@@ -3049,7 +3049,11 @@ async function printPrescription() {
   win.focus();
   setTimeout(() => win.print(), 700);
 
-  // 3. Cerrar modal y refrescar expediente
+  // 3. Auto-importar los medicamentos de la receta al módulo de medicamentos
+  const _rxFakeNote = [{ plan_tratamiento: JSON.stringify(rxMeta), created_at: new Date().toISOString() }];
+  importMedsFromNotes(_rxFakeNote, currentPatient.id, true).catch(() => {});
+
+  // 4. Cerrar modal y refrescar expediente
   closeModal('prescriptionModal');
   viewPatient(currentPatient.id);
 }
@@ -4507,7 +4511,8 @@ function parseTxFarmacoLines(text) {
   return results;
 }
 
-// Import medications from all SOAP notes that have tx_farmaco — skips duplicates by name
+// Import medications from all notes that have medication data — skips duplicates by name
+// Reads from: meta.tx_farmaco (SOAP/evolucion), meta.medicamentos (receta), meta.tratamiento (urgencias/egreso)
 async function importMedsFromNotes(notes, patientId, silent = false) {
   if (!notes || !notes.length || !patientId) return 0;
   // Get current meds to check duplicates
@@ -4519,15 +4524,16 @@ async function importMedsFromNotes(notes, patientId, silent = false) {
 
   const toAdd = [];
   for (const note of notes) {
-    let txFarmaco = '';
+    let medText = '';
     try {
       if (note.plan_tratamiento && note.plan_tratamiento.startsWith('{')) {
         const meta = JSON.parse(note.plan_tratamiento);
-        txFarmaco = meta.tx_farmaco || '';
+        // receta notes → meta.medicamentos; SOAP → meta.tx_farmaco; urgencias/egreso → meta.tratamiento
+        medText = meta.medicamentos || meta.tx_farmaco || meta.tratamiento || '';
       }
     } catch(e) {}
-    if (!txFarmaco.trim()) continue;
-    const parsed = parseTxFarmacoLines(txFarmaco);
+    if (!medText.trim()) continue;
+    const parsed = parseTxFarmacoLines(medText);
     const noteDate = note.created_at ? note.created_at.split('T')[0] : null;
     for (const med of parsed) {
       const key = med.nombre.toLowerCase().trim();
