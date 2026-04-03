@@ -398,6 +398,73 @@
     /* ── Note auto-draft banner ── */
     .ndraft-banner { background:#fffff0;border:1px solid #ecc94b;border-radius:8px;padding:7px 12px;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-size:0.82rem;color:#744210; }
     .ndraft-ind { font-size:0.72rem;color:#a0aec0;transition:opacity 0.5s; }
+
+    /* ══════════════════════════════════════════════════════
+       PORTAL PACIENTE
+    ══════════════════════════════════════════════════════ */
+    #patientPortal { display:none; min-height:100vh; background:#f0f7f4; }
+    .pp-nav { background:linear-gradient(135deg,#0d6b5e,#1a8a75); color:white; padding:0 20px; height:58px; display:flex; align-items:center; gap:14px; box-shadow:0 2px 10px rgba(0,0,0,0.18); position:sticky; top:0; z-index:100; }
+    .pp-nav h1 { font-size:1.1rem; font-weight:700; flex:1; letter-spacing:0.01em; }
+    .pp-nav .pp-user { font-size:0.83rem; opacity:0.88; }
+    .pp-nav button { background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); color:white; padding:5px 14px; border-radius:8px; cursor:pointer; font-size:0.82rem; font-weight:600; }
+    .pp-nav button:hover { background:rgba(255,255,255,0.25); }
+    .pp-body { max-width:860px; margin:0 auto; padding:24px 16px 60px; }
+    .pp-tabs { display:flex; gap:6px; background:white; border-radius:14px; padding:6px; margin-bottom:24px; box-shadow:0 2px 8px rgba(0,0,0,0.07); overflow-x:auto; }
+    .pp-tab { flex:1; min-width:100px; padding:10px 8px; border:none; border-radius:10px; background:transparent; cursor:pointer; font-size:0.85rem; font-weight:600; color:#4a5568; transition:all 0.18s; white-space:nowrap; }
+    .pp-tab.active { background:linear-gradient(135deg,#0d6b5e,#1a8a75); color:white; box-shadow:0 3px 10px rgba(13,107,94,0.3); }
+    .pp-tab:hover:not(.active) { background:#f0f7f4; color:#0d6b5e; }
+    .pp-section { display:none; }
+    .pp-section.active { display:block; }
+
+    /* Tarjetas del portal */
+    .pp-welcome-card { background:linear-gradient(135deg,#0d6b5e,#1a8a75); color:white; border-radius:16px; padding:24px; margin-bottom:20px; position:relative; overflow:hidden; }
+    .pp-welcome-card::after { content:'🏥'; position:absolute; right:20px; bottom:-10px; font-size:4rem; opacity:0.15; }
+    .pp-welcome-card h2 { font-size:1.4rem; font-weight:800; margin-bottom:4px; }
+    .pp-welcome-card p { opacity:0.9; font-size:0.9rem; }
+    .pp-card { background:white; border-radius:14px; padding:20px; margin-bottom:16px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+    .pp-card h3 { font-size:1rem; font-weight:700; color:#1a202c; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+    .pp-card h3 .pp-badge { font-size:0.7rem; background:#e6fffa; color:#0d6b5e; padding:2px 8px; border-radius:10px; font-weight:700; }
+
+    /* Medicamentos */
+    .pp-med-row { display:flex; align-items:flex-start; gap:14px; padding:12px 0; border-bottom:1px solid #f0f0f0; }
+    .pp-med-row:last-child { border-bottom:none; }
+    .pp-med-icon { width:42px; height:42px; border-radius:10px; background:#e6fffa; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+    .pp-med-name { font-weight:700; color:#1a202c; font-size:0.93rem; }
+    .pp-med-dose { font-size:0.82rem; color:#0d6b5e; font-weight:600; margin-top:2px; }
+    .pp-med-notes { font-size:0.8rem; color:#718096; margin-top:3px; }
+    .pp-med-status { margin-top:5px; }
+    .pp-pill { display:inline-block; font-size:0.7rem; padding:2px 8px; border-radius:10px; font-weight:700; background:#c6f6d5; color:#276749; }
+    .pp-pill.inactive { background:#fed7d7; color:#9b2c2c; }
+
+    /* Material educativo */
+    .pp-edu-card { border:1px solid #e2e8f0; border-radius:12px; padding:14px; margin-bottom:12px; transition:box-shadow 0.2s; cursor:default; }
+    .pp-edu-card:hover { box-shadow:0 4px 14px rgba(0,0,0,0.09); }
+    .pp-edu-type { font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:10px; background:#ebf8ff; color:#2b6cb0; display:inline-block; margin-bottom:8px; }
+    .pp-edu-title { font-weight:700; color:#1a202c; font-size:0.9rem; margin-bottom:5px; }
+    .pp-edu-body { font-size:0.83rem; color:#4a5568; line-height:1.55; }
+    .pp-edu-date { font-size:0.75rem; color:#a0aec0; margin-top:8px; }
+
+    /* Archivos */
+    .pp-upload-zone { border:2px dashed #81e6d9; border-radius:14px; padding:32px 20px; text-align:center; background:#f0fffe; cursor:pointer; transition:all 0.2s; margin-bottom:16px; }
+    .pp-upload-zone:hover, .pp-upload-zone.drag-over { border-color:#0d6b5e; background:#e6fffa; }
+    .pp-upload-zone .pp-up-icon { font-size:2.2rem; margin-bottom:8px; }
+    .pp-upload-zone p { color:#0d6b5e; font-weight:700; font-size:0.9rem; margin-bottom:4px; }
+    .pp-upload-zone small { color:#718096; font-size:0.78rem; }
+    .pp-file-row { display:flex; align-items:center; gap:12px; padding:11px 14px; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:8px; background:white; }
+    .pp-file-icon { font-size:1.4rem; flex-shrink:0; }
+    .pp-file-name { font-weight:600; color:#1a202c; font-size:0.88rem; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .pp-file-meta { font-size:0.75rem; color:#a0aec0; white-space:nowrap; }
+    .pp-file-status { font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:10px; background:#fefcbf; color:#744210; white-space:nowrap; }
+    .pp-file-status.seen { background:#c6f6d5; color:#276749; }
+
+    /* Empty states */
+    .pp-empty { text-align:center; padding:36px 20px; color:#a0aec0; }
+    .pp-empty .pp-empty-icon { font-size:2.8rem; margin-bottom:10px; }
+    .pp-empty p { font-size:0.88rem; }
+
+    /* Upload progress */
+    .pp-progress { background:#e2e8f0; border-radius:8px; height:6px; overflow:hidden; margin-top:8px; }
+    .pp-progress-bar { height:100%; background:linear-gradient(90deg,#0d6b5e,#1a8a75); border-radius:8px; transition:width 0.3s; }
 </style>
 </head>
 <body>
@@ -445,6 +512,67 @@
       <p id="reg_ok" style="color:#276749;font-size:0.85rem;display:none">✅ Tu cuenta ha sido activada. Tienes 72 horas de prueba para disfrutar del expediente clínico electrónico hecho por médicos, para médicos.</p>
       <button class="btn btn-primary" onclick="submitAccessRequest()">Enviar solicitud</button>
       <button class="btn btn-secondary" style="width:100%;margin-top:8px" onclick="document.getElementById('registerForm').style.display='none'">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PORTAL PACIENTE -->
+<div id="patientPortal">
+  <nav class="pp-nav">
+    <h1>🏥 Mi Expediente</h1>
+    <span class="pp-user" id="ppNavUser"></span>
+    <button onclick="portalLogout()">Salir</button>
+  </nav>
+  <div class="pp-body">
+    <!-- Welcome card -->
+    <div class="pp-welcome-card">
+      <h2 id="ppWelcomeMsg">Bienvenido/a</h2>
+      <p id="ppWelcomeSub">Consulta tus medicamentos, material educativo y envía documentos a tu médico.</p>
+    </div>
+    <!-- Tabs -->
+    <div class="pp-tabs">
+      <button class="pp-tab active" onclick="ppShowTab('meds',this)">💊 Mis Medicamentos</button>
+      <button class="pp-tab" onclick="ppShowTab('edu',this)">📚 Material Educativo</button>
+      <button class="pp-tab" onclick="ppShowTab('files',this)">📎 Mis Archivos</button>
+    </div>
+    <!-- Tab: Medicamentos -->
+    <div id="ppMeds" class="pp-section active">
+      <div class="pp-card">
+        <h3>💊 Medicamentos activos <span class="pp-badge" id="ppMedsBadge">…</span></h3>
+        <div id="ppMedsList"><div class="pp-empty"><div class="pp-empty-icon">⏳</div><p>Cargando…</p></div></div>
+      </div>
+      <div class="pp-card" id="ppMedsInactiveCard" style="display:none">
+        <h3>📋 Medicamentos previos</h3>
+        <div id="ppMedsInactiveList"></div>
+      </div>
+    </div>
+    <!-- Tab: Material educativo -->
+    <div id="ppEdu" class="pp-section">
+      <div class="pp-card">
+        <h3>📚 Material compartido por tu médico</h3>
+        <div id="ppEduList"><div class="pp-empty"><div class="pp-empty-icon">⏳</div><p>Cargando…</p></div></div>
+      </div>
+    </div>
+    <!-- Tab: Archivos -->
+    <div id="ppFiles" class="pp-section">
+      <div class="pp-card">
+        <h3>📎 Enviar documentos a mi médico</h3>
+        <div class="pp-upload-zone" id="ppDropZone"
+          onclick="document.getElementById('ppFileInput').click()"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="ppHandleDrop(event)">
+          <div class="pp-up-icon">📤</div>
+          <p>Toca o arrastra tus archivos aquí</p>
+          <small>PDF, JPG, PNG — máximo 10 MB por archivo</small>
+          <input type="file" id="ppFileInput" style="display:none" multiple accept=".pdf,.jpg,.jpeg,.png,.heic" onchange="ppUploadFiles(this.files)">
+        </div>
+        <div id="ppUploadStatus"></div>
+      </div>
+      <div class="pp-card">
+        <h3>📁 Archivos enviados</h3>
+        <div id="ppFilesList"><div class="pp-empty"><div class="pp-empty-icon">⏳</div><p>Cargando…</p></div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1243,8 +1371,10 @@ function logout() {
   token = null; currentUser = null; realAdminSession = null;
   localStorage.removeItem('ece_token'); localStorage.removeItem('ece_user');
   document.getElementById('app').style.display = 'none';
+  document.getElementById('patientPortal').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
 }
+function portalLogout() { logout(); }
 
 function isMedico() {
   return !currentUser || currentUser.role === 'medico' || currentUser.role === 'admin';
@@ -1252,6 +1382,13 @@ function isMedico() {
 
 function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
+  // ── Portal paciente ──
+  if (currentUser?.role === 'paciente') {
+    document.getElementById('patientPortal').style.display = 'block';
+    document.getElementById('app').style.display = 'none';
+    initPatientPortal();
+    return;
+  }
   document.getElementById('app').style.display = 'block';
   const rolLabel = { medico: 'Médico', admin: 'Administrador', recepcion: 'Recepción', enfermera: 'Enfermera' };
   const badge = isMedico() ? '' : ` <span style="background:#fed7d7;color:#9b2c2c;font-size:0.7rem;padding:2px 8px;border-radius:8px;font-weight:700">${rolLabel[currentUser.role]||currentUser.role}</span>`;
@@ -12815,6 +12952,189 @@ function _ndraftRestore() {
     const btn = document.querySelector(`.note-type-btn[onclick*="'${draft.tipo}'"]`);
     if (btn) { selectNoteType(draft.tipo, btn); setTimeout(restore, 80); } else restore();
   } else { restore(); }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  PORTAL PACIENTE
+// ══════════════════════════════════════════════════════════════════
+
+let _ppPatientId = null;
+
+function initPatientPortal() {
+  const name = (currentUser?.name || 'Paciente').split(' ')[0];
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+  document.getElementById('ppNavUser').textContent = currentUser?.name || '';
+  document.getElementById('ppWelcomeMsg').textContent = `${greet}, ${name}`;
+  // patient_id linked to this user account
+  _ppPatientId = currentUser?.patient_id || null;
+  if (!_ppPatientId) {
+    document.getElementById('ppWelcomeSub').textContent = 'Tu cuenta aún no está vinculada a un expediente. Contacta a tu médico.';
+    ['ppMedsList','ppEduList','ppFilesList'].forEach(id => {
+      document.getElementById(id).innerHTML = '<div class="pp-empty"><div class="pp-empty-icon">🔗</div><p>Sin expediente vinculado</p></div>';
+    });
+    document.getElementById('ppMedsBadge').textContent = '–';
+    return;
+  }
+  ppLoadMeds();
+  ppLoadEdu();
+  ppLoadFiles();
+}
+
+function ppShowTab(tab, btn) {
+  document.querySelectorAll('.pp-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.pp-section').forEach(s => s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pp' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+}
+
+// ── Medicamentos ─────────────────────────────────────────────────
+async function ppLoadMeds() {
+  const el = document.getElementById('ppMedsList');
+  const elInactive = document.getElementById('ppMedsInactiveList');
+  try {
+    const meds = await api('/api/patients/' + _ppPatientId + '/medications');
+    const active = meds.filter(m => m.activo !== false && m.status !== 'inactivo');
+    const inactive = meds.filter(m => m.activo === false || m.status === 'inactivo');
+    document.getElementById('ppMedsBadge').textContent = active.length + ' activos';
+    if (!active.length) {
+      el.innerHTML = '<div class="pp-empty"><div class="pp-empty-icon">💊</div><p>No tienes medicamentos activos registrados.</p></div>';
+    } else {
+      el.innerHTML = active.map(m => ppMedRow(m, true)).join('');
+    }
+    if (inactive.length) {
+      document.getElementById('ppMedsInactiveCard').style.display = '';
+      elInactive.innerHTML = inactive.map(m => ppMedRow(m, false)).join('');
+    }
+  } catch(e) {
+    el.innerHTML = '<div class="pp-empty"><div class="pp-empty-icon">⚠️</div><p>Error al cargar medicamentos.</p></div>';
+  }
+}
+
+function ppMedRow(m, active) {
+  const icons = { 'tableta':'💊', 'cápsula':'💊', 'jarabe':'🧴', 'inyectable':'💉', 'inhalador':'🫁', 'gotas':'💧', 'crema':'🧴', 'parche':'🩹' };
+  const icon = icons[m.forma?.toLowerCase()] || '💊';
+  const dose = [m.dosis, m.frecuencia, m.via].filter(Boolean).join(' · ');
+  const statusLabel = active ? 'Activo' : 'Inactivo';
+  return `<div class="pp-med-row">
+    <div class="pp-med-icon">${icon}</div>
+    <div style="flex:1">
+      <div class="pp-med-name">${m.nombre || m.name || '—'}</div>
+      ${dose ? `<div class="pp-med-dose">${dose}</div>` : ''}
+      ${m.indicacion || m.indication ? `<div class="pp-med-notes">📋 ${m.indicacion || m.indication}</div>` : ''}
+      ${m.instrucciones ? `<div class="pp-med-notes">ℹ️ ${m.instrucciones}</div>` : ''}
+      ${m.duracion ? `<div class="pp-med-notes">⏱ ${m.duracion}</div>` : ''}
+      <div class="pp-med-status"><span class="pp-pill ${active ? '' : 'inactive'}">${statusLabel}</span></div>
+    </div>
+  </div>`;
+}
+
+// ── Material educativo ────────────────────────────────────────────
+async function ppLoadEdu() {
+  const el = document.getElementById('ppEduList');
+  try {
+    const notes = await api('/api/patients/' + _ppPatientId + '/notes');
+    const edu = notes.filter(n => n.tipo === 'educacion' || n.tipo === 'educativo' || n.tipo === 'instrucciones' || n.portal_visible === true);
+    if (!edu.length) {
+      el.innerHTML = '<div class="pp-empty"><div class="pp-empty-icon">📚</div><p>Tu médico aún no ha compartido material contigo.</p></div>';
+      return;
+    }
+    const typeLabel = { educacion:'Educación', educativo:'Educación', instrucciones:'Instrucciones', evolucion:'Nota clínica', receta:'Receta', plan:'Plan de tratamiento' };
+    el.innerHTML = edu.map(n => {
+      const fecha = n.created_at ? new Date(n.created_at).toLocaleDateString('es-MX', {day:'numeric',month:'long',year:'numeric'}) : '';
+      const tipo = typeLabel[n.tipo] || n.tipo || 'Nota';
+      const body = n.contenido || n.diagnostico || n.plan || n.nota || n.content || '';
+      const preview = body.length > 300 ? body.slice(0,300) + '…' : body;
+      return `<div class="pp-edu-card">
+        <span class="pp-edu-type">${tipo}</span>
+        ${n.titulo ? `<div class="pp-edu-title">${n.titulo}</div>` : ''}
+        <div class="pp-edu-body">${preview.replace(/\n/g,'<br>')}</div>
+        ${fecha ? `<div class="pp-edu-date">📅 ${fecha}${n.author_name ? ' · Dr(a). '+n.author_name : ''}</div>` : ''}
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="pp-empty"><div class="pp-empty-icon">⚠️</div><p>Error al cargar material.</p></div>';
+  }
+}
+
+// ── Archivos ─────────────────────────────────────────────────────
+async function ppLoadFiles() {
+  const el = document.getElementById('ppFilesList');
+  try {
+    const files = await api('/api/patients/' + _ppPatientId + '/portal-files');
+    if (!files?.length) {
+      el.innerHTML = '<div class="pp-empty"><div class="pp-empty-icon">📂</div><p>Aún no has enviado ningún archivo.</p></div>';
+      return;
+    }
+    el.innerHTML = files.map(f => {
+      const ext = (f.nombre || f.name || '').split('.').pop().toLowerCase();
+      const icon = ext === 'pdf' ? '📄' : ['jpg','jpeg','png','heic','webp'].includes(ext) ? '🖼' : '📎';
+      const fecha = f.created_at ? new Date(f.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}) : '';
+      const size = f.size_bytes ? (f.size_bytes / 1024 < 1000 ? Math.round(f.size_bytes/1024)+'KB' : (f.size_bytes/1048576).toFixed(1)+'MB') : '';
+      const seen = f.visto_por_medico || f.seen;
+      return `<div class="pp-file-row">
+        <div class="pp-file-icon">${icon}</div>
+        <div class="pp-file-name" title="${f.nombre||f.name||''}">${f.nombre||f.name||'Archivo'}</div>
+        <div class="pp-file-meta">${[size,fecha].filter(Boolean).join(' · ')}</div>
+        <span class="pp-file-status ${seen ? 'seen' : ''}">${seen ? '✅ Visto' : '⏳ Enviado'}</span>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="pp-empty"><div class="pp-empty-icon">⚠️</div><p>Error al cargar archivos.</p></div>';
+  }
+}
+
+function ppHandleDrop(e) {
+  e.preventDefault();
+  document.getElementById('ppDropZone').classList.remove('drag-over');
+  ppUploadFiles(e.dataTransfer.files);
+}
+
+async function ppUploadFiles(fileList) {
+  if (!fileList?.length || !_ppPatientId) return;
+  const statusEl = document.getElementById('ppUploadStatus');
+  const allowed = ['application/pdf','image/jpeg','image/png','image/heic','image/webp'];
+  const maxSize = 10 * 1024 * 1024;
+
+  for (const file of Array.from(fileList)) {
+    if (!allowed.includes(file.type) && !file.name.match(/\.(pdf|jpg|jpeg|png|heic|webp)$/i)) {
+      showToast('Tipo no permitido: ' + file.name, 'error'); continue;
+    }
+    if (file.size > maxSize) { showToast('Archivo muy grande (máx 10 MB): ' + file.name, 'error'); continue; }
+
+    statusEl.innerHTML = `<div style="font-size:0.83rem;color:#0d6b5e;margin-bottom:6px">⏫ Subiendo ${file.name}…</div>
+      <div class="pp-progress"><div class="pp-progress-bar" id="ppPBar" style="width:15%"></div></div>`;
+
+    // Animate progress bar
+    let pct = 15;
+    const tick = setInterval(() => {
+      pct = Math.min(pct + 8, 88);
+      const bar = document.getElementById('ppPBar');
+      if (bar) bar.style.width = pct + '%';
+    }, 300);
+
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('patient_id', _ppPatientId);
+      fd.append('uploaded_by_patient', '1');
+      const resp = await fetch('/api/patients/' + _ppPatientId + '/portal-files', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: fd
+      });
+      clearInterval(tick);
+      if (!resp.ok) throw new Error('Error ' + resp.status);
+      const bar = document.getElementById('ppPBar');
+      if (bar) bar.style.width = '100%';
+      showToast('✅ ' + file.name + ' enviado', 'success');
+      setTimeout(() => { statusEl.innerHTML = ''; ppLoadFiles(); }, 900);
+    } catch(e) {
+      clearInterval(tick);
+      statusEl.innerHTML = '';
+      showToast('Error al subir ' + file.name, 'error');
+    }
+  }
 }
 
 </script>
