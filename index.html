@@ -1950,7 +1950,10 @@ async function viewPatient(id) {
       <div class="card">
         <div class="card-header">
           <span class="card-title">💊 Medicamentos activos</span>
-          ${isMedico() ? `<button class="btn btn-primary btn-sm no-print" style="width:auto" onclick="openMedModal()">+ Agregar medicamento</button>` : ''}
+          ${isMedico() ? `<div style="display:flex;gap:6px" class="no-print">
+            <button class="btn btn-secondary btn-sm" style="width:auto;font-size:0.75rem" title="Importar medicamentos que aparecen en notas previas" onclick="importMedsFromNotesBtn()">🔄 Importar desde notas</button>
+            <button class="btn btn-primary btn-sm" style="width:auto" onclick="openMedModal()">+ Agregar medicamento</button>
+          </div>` : ''}
         </div>
         <div id="medsList"><p class="loading">Cargando...</p></div>
       </div>
@@ -2398,16 +2401,23 @@ async function saveNote() {
     }
     _ndraftStop(); _ndraftClear();
     const _wasEditing = !!editingNoteId;
+    const _savedPatientId = currentNotePatientId;
     noteOpenTime = null;
     editingNoteId = null;
     closeModal('noteModal');
     showToast(_wasEditing ? '✏️ Nota actualizada' : '📋 Nota guardada', 'success');
+    // Auto-import medications from this note's tx_farmaco (silent — no toast if 0)
+    const _txFarmaco = meta?.tx_farmaco || '';
+    if (_txFarmaco.trim() && _savedPatientId) {
+      const _fakeNote = [{ plan_tratamiento: JSON.stringify(meta), created_at: new Date().toISOString() }];
+      importMedsFromNotes(_fakeNote, _savedPatientId, true).catch(() => {});
+    }
     // Check if current patient is a shared patient (not in own list)
     const _ownIds = new Set((allPatients||[]).map(p => p.id));
-    if (!_ownIds.has(currentNotePatientId) && _shareData?.shares?.[currentNotePatientId]) {
-      viewPatientShared(currentNotePatientId, true);
+    if (!_ownIds.has(_savedPatientId) && _shareData?.shares?.[_savedPatientId]) {
+      viewPatientShared(_savedPatientId, true);
     } else {
-      viewPatient(currentNotePatientId);
+      viewPatient(_savedPatientId);
     }
   } catch (e) { document.getElementById('noteError').textContent = 'Error: ' + e.message; }
 }
@@ -4434,6 +4444,119 @@ function medRow(m) {
       <button class="btn btn-secondary btn-sm" onclick="deleteMed('${m.id}')" style="padding:3px 8px;color:#e53e3e">🗑</button>
     </div>` : ''}
   </div>`;
+}
+
+// ── Importar medicamentos desde notas SOAP ──────────────────────────
+// Parses a tx_farmaco text block into structured medication objects
+function parseTxFarmacoLines(text) {
+  if (!text || !text.trim()) return [];
+  const VIA_RE = /\b(VO|IV|IM|SC|SL|Tópico|Tópica|Inhalado|Inhalada|Rectal|Ótico|Oftálmico|Vaginal|sublingual|oral|intramuscular|intravenosa|subcutánea)\b/i;
+  const FREQ_RE = /\b(c\/\d+h|c\/\d+\s*hrs?|c\/semana|c\/mes|c\/día|cada\s+\d+\s*h(?:oras?)?|PRN|QD|BID|TID|QID|una\s+vez\s+al\s+día|dos\s+veces\s+al\s+día|tres\s+veces\s+al\s+día)\b/i;
+  const DOSE_RE = /\b(\d+(?:[.,]\d+)?\s*(?:mg|mcg|μg|g|UI|U|ml|mL|%|meq|mmol))\b/i;
+  const results = [];
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  for (const raw of lines) {
+    // Remove leading number/bullet: "1." "2)" "•" "-"
+    const line = raw.replace(/^[\d]+[\.\-\)\.]\s*/, '').replace(/^[-•*]\s*/, '').trim();
+    if (!line || line.length < 3) continue;
+    // Try structured format from drug builder: "Drug · dose · VIA · freq · N días [· extra]"
+    const parts = line.split(/\s*·\s*/);
+    let nombre, dosis, via, frecuencia, indicacion;
+    if (parts.length >= 3) {
+      nombre = parts[0].trim();
+      dosis = parts[1]?.trim() || '';
+      via = parts[2]?.trim() || '';
+      frecuencia = parts[3]?.trim() || '';
+      indicacion = parts.slice(4).join(' · ').trim();
+    } else {
+      // Free-form: extract patterns
+      const viaMatch = line.match(VIA_RE);
+      const freqMatch = line.match(FREQ_RE);
+      const doseMatch = line.match(DOSE_RE);
+      // nombre = everything before first comma or before dose number
+      const commaIdx = line.indexOf(',');
+      if (commaIdx > 3) {
+        nombre = line.slice(0, commaIdx).trim();
+        indicacion = line.slice(commaIdx + 1).trim();
+      } else {
+        // Split before the dose
+        const doseIdx = doseMatch ? line.indexOf(doseMatch[0]) : -1;
+        if (doseIdx > 2) {
+          nombre = line.slice(0, doseIdx).trim();
+          indicacion = line.slice(doseIdx).trim();
+        } else {
+          nombre = line.split(/\s+/).slice(0,3).join(' ');
+          indicacion = line;
+        }
+      }
+      dosis = doseMatch ? doseMatch[0] : '';
+      via = viaMatch ? viaMatch[0].toUpperCase() : '';
+      frecuencia = freqMatch ? freqMatch[0] : '';
+      // Remove via/freq from indicacion to keep it clean
+      if (via) indicacion = indicacion.replace(VIA_RE, '').trim();
+      if (frecuencia) indicacion = indicacion.replace(FREQ_RE, '').trim();
+      if (dosis) indicacion = indicacion.replace(dosis, '').trim();
+      indicacion = indicacion.replace(/[,·\-]+\s*$/, '').replace(/^\s*[,·\-]+/, '').trim();
+    }
+    if (nombre && nombre.length > 1) {
+      results.push({ nombre: nombre.slice(0,200), presentacion: '', dosis: dosis.slice(0,100),
+        frecuencia: frecuencia.slice(0,100), via: via.slice(0,80), indicacion: indicacion.slice(0,500),
+        activo: true, portal_visible: true });
+    }
+  }
+  return results;
+}
+
+// Import medications from all SOAP notes that have tx_farmaco — skips duplicates by name
+async function importMedsFromNotes(notes, patientId, silent = false) {
+  if (!notes || !notes.length || !patientId) return 0;
+  // Get current meds to check duplicates
+  let existingNames = new Set();
+  try {
+    const existing = await api('/api/patients/' + patientId + '/medications');
+    existingNames = new Set(existing.map(m => (m.nombre||'').toLowerCase().trim()));
+  } catch(e) {}
+
+  const toAdd = [];
+  for (const note of notes) {
+    let txFarmaco = '';
+    try {
+      if (note.plan_tratamiento && note.plan_tratamiento.startsWith('{')) {
+        const meta = JSON.parse(note.plan_tratamiento);
+        txFarmaco = meta.tx_farmaco || '';
+      }
+    } catch(e) {}
+    if (!txFarmaco.trim()) continue;
+    const parsed = parseTxFarmacoLines(txFarmaco);
+    const noteDate = note.created_at ? note.created_at.split('T')[0] : null;
+    for (const med of parsed) {
+      const key = med.nombre.toLowerCase().trim();
+      if (!existingNames.has(key)) {
+        existingNames.add(key);
+        toAdd.push({ ...med, fecha_inicio: noteDate });
+      }
+    }
+  }
+
+  let added = 0;
+  for (const med of toAdd) {
+    try {
+      await api('/api/patients/' + patientId + '/medications', {
+        method: 'POST', body: JSON.stringify(med)
+      });
+      added++;
+    } catch(e) { console.warn('importMeds skip:', e.message); }
+  }
+  if (!silent && added > 0) showToast(`💊 ${added} medicamento${added > 1 ? 's' : ''} importado${added > 1 ? 's' : ''} desde notas`, 'success');
+  if (!silent && added === 0) showToast('Sin medicamentos nuevos que importar desde las notas', 'info');
+  return added;
+}
+
+async function importMedsFromNotesBtn() {
+  const notes = currentNotes || [];
+  if (!notes.length) { showToast('No hay notas previas para este paciente', 'warn'); return; }
+  const added = await importMedsFromNotes(notes, currentPatient?.id, false);
+  if (added > 0) viewPatient(currentPatient.id);
 }
 
 function openMedModal(med) {
