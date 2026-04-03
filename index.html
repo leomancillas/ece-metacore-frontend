@@ -783,6 +783,11 @@
       </label>
     </div>
     <p id="noteError" class="error-msg"></p>
+    <div id="notePortalToggle" style="display:none;align-items:center;gap:8px;padding:8px 12px;background:#f0fffe;border:1px solid #81e6d9;border-radius:8px;margin-bottom:8px">
+      <input type="checkbox" id="notePortalVisible" style="width:16px;height:16px;accent-color:#0d6b5e;cursor:pointer">
+      <label for="notePortalVisible" style="font-size:0.83rem;color:#0d6b5e;font-weight:600;cursor:pointer;margin:0">🏥 Compartir en portal del paciente</label>
+      <span style="font-size:0.75rem;color:#718096;margin-left:auto">El paciente podrá verla en "Material educativo"</span>
+    </div>
     <div class="note-modal-footer">
       <span class="kbd-hint">Ctrl+Enter para guardar · <span id="_ndraft_ind" class="ndraft-ind" style="opacity:0.4"></span></span>
       <button class="btn btn-secondary" onclick="closeModal('noteModal')">Cancelar</button>
@@ -1188,6 +1193,46 @@
 </div>
 
 <!-- MODAL COMPARTIR PACIENTE -->
+<!-- PORTAL PACIENTE MODAL -->
+<div class="modal-overlay" id="patientPortalModal">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <h2 class="modal-title">🏥 Acceso al portal del paciente</h2>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('patientPortalModal')">✕</button>
+    </div>
+    <!-- Estado actual -->
+    <div id="ppModalStatus" style="background:#f0fffe;border:1px solid #81e6d9;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:0.85rem;display:none"></div>
+    <!-- Form -->
+    <div id="ppModalForm">
+      <p style="font-size:0.85rem;color:#4a5568;margin-bottom:14px">Crea una cuenta para que <strong id="ppModalPatientName"></strong> pueda ver sus medicamentos, material educativo y enviar archivos desde su teléfono.</p>
+      <div class="form-group">
+        <label>Correo del paciente *</label>
+        <input type="email" id="ppEmail" placeholder="paciente@correo.com">
+      </div>
+      <div class="form-group">
+        <label>Contraseña temporal *</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="ppPassword" placeholder="Mínimo 8 caracteres" style="flex:1">
+          <button type="button" class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="ppGenPassword()">🔀 Generar</button>
+        </div>
+        <small style="color:#718096;font-size:0.75rem;margin-top:3px;display:block">El paciente puede cambiarla desde su perfil después.</small>
+      </div>
+      <p id="ppModalError" class="error-msg"></p>
+    </div>
+    <!-- Existing account actions -->
+    <div id="ppModalExisting" style="display:none">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <button class="btn btn-secondary btn-sm" style="width:auto" onclick="ppResetPassword()">🔑 Resetear contraseña</button>
+        <button class="btn btn-danger btn-sm" onclick="ppRevokeAccess()">🚫 Revocar acceso</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-secondary" onclick="closeModal('patientPortalModal')">Cancelar</button>
+      <button class="btn btn-primary" id="ppModalSaveBtn" style="width:auto;background:linear-gradient(135deg,#0d6b5e,#1a8a75)" onclick="ppCreatePortalAccess()">🏥 Crear acceso</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="sharePatientModal">
   <div class="modal" style="width:480px">
     <div class="modal-header">
@@ -1740,6 +1785,7 @@ async function viewPatient(id) {
           ${isMedico() ? `<button class="btn btn-secondary btn-sm no-print" onclick="generateEpicrisis()" title="Generar epicrisis" style="font-size:0.8rem">📋 Epicrisis</button>` : ''}
           <button class="btn btn-secondary btn-sm no-print" onclick="exportPatientPDF()" title="Exportar expediente en PDF" style="font-size:0.8rem">📄 PDF</button>
           ${isMedico() ? `<button class="btn btn-secondary btn-sm no-print" onclick="generateAiSummary()" title="Resumen clínico con IA" style="font-size:0.8rem">🤖 IA</button>` : ''}
+          ${isMedico() ? `<button class="btn btn-secondary btn-sm no-print" id="portalAccessBtn" onclick="openPatientPortalModal()" title="Acceso portal del paciente" style="font-size:0.8rem">🏥 Portal</button>` : ''}
         </div>
       </div>
       ${criticalBanner}
@@ -1986,6 +2032,13 @@ function openNoteModal(patientId) {
   document.getElementById('noteEsDefuncion').checked = false;
   renderNoteForm('evolucion');
   noteOpenTime = Date.now();
+  // Show portal toggle only if patient has portal access
+  const ptToggle = document.getElementById('notePortalToggle');
+  if (ptToggle) {
+    ptToggle.style.display = currentPatient?.has_portal_access ? 'flex' : 'none';
+    const cb = document.getElementById('notePortalVisible');
+    if (cb) cb.checked = false;
+  }
   document.getElementById('noteModal').classList.add('open');
   _ndraftStart();
   setTimeout(_ndraftCheckBanner, 60);
@@ -2245,15 +2298,16 @@ async function saveNote() {
     stopVoice();
     const duracion_minutos = noteOpenTime ? Math.round((Date.now() - noteOpenTime) / 60000) : null;
     const es_defuncion = document.getElementById('noteEsDefuncion')?.checked || false;
+    const portal_visible = document.getElementById('notePortalVisible')?.checked || false;
     if (editingNoteId) {
       await api('/api/patients/' + currentNotePatientId + '/notes/' + editingNoteId, {
         method: 'PUT',
-        body: JSON.stringify({ tipo, motivo_consulta, diagnostico, plan_tratamiento, duracion_minutos, es_defuncion })
+        body: JSON.stringify({ tipo, motivo_consulta, diagnostico, plan_tratamiento, duracion_minutos, es_defuncion, portal_visible })
       });
     } else {
       await api('/api/patients/' + currentNotePatientId + '/notes', {
         method: 'POST',
-        body: JSON.stringify({ tipo, motivo_consulta, diagnostico, plan_tratamiento, duracion_minutos, es_defuncion })
+        body: JSON.stringify({ tipo, motivo_consulta, diagnostico, plan_tratamiento, duracion_minutos, es_defuncion, portal_visible })
       });
     }
     _ndraftStop(); _ndraftClear();
@@ -12952,6 +13006,98 @@ function _ndraftRestore() {
     const btn = document.querySelector(`.note-type-btn[onclick*="'${draft.tipo}'"]`);
     if (btn) { selectNoteType(draft.tipo, btn); setTimeout(restore, 80); } else restore();
   } else { restore(); }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  PORTAL PACIENTE — GESTIÓN DESDE EXPEDIENTE (MÉDICO)
+// ══════════════════════════════════════════════════════════════════
+
+async function openPatientPortalModal() {
+  if (!currentPatient) return;
+  document.getElementById('ppModalPatientName').textContent =
+    [currentPatient.nombre, currentPatient.apellido_paterno, currentPatient.apellido_materno].filter(Boolean).join(' ');
+  document.getElementById('ppModalError').textContent = '';
+  document.getElementById('ppEmail').value = currentPatient.email || '';
+  document.getElementById('ppPassword').value = '';
+  // Check if patient already has a portal account
+  const statusEl = document.getElementById('ppModalStatus');
+  const formEl = document.getElementById('ppModalForm');
+  const existingEl = document.getElementById('ppModalExisting');
+  const saveBtn = document.getElementById('ppModalSaveBtn');
+  statusEl.style.display = 'none';
+  formEl.style.display = 'block';
+  existingEl.style.display = 'none';
+  saveBtn.textContent = '🏥 Crear acceso';
+  saveBtn.style.display = '';
+  try {
+    const res = await api('/api/patients/' + currentPatient.id + '/portal-account').catch(() => null);
+    if (res?.exists) {
+      statusEl.innerHTML = `✅ <strong>${res.email}</strong> ya tiene acceso al portal.<br><span style="color:#718096;font-size:0.8rem">Último acceso: ${res.last_sign_in ? new Date(res.last_sign_in).toLocaleDateString('es-MX') : 'Nunca'}</span>`;
+      statusEl.style.display = 'block';
+      formEl.style.display = 'none';
+      existingEl.style.display = 'block';
+      saveBtn.style.display = 'none';
+      // Mark patient as having portal access
+      if (currentPatient) currentPatient.has_portal_access = true;
+    }
+  } catch(e) { /* no account yet */ }
+  openModal('patientPortalModal');
+}
+
+function ppGenPassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#';
+  const pw = Array.from({length: 12}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  document.getElementById('ppPassword').value = pw;
+}
+
+async function ppCreatePortalAccess() {
+  const email = document.getElementById('ppEmail').value.trim();
+  const password = document.getElementById('ppPassword').value.trim();
+  const errEl = document.getElementById('ppModalError');
+  if (!email || !password) { errEl.textContent = 'Correo y contraseña son obligatorios.'; return; }
+  if (password.length < 8) { errEl.textContent = 'La contraseña debe tener al menos 8 caracteres.'; return; }
+  const btn = document.getElementById('ppModalSaveBtn');
+  btn.textContent = '⏳ Creando…'; btn.disabled = true;
+  try {
+    await api('/api/patients/' + currentPatient.id + '/portal-account', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, patient_id: currentPatient.id,
+        name: [currentPatient.nombre, currentPatient.apellido_paterno].filter(Boolean).join(' ') })
+    });
+    if (currentPatient) currentPatient.has_portal_access = true;
+    // Show portal toggle in note modal from now on
+    const ptToggle = document.getElementById('notePortalToggle');
+    if (ptToggle) ptToggle.style.display = 'flex';
+    closeModal('patientPortalModal');
+    showToast('✅ Acceso al portal creado para ' + email, 'success');
+  } catch(e) {
+    errEl.textContent = e.message || 'Error al crear la cuenta.';
+    btn.textContent = '🏥 Crear acceso'; btn.disabled = false;
+  }
+}
+
+async function ppResetPassword() {
+  const newPw = prompt('Nueva contraseña temporal (mín. 8 caracteres):');
+  if (!newPw || newPw.length < 8) { if(newPw !== null) showToast('Contraseña muy corta', 'error'); return; }
+  try {
+    await api('/api/patients/' + currentPatient.id + '/portal-account', {
+      method: 'PATCH', body: JSON.stringify({ password: newPw })
+    });
+    closeModal('patientPortalModal');
+    showToast('🔑 Contraseña actualizada', 'success');
+  } catch(e) { showToast(e.message || 'Error', 'error'); }
+}
+
+async function ppRevokeAccess() {
+  if (!confirm('¿Revocar el acceso al portal de este paciente? No podrá iniciar sesión.')) return;
+  try {
+    await api('/api/patients/' + currentPatient.id + '/portal-account', { method: 'DELETE' });
+    if (currentPatient) currentPatient.has_portal_access = false;
+    const ptToggle = document.getElementById('notePortalToggle');
+    if (ptToggle) ptToggle.style.display = 'none';
+    closeModal('patientPortalModal');
+    showToast('🚫 Acceso al portal revocado', 'warn');
+  } catch(e) { showToast(e.message || 'Error', 'error'); }
 }
 
 // ══════════════════════════════════════════════════════════════════
