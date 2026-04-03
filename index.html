@@ -13128,7 +13128,7 @@ async function openPatientPortalModal() {
       if (currentPatient) currentPatient.has_portal_access = true;
     }
   } catch(e) { /* no account yet */ }
-  openModal('patientPortalModal');
+  document.getElementById('patientPortalModal').classList.add('open');
 }
 
 function ppGenPassword() {
