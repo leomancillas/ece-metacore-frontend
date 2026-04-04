@@ -49,6 +49,7 @@
       "shared_by": "4c7c3132-c961-4f42-99c9-a6c9b68530c9",
       "shared_by_name": "Dr. Leonardo Mancillas",
       "shared_with": [
+        "4f5d887f-6de8-4e5f-ba2c-41c2672930ff",
         "567830c7-cbe9-4003-82a9-2535fbe052e8",
         "e6e9572b-c9a0-4664-bb5f-87e2c620bb37",
         "cfdc75a2-c299-4565-a5a1-854ad7bbc49e",
@@ -67,7 +68,7 @@
         "alergias": "",
         "antecedentes": ""
       },
-      "updated_at": "2026-04-02T16:14:28.335Z"
+      "updated_at": "2026-04-04T03:35:19.496Z"
     }
   }
 }
