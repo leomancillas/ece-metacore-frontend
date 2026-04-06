@@ -10,7 +10,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ECE META">
 <link rel="manifest" href="manifest.json">
-<script src="https://cdn.jsdelivr.net/npm/@simplewebauthn/browser@8/dist/bundle/index.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@simplewebauthn/browser@8/dist/bundle/index.umd.min.js">
+// Bridge to ECE OBES
+function openExpedienteOBES(){if(!currentPatient)return;localStorage.setItem("ece_bridge_patient",JSON.stringify({patient_id:currentPatient.id,name:currentPatient.name||currentPatient.nombre,return_url:location.href}));window.open("https://leomancillas.github.io/ece-obes-frontend/","_blank");}
+function checkOBESReturn(){const m=localStorage.getItem("ece_meta_return");if(m){localStorage.removeItem("ece_meta_return");try{const d=JSON.parse(m);if(d.patient_id&&typeof selectPatient==="function")selectPatient(d.patient_id);else if(d.patient_id)viewPatient(d.patient_id);}catch(e){}}}
+document.addEventListener("DOMContentLoaded",checkOBESReturn);
+</script>
 <style>
     :root { --primary: #1a6b3c; --primary-light: #2d9e5a; --bg: #f5f7fa; --card: #fff; --text: #1a202c; --border: #e2e8f0; --danger: #e53e3e; --amber: #d69e2e; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1870,6 +1875,7 @@ async function viewPatient(id) {
           <button class="btn btn-secondary btn-sm no-print" onclick="openVitalsModal()" title="Registrar signos vitales" style="font-size:0.8rem">📏 Signos</button>
           ${isMedico() ? `<button class="btn btn-secondary btn-sm no-print" onclick="generateEpicrisis()" title="Generar epicrisis" style="font-size:0.8rem">📋 Epicrisis</button>` : ''}
           <button class="btn btn-secondary btn-sm no-print" onclick="exportPatientPDF()" title="Exportar expediente en PDF" style="font-size:0.8rem">📄 PDF</button>
+          <button class="btn btn-secondary btn-sm no-print" onclick="openExpedienteOBES()" title="Abrir expediente OBES" style="background:#1A5276;color:white;border:none;font-size:0.8rem">📋 Expediente OBES</button>
           ${isMedico() ? `<button class="btn btn-secondary btn-sm no-print" onclick="generateAiSummary()" title="Resumen clínico con IA" style="font-size:0.8rem">🤖 IA</button>` : ''}
           ${isMedico() ? `<button class="btn btn-secondary btn-sm no-print" id="portalAccessBtn" onclick="openPatientPortalModal()" title="Acceso portal del paciente" style="font-size:0.8rem">🏥 Portal</button>` : ''}
         </div>
