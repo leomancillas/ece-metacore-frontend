@@ -3956,7 +3956,7 @@ async function showAdminPanel() {
 
 async function adminUpdateUser(userId, status) {
   try {
-    await api('/api/admin/users/' + userId, { method:'PUT', body: JSON.stringify({ status }) });
+    await api('/api/admin/users/' + userId, { method:'PUT', body: JSON.stringify({ status, is_active: status === 'active' }) });
     showAdminPanel();
   } catch(e) { showToast(e.message, 'error'); }
 }
