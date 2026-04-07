@@ -405,6 +405,76 @@ document.addEventListener("DOMContentLoaded",checkOBESReturn);
     .ndraft-ind { font-size:0.72rem;color:#a0aec0;transition:opacity 0.5s; }
 
     /* ══════════════════════════════════════════════════════
+       DELEGAPRO — GESTIÓN EJECUTIVA
+    ══════════════════════════════════════════════════════ */
+    :root {
+      --dp-navy:#1B2A4A; --dp-teal:#0D7377; --dp-success:#27AE60;
+      --dp-warn:#E67E22; --dp-danger:#C0392B; --dp-bg:#f4f6fa;
+    }
+    .dp-page { padding:28px 32px; max-width:1300px; margin:0 auto; }
+    @media(max-width:700px){ .dp-page{padding:16px 12px;} }
+    /* KPI cards */
+    .dp-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:28px; }
+    .dp-kpi  { background:#fff; border-radius:14px; padding:18px 20px; box-shadow:0 2px 10px rgba(0,0,0,0.06); border-top:4px solid var(--dp-teal); }
+    .dp-kpi-val  { font-size:2rem; font-weight:800; color:var(--dp-navy); line-height:1; }
+    .dp-kpi-lbl  { font-size:0.75rem; color:#64748b; margin-top:4px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
+    /* Charts row */
+    .dp-charts { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:28px; }
+    @media(max-width:700px){ .dp-charts{grid-template-columns:1fr;} }
+    .dp-chart-card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.06); }
+    .dp-chart-title { font-size:0.82rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#64748b; margin-bottom:14px; }
+    .dp-bar-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:0.78rem; }
+    .dp-bar-lbl { width:180px; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#334155; }
+    .dp-bar-track { flex:1; background:#e2e8f0; border-radius:4px; height:10px; }
+    .dp-bar-fill  { height:10px; border-radius:4px; background:var(--dp-teal); transition:width .4s; }
+    .dp-bar-cnt   { width:24px; text-align:right; color:#64748b; font-weight:700; }
+    .dp-donut-wrap { display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+    .dp-donut-legend { display:flex; flex-direction:column; gap:8px; }
+    .dp-donut-item  { display:flex; align-items:center; gap:7px; font-size:0.8rem; color:#334155; }
+    .dp-donut-dot   { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+    /* Task table */
+    .dp-toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+    .dp-toolbar input, .dp-toolbar select { padding:7px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:0.83rem; background:#fff; color:#1e293b; }
+    .dp-toolbar input { min-width:200px; flex:1; }
+    .dp-table-wrap { background:#fff; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,0.06); overflow:hidden; }
+    .dp-table { width:100%; border-collapse:collapse; font-size:0.83rem; }
+    .dp-table thead tr { background:var(--dp-navy); color:#fff; }
+    .dp-table th { padding:11px 14px; text-align:left; font-weight:600; font-size:0.75rem; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; }
+    .dp-table td { padding:11px 14px; border-bottom:1px solid #f1f5f9; color:#1e293b; vertical-align:middle; }
+    .dp-table tbody tr:hover { background:#f8fafc; }
+    .dp-table tbody tr:last-child td { border-bottom:none; }
+    /* Badges */
+    .dp-badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:0.72rem; font-weight:700; }
+    .dp-badge-pending   { background:#fef3c7; color:#92400e; }
+    .dp-badge-progress  { background:#dbeafe; color:#1e40af; }
+    .dp-badge-blocked   { background:#fee2e2; color:#991b1b; }
+    .dp-badge-done      { background:#dcfce7; color:#166534; }
+    .dp-days-red   { background:#fecaca; color:#991b1b; border-radius:8px; padding:2px 8px; font-weight:700; font-size:0.78rem; }
+    .dp-days-amber { background:#fef3c7; color:#92400e; border-radius:8px; padding:2px 8px; font-weight:700; font-size:0.78rem; }
+    .dp-days-green { background:#dcfce7; color:#166534; border-radius:8px; padding:2px 8px; font-weight:700; font-size:0.78rem; }
+    .dp-days-grey  { background:#f1f5f9; color:#64748b; border-radius:8px; padding:2px 8px; font-weight:600; font-size:0.78rem; }
+    .dp-score { display:inline-block; width:28px; height:28px; border-radius:8px; text-align:center; line-height:28px; font-weight:800; font-size:0.85rem; }
+    .dp-score-9,.dp-score-8,.dp-score-6 { background:#fecaca; color:#991b1b; }
+    .dp-score-4 { background:#fef3c7; color:#92400e; }
+    .dp-score-3,.dp-score-2,.dp-score-1 { background:#dcfce7; color:#166534; }
+    /* Form */
+    .dp-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media(max-width:600px){ .dp-form-grid{grid-template-columns:1fr;} }
+    .dp-form-grid .span2 { grid-column:1/-1; }
+    .dp-section-hdr { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--dp-teal); border-bottom:2px solid var(--dp-teal); padding-bottom:4px; margin:20px 0 14px; grid-column:1/-1; }
+    .dp-score-preview { display:inline-flex; align-items:center; gap:8px; margin-top:8px; font-size:0.85rem; font-weight:700; color:var(--dp-navy); }
+    /* Detail */
+    .dp-detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px 24px; }
+    .dp-detail-field label { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#64748b; display:block; margin-bottom:3px; }
+    .dp-detail-field span  { font-size:0.9rem; color:#1e293b; }
+    /* Section header */
+    .dp-hdr { display:flex; align-items:center; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
+    .dp-hdr h2 { font-size:1.4rem; font-weight:800; color:var(--dp-navy); flex:1; }
+    .dp-tabs { display:flex; gap:4px; margin-bottom:20px; border-bottom:2px solid #e2e8f0; }
+    .dp-tab  { padding:8px 18px; font-size:0.85rem; font-weight:600; color:#64748b; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; border-radius:4px 4px 0 0; transition:all .15s; }
+    .dp-tab.active { color:var(--dp-teal); border-bottom-color:var(--dp-teal); background:#f0fdfa; }
+    .dp-tab:hover:not(.active) { background:#f8fafc; }
+    /* ══════════════════════════════════════════════════════
        PORTAL PACIENTE
     ══════════════════════════════════════════════════════ */
     #patientPortal { display:none; min-height:100vh; background:#f0f7f4; }
@@ -651,6 +721,7 @@ document.addEventListener("DOMContentLoaded",checkOBESReturn);
       <div class="sidebar-section">Herramientas</div>
       <a href="#" onclick="showSection('indicators');closeSidebar()">📈 Indicadores</a>
       <a href="#" onclick="showSection('research');closeSidebar()">🤖 Asistente IA</a>
+      <a href="#" id="sidebarGestion" style="display:none" onclick="showSection('gestion');closeSidebar()">📋 DelegaPro</a>
       <hr class="sidebar-divider">
       <a href="#" id="sidebarAdmin" style="display:none" onclick="showSection('admin');closeSidebar()">⚙️ Administrador</a>
     </div>
@@ -1540,6 +1611,8 @@ function showApp() {
   // Show admin panel link ONLY for real admin (not while impersonating)
   const adminLink = document.getElementById('sidebarAdmin');
   if (adminLink) adminLink.style.display = (!realAdminSession && currentUser?.role === 'admin') ? '' : 'none';
+  const gestionLink = document.getElementById('sidebarGestion');
+  if (gestionLink) gestionLink.style.display = (['admin','asistente'].includes(currentUser?.role)) ? '' : 'none';
   // Impersonation banner
   const banner = document.getElementById('impersonationBanner');
   if (banner) {
@@ -1558,14 +1631,17 @@ function showApp() {
 // ── NAVEGACION ─────────────────────────────────────────────────────
 function showSection(s) {
   document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-  const idx = ['dashboard','patients','agenda','indicators','research','admin'].indexOf(s);
-  if (idx >= 0) document.querySelectorAll('.sidebar a')[idx]?.classList.add('active');
+  // Mark active link by onclick attribute
+  document.querySelectorAll('.sidebar a').forEach(a => {
+    if (a.getAttribute('onclick')?.includes(`'${s}'`)) a.classList.add('active');
+  });
   if (s === 'dashboard') renderDashboard();
   else if (s === 'patients') renderPatients();
   else if (s === 'agenda') renderAgenda();
   else if (s === 'indicators') showIndicadores();
   else if (s === 'research') renderResearch();
   else if (s === 'admin') showAdminPanel();
+  else if (s === 'gestion') renderGestion();
 }
 
 // ── DASHBOARD PERSONALIZADO ────────────────────────────────────────
@@ -13708,6 +13784,439 @@ async function ppUploadFiles(fileList) {
     }
   }
 }
+
+// ══════════════════════════════════════════════════════════════════
+//  DELEGAPRO — GESTIÓN EJECUTIVA Y PROYECTOS
+// ══════════════════════════════════════════════════════════════════
+let _dpView = 'dashboard'; // dashboard | table | form | detail
+let _dpEditId = null;
+let _dpFilters = { category:'', status:'', q:'' };
+
+const DP_CATEGORIES = [
+  'Consulta Endocrinología','Hospital Universitario','Hospital Zambrano',
+  'Investigación','Industria Farmacéutica','Proyectos Estratégicos',
+  'Congresos y Viajes','Educación Posgrado','Educación Pregrado',
+  'Doctorado (PhD)','Administración Personal','Liderazgo en Investigación'
+];
+const DP_STATUS  = ['Pendiente','En Progreso','Bloqueado','Completado'];
+const DP_LEVELS  = ['Alta','Media','Baja'];
+const DP_STATUS_CLASS = { Pendiente:'dp-badge-pending', 'En Progreso':'dp-badge-progress', Bloqueado:'dp-badge-blocked', Completado:'dp-badge-done' };
+const DP_STATUS_EMOJI = { Pendiente:'⏳', 'En Progreso':'🔄', Bloqueado:'🚧', Completado:'✅' };
+
+function dpIsAdmin() { return currentUser?.role === 'admin'; }
+function dpCanManage() { return ['admin','asistente'].includes(currentUser?.role); }
+
+function dpDaysBadge(days, status) {
+  if (status === 'Completado') return `<span class="dp-days-grey">✓ Completado</span>`;
+  if (days === null || days === undefined) return `<span class="dp-days-grey">—</span>`;
+  const d = parseInt(days);
+  if (d <= 2)  return `<span class="dp-days-red">🔴 ${d < 0 ? Math.abs(d)+' días vencida' : d === 0 ? 'Hoy' : d+'d'}</span>`;
+  if (d <= 5)  return `<span class="dp-days-amber">🟡 ${d}d</span>`;
+  return `<span class="dp-days-green">${d}d</span>`;
+}
+
+function dpScoreBadge(score) {
+  const s = parseInt(score) || 0;
+  const cls = [9,8,6].includes(s) ? 'dp-score-9' : s === 4 ? 'dp-score-4' : 'dp-score-3';
+  return `<span class="dp-score ${cls}">${s}</span>`;
+}
+
+function dpStatusBadge(status) {
+  return `<span class="dp-badge ${DP_STATUS_CLASS[status]||'dp-badge-pending'}">${DP_STATUS_EMOJI[status]||''} ${status}</span>`;
+}
+
+async function renderGestion(view = _dpView) {
+  _dpView = view;
+  const c = document.getElementById('mainContent');
+  c.innerHTML = '<p class="loading">Cargando DelegaPro…</p>';
+  if (!dpCanManage()) {
+    c.innerHTML = '<div style="padding:40px;text-align:center;color:#64748b">⛔ Acceso restringido — módulo DelegaPro</div>';
+    return;
+  }
+  if (view === 'dashboard') await dpRenderDashboard();
+  else if (view === 'table') await dpRenderTable();
+  else if (view === 'form') dpRenderForm();
+  else if (view === 'detail') await dpRenderDetail(_dpEditId);
+}
+
+// ── Header tabs ──────────────────────────────────────────────────
+function dpHeaderTabs(active) {
+  return `
+  <div class="dp-hdr">
+    <h2>📋 DelegaPro</h2>
+    ${dpIsAdmin() ? `<button class="btn btn-primary btn-sm" style="width:auto" onclick="dpNewTask()">+ Nueva tarea</button>` : ''}
+  </div>
+  <div class="dp-tabs">
+    <div class="dp-tab ${active==='dashboard'?'active':''}" onclick="renderGestion('dashboard')">📊 Dashboard</div>
+    <div class="dp-tab ${active==='table'?'active':''}" onclick="renderGestion('table')">📋 Tareas</div>
+  </div>`;
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────────
+async function dpRenderDashboard() {
+  const c = document.getElementById('mainContent');
+  try {
+    const [stats, tasks] = await Promise.all([
+      api('/api/tasks/stats'),
+      api('/api/tasks?sort=score'),
+    ]);
+    const today = new Date().toISOString().split('T')[0];
+    const critical = tasks.filter(t => t.priority_score >= 6 && t.status !== 'Completado' && t.days_remaining !== null && parseInt(t.days_remaining) <= 7);
+    const blocked  = tasks.filter(t => t.status === 'Bloqueado');
+
+    // Bar chart data
+    const maxCat = Math.max(...(stats.byCategory||[]).map(r => parseInt(r.count)), 1);
+    const barsHtml = (stats.byCategory||[]).slice(0,8).map(r => `
+      <div class="dp-bar-row">
+        <span class="dp-bar-lbl" title="${r.category}">${r.category}</span>
+        <div class="dp-bar-track"><div class="dp-bar-fill" style="width:${Math.round(parseInt(r.count)/maxCat*100)}%"></div></div>
+        <span class="dp-bar-cnt">${r.count}</span>
+      </div>`).join('');
+
+    // Donut (SVG)
+    const SC = { Pendiente:'#fbbf24','En Progreso':'#3b82f6',Bloqueado:'#ef4444',Completado:'#22c55e' };
+    const total = (stats.byStatus||[]).reduce((s,r) => s+parseInt(r.count),0) || 1;
+    let offset = 0;
+    const slices = (stats.byStatus||[]).map(r => {
+      const pct = parseInt(r.count)/total;
+      const slice = `<circle cx="60" cy="60" r="45" fill="none" stroke="${SC[r.status]||'#94a3b8'}"
+        stroke-width="18" stroke-dasharray="${pct*282.6} ${282.6}"
+        stroke-dashoffset="${-offset*282.6}" transform="rotate(-90 60 60)"/>`;
+      offset += pct;
+      return slice;
+    }).join('');
+    const legend = (stats.byStatus||[]).map(r =>
+      `<div class="dp-donut-item"><div class="dp-donut-dot" style="background:${SC[r.status]||'#94a3b8'}"></div>${r.status}: <b>${r.count}</b></div>`
+    ).join('');
+
+    c.innerHTML = `
+    <div class="dp-page">
+      ${dpHeaderTabs('dashboard')}
+      <div class="dp-kpis">
+        <div class="dp-kpi" style="border-top-color:#0D7377"><div class="dp-kpi-val">${stats.total||0}</div><div class="dp-kpi-lbl">Total tareas</div></div>
+        <div class="dp-kpi" style="border-top-color:#3b82f6"><div class="dp-kpi-val">${stats.active||0}</div><div class="dp-kpi-lbl">Activas</div></div>
+        <div class="dp-kpi" style="border-top-color:#22c55e"><div class="dp-kpi-val">${stats.pctCompleted||0}%</div><div class="dp-kpi-lbl">Completadas</div></div>
+        <div class="dp-kpi" style="border-top-color:#ef4444"><div class="dp-kpi-val">${stats.blocked||0}</div><div class="dp-kpi-lbl">Bloqueadas</div></div>
+        <div class="dp-kpi" style="border-top-color:#f97316"><div class="dp-kpi-val">${stats.overdue||0}</div><div class="dp-kpi-lbl">Vencidas</div></div>
+      </div>
+      <div class="dp-charts">
+        <div class="dp-chart-card"><div class="dp-chart-title">Tareas por categoría</div>${barsHtml||'<p style="color:#94a3b8;font-size:0.83rem">Sin datos</p>'}</div>
+        <div class="dp-chart-card"><div class="dp-chart-title">Distribución por estatus</div>
+          <div class="dp-donut-wrap">
+            <svg width="120" height="120" viewBox="0 0 120 120">${slices}</svg>
+            <div class="dp-donut-legend">${legend}</div>
+          </div>
+        </div>
+      </div>
+      ${critical.length ? `
+      <div class="dp-chart-card" style="margin-bottom:18px">
+        <div class="dp-chart-title" style="color:#ef4444">🔴 Tareas críticas — alta prioridad · ≤7 días</div>
+        <table class="dp-table" style="margin-top:8px">
+          <thead><tr><th>ID</th><th>Tarea</th><th>Categoría</th><th>Score</th><th>Días</th><th>Responsable</th><th>Acción inmediata</th></tr></thead>
+          <tbody>${critical.map(t => `<tr style="cursor:pointer" onclick="dpViewDetail('${t.id}')">
+            <td><b>${t.id}</b></td><td>${t.name}</td><td style="font-size:0.75rem;color:#64748b">${t.category}</td>
+            <td>${dpScoreBadge(t.priority_score)}</td><td>${dpDaysBadge(t.days_remaining,t.status)}</td>
+            <td>${t.responsible||'—'}</td><td style="font-size:0.78rem;color:#475569">${t.next_action||'—'}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>` : ''}
+      ${blocked.length ? `
+      <div class="dp-chart-card">
+        <div class="dp-chart-title" style="color:#ef4444">🚧 Tareas bloqueadas</div>
+        <table class="dp-table" style="margin-top:8px">
+          <thead><tr><th>ID</th><th>Tarea</th><th>Stakeholder</th><th>Acción inmediata</th><th></th></tr></thead>
+          <tbody>${blocked.map(t => `<tr>
+            <td><b>${t.id}</b></td><td>${t.name}</td>
+            <td>${t.stakeholder||'—'}</td>
+            <td style="font-size:0.78rem;color:#475569">${t.next_action||'—'}</td>
+            <td><button class="btn btn-secondary btn-sm" onclick="dpQuickStatus('${t.id}','En Progreso')">▶ Reactivar</button></td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>` : ''}
+    </div>`;
+  } catch(e) { c.innerHTML = `<div class="dp-page"><p style="color:red">Error: ${e.message}</p></div>`; }
+}
+
+// ── TABLE ────────────────────────────────────────────────────────
+async function dpRenderTable() {
+  const c = document.getElementById('mainContent');
+  const params = new URLSearchParams();
+  if (_dpFilters.category) params.set('category', _dpFilters.category);
+  if (_dpFilters.status)   params.set('status',   _dpFilters.status);
+  if (_dpFilters.q)        params.set('q',         _dpFilters.q);
+  params.set('sort', 'due_date');
+  try {
+    const tasks = await api('/api/tasks?' + params.toString());
+    const catOptions = DP_CATEGORIES.map(c => `<option value="${c}" ${_dpFilters.category===c?'selected':''}>${c}</option>`).join('');
+    const stOptions  = DP_STATUS.map(s => `<option value="${s}" ${_dpFilters.status===s?'selected':''}>${s}</option>`).join('');
+    c.innerHTML = `
+    <div class="dp-page">
+      ${dpHeaderTabs('table')}
+      <div class="dp-toolbar">
+        <input placeholder="🔍 Buscar tarea..." value="${_dpFilters.q||''}" oninput="_dpFilters.q=this.value" onkeydown="if(event.key==='Enter')renderGestion('table')">
+        <select onchange="_dpFilters.category=this.value;renderGestion('table')">
+          <option value="">Todas las categorías</option>${catOptions}
+        </select>
+        <select onchange="_dpFilters.status=this.value;renderGestion('table')">
+          <option value="">Todos los estatus</option>${stOptions}
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="_dpFilters={category:'',status:'',q:''};renderGestion('table')">✕ Limpiar</button>
+        <button class="btn btn-secondary btn-sm" onclick="renderGestion('table')">🔄</button>
+      </div>
+      <div class="dp-table-wrap">
+        <table class="dp-table">
+          <thead><tr>
+            <th>ID</th><th>Tarea</th><th>Categoría</th><th>Score</th>
+            <th>Estatus</th><th>Días</th><th>Responsable</th><th>Acción inmediata</th><th></th>
+          </tr></thead>
+          <tbody>
+          ${!tasks.length ? `<tr><td colspan="9" style="text-align:center;padding:32px;color:#94a3b8">Sin tareas — ${JSON.stringify(_dpFilters)}</td></tr>` :
+            tasks.map(t => `<tr>
+              <td style="font-weight:700;color:var(--dp-navy);white-space:nowrap">${t.id}</td>
+              <td style="max-width:220px;cursor:pointer" onclick="dpViewDetail('${t.id}')" title="Ver detalle"><b>${t.name}</b></td>
+              <td style="font-size:0.75rem;color:#64748b;max-width:140px">${t.category}</td>
+              <td>${dpScoreBadge(t.priority_score)}</td>
+              <td>${dpStatusBadge(t.status)}</td>
+              <td>${dpDaysBadge(t.days_remaining, t.status)}</td>
+              <td style="font-size:0.82rem">${t.responsible||'—'}</td>
+              <td style="font-size:0.76rem;color:#475569;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.next_action||'—'}</td>
+              <td style="white-space:nowrap">
+                <div style="display:flex;gap:4px">
+                  <button class="btn btn-secondary btn-sm" onclick="dpViewDetail('${t.id}')" title="Ver">👁</button>
+                  <button class="btn btn-secondary btn-sm" onclick="dpEditTask('${t.id}')" title="Editar">✏️</button>
+                  <select style="font-size:0.72rem;padding:2px 4px;border-radius:6px;border:1px solid #d1d5db" onchange="dpQuickStatus('${t.id}',this.value);this.value=''"
+                    title="Cambiar estatus">
+                    <option value="">⚡</option>
+                    ${DP_STATUS.map(s => `<option value="${s}" ${t.status===s?'selected':''}>${s}</option>`).join('')}
+                  </select>
+                  ${dpIsAdmin() ? `<button class="btn btn-sm" style="background:#fecaca;color:#991b1b;border:none;border-radius:6px;padding:3px 7px;cursor:pointer" onclick="dpDeleteTask('${t.id}','${t.name.replace(/'/g,'&apos;')}')" title="Eliminar">🗑</button>` : ''}
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  } catch(e) { c.innerHTML = `<div class="dp-page">${dpHeaderTabs('table')}<p style="color:red">Error: ${e.message}</p></div>`; }
+}
+
+// ── FORM ─────────────────────────────────────────────────────────
+function dpRenderForm(task = null) {
+  const c = document.getElementById('mainContent');
+  const isEdit = !!task;
+  const ro = !dpIsAdmin() ? 'readonly disabled style="background:#f1f5f9;color:#64748b"' : '';
+  const v = (field, def='') => task ? (task[field]||def) : def;
+  const sel = (field, opts, def='') => opts.map(o =>
+    `<option value="${o}" ${(task?task[field]:def)===o?'selected':''}>${o}</option>`).join('');
+
+  c.innerHTML = `
+  <div class="dp-page">
+    <div class="dp-hdr">
+      <button class="btn btn-secondary btn-sm" onclick="renderGestion('table')">← Volver</button>
+      <h2>${isEdit ? '✏️ Editar tarea' : '+ Nueva tarea'} ${isEdit?`<span style="font-size:1rem;color:#64748b">${task.id}</span>`:''}</h2>
+    </div>
+    <div style="background:#fff;border-radius:14px;padding:28px;box-shadow:0 2px 10px rgba(0,0,0,0.06);max-width:860px">
+      <div class="dp-form-grid">
+        <div class="dp-section-hdr">📌 Identificación</div>
+        <div class="form-group span2"><label>Nombre de la tarea / proyecto *</label>
+          <input id="dp_name" value="${v('name')}" placeholder="Describe la tarea de forma clara y accionable" required></div>
+        <div class="form-group"><label>Categoría *</label>
+          <select id="dp_category"><option value="">Seleccionar…</option>${sel('category',DP_CATEGORIES)}</select></div>
+        <div class="form-group"><label>Estatus *</label>
+          <select id="dp_status" onchange="dpCheckBlocked()">${sel('status',DP_STATUS,'Pendiente')}</select></div>
+        <div class="form-group"><label>Responsable</label>
+          <input id="dp_responsible" value="${v('responsible')}" placeholder="Nombre del responsable"></div>
+        <div class="form-group"><label>Stakeholder</label>
+          <input id="dp_stakeholder" value="${v('stakeholder')}" placeholder="Institución, persona clave, patrocinador"></div>
+        <div class="form-group span2"><label>Descripción</label>
+          <textarea id="dp_description" rows="3" placeholder="Contexto, objetivos, entregables esperados">${v('description')}</textarea></div>
+
+        <div class="dp-section-hdr">⚡ Priorización</div>
+        <div class="form-group"><label>Impacto ${!dpIsAdmin()?'<small>(solo admin)</small>':''}</label>
+          <select id="dp_impact" ${ro} onchange="dpCalcScore()">${sel('impact',DP_LEVELS,'Media')}</select></div>
+        <div class="form-group"><label>Urgencia ${!dpIsAdmin()?'<small>(solo admin)</small>':''}</label>
+          <select id="dp_urgency" ${ro} onchange="dpCalcScore()">${sel('urgency',DP_LEVELS,'Media')}</select></div>
+        <div class="form-group"><label>Prioridad</label>
+          <select id="dp_priority" ${ro}>${sel('priority',DP_LEVELS,'Media')}</select></div>
+        <div class="form-group" style="display:flex;align-items:flex-end">
+          <div>
+            <label>Puntaje de prioridad</label>
+            <div class="dp-score-preview">
+              ${dpScoreBadge(task?.priority_score||4)}
+              <span id="dp_score_preview">${task?.priority_score||4}</span>
+              <span style="font-size:0.75rem;color:#64748b;font-weight:400">= impacto × urgencia</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dp-section-hdr">📅 Fechas</div>
+        <div class="form-group"><label>Fecha inicio</label>
+          <input id="dp_start_date" type="date" value="${v('start_date','').toString().split('T')[0]}"></div>
+        <div class="form-group"><label>Fecha límite *</label>
+          <input id="dp_due_date" type="date" value="${v('due_date','').toString().split('T')[0]}" oninput="dpCalcDays()">
+          <div id="dp_days_preview" style="font-size:0.8rem;margin-top:4px;color:#64748b"></div></div>
+
+        <div class="dp-section-hdr">🔜 Seguimiento</div>
+        <div class="form-group span2">
+          <label>Acción inmediata <span id="dp_nextaction_req" style="color:#ef4444;display:none">*</span></label>
+          <input id="dp_next_action" value="${v('next_action')}" placeholder="Verbo + objeto + contexto (ej: Enviar borrador capítulo 2 a tutor UANL)">
+        </div>
+        <div class="form-group span2"><label>Notas / observaciones</label>
+          <textarea id="dp_notes" rows="3" placeholder="Dependencias, riesgos, contexto adicional">${v('notes')}</textarea></div>
+      </div>
+      <div id="dp_form_error" style="color:#ef4444;font-size:0.85rem;margin-top:8px"></div>
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button class="btn btn-secondary" onclick="renderGestion('table')">Cancelar</button>
+        <button class="btn btn-primary" style="width:auto" onclick="dpSaveTask('${isEdit ? task.id : ''}')">💾 ${isEdit?'Guardar cambios':'Crear tarea'}</button>
+      </div>
+    </div>
+  </div>`;
+  dpCalcScore();
+  dpCalcDays();
+}
+
+function dpCheckBlocked() {
+  const req = document.getElementById('dp_nextaction_req');
+  if (req) req.style.display = document.getElementById('dp_status')?.value === 'Bloqueado' ? '' : 'none';
+}
+
+function dpCalcScore() {
+  const imp = { Alta:3, Media:2, Baja:1 };
+  const i = imp[document.getElementById('dp_impact')?.value] || 2;
+  const u = imp[document.getElementById('dp_urgency')?.value] || 2;
+  const score = i * u;
+  const el = document.getElementById('dp_score_preview');
+  if (el) el.parentElement.querySelector('.dp-score')?.replaceWith(
+    Object.assign(document.createElement('span'), {
+      className: `dp-score ${[9,8,6].includes(score)?'dp-score-9':score===4?'dp-score-4':'dp-score-3'}`,
+      textContent: score
+    })
+  );
+  if (el) el.textContent = score;
+}
+
+function dpCalcDays() {
+  const val = document.getElementById('dp_due_date')?.value;
+  const el  = document.getElementById('dp_days_preview');
+  if (!el || !val) return;
+  const days = Math.round((new Date(val) - new Date()) / 86400000);
+  el.innerHTML = dpDaysBadge(days, '');
+}
+
+async function dpSaveTask(editId = '') {
+  const g = id => document.getElementById(id)?.value?.trim();
+  const name = g('dp_name'), category = g('dp_category'), status = g('dp_status'), due_date = g('dp_due_date');
+  const next_action = g('dp_next_action');
+  const errEl = document.getElementById('dp_form_error');
+  if (!name || !category || !status) { errEl.textContent = 'Nombre, categoría y estatus son obligatorios.'; return; }
+  if (status === 'Bloqueado' && !next_action) { errEl.textContent = 'La acción inmediata es obligatoria cuando el estatus es Bloqueado.'; return; }
+  errEl.textContent = '';
+  const body = { name, category, status, due_date: due_date||null,
+    start_date: g('dp_start_date')||null, responsible: g('dp_responsible'),
+    stakeholder: g('dp_stakeholder'), description: g('dp_description'),
+    impact: g('dp_impact'), urgency: g('dp_urgency'), priority: g('dp_priority'),
+    next_action, notes: g('dp_notes') };
+  try {
+    if (editId) await api('/api/tasks/'+editId, { method:'PUT', body:JSON.stringify(body) });
+    else        await api('/api/tasks',          { method:'POST', body:JSON.stringify(body) });
+    showToast(editId ? '✏️ Tarea actualizada' : '✅ Tarea creada', 'success');
+    renderGestion('table');
+  } catch(e) { errEl.textContent = 'Error: ' + e.message; }
+}
+
+// ── DETAIL ───────────────────────────────────────────────────────
+async function dpViewDetail(id) {
+  _dpEditId = id;
+  await dpRenderDetail(id);
+}
+
+async function dpRenderDetail(id) {
+  if (!id) return renderGestion('table');
+  const c = document.getElementById('mainContent');
+  try {
+    const t = await api('/api/tasks/' + id);
+    const fmt = iso => iso ? new Date(iso).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+    c.innerHTML = `
+    <div class="dp-page">
+      <div class="dp-hdr">
+        <button class="btn btn-secondary btn-sm" onclick="renderGestion('table')">← Tareas</button>
+        <h2>${t.id} — ${t.name}</h2>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="dpEditTask('${t.id}')">✏️ Editar</button>
+          ${dpIsAdmin()?`<button class="btn btn-sm" style="background:#fecaca;color:#991b1b;border:none;border-radius:6px;padding:5px 12px;cursor:pointer" onclick="dpDeleteTask('${t.id}','${t.name.replace(/'/g,'&apos;')}')">🗑 Eliminar</button>`:''}
+        </div>
+      </div>
+      <div style="background:#fff;border-radius:14px;padding:28px;box-shadow:0 2px 10px rgba(0,0,0,0.06);max-width:860px">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;align-items:center">
+          ${dpStatusBadge(t.status)}
+          ${dpScoreBadge(t.priority_score)}
+          ${dpDaysBadge(t.days_remaining, t.status)}
+          <span style="font-size:0.78rem;background:#e2e8f0;padding:3px 10px;border-radius:20px;color:#475569">${t.category}</span>
+        </div>
+        <div class="dp-detail-grid" style="margin-bottom:20px">
+          <div class="dp-detail-field"><label>Responsable</label><span>${t.responsible||'—'}</span></div>
+          <div class="dp-detail-field"><label>Stakeholder</label><span>${t.stakeholder||'—'}</span></div>
+          <div class="dp-detail-field"><label>Impacto</label><span>${t.impact||'—'}</span></div>
+          <div class="dp-detail-field"><label>Urgencia</label><span>${t.urgency||'—'}</span></div>
+          <div class="dp-detail-field"><label>Fecha inicio</label><span>${fmt(t.start_date)}</span></div>
+          <div class="dp-detail-field"><label>Fecha límite</label><span>${fmt(t.due_date)}</span></div>
+          <div class="dp-detail-field"><label>Última actualización</label><span>${fmt(t.updated_at)}</span></div>
+          <div class="dp-detail-field"><label>Completado</label><span>${fmt(t.completed_at)}</span></div>
+        </div>
+        ${t.description?`<div style="margin-bottom:16px"><label style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;display:block;margin-bottom:6px">Descripción</label><p style="color:#334155;line-height:1.6">${t.description}</p></div>`:''}
+        ${t.next_action?`<div style="background:#f0fdfa;border-left:4px solid var(--dp-teal);padding:14px 16px;border-radius:8px;margin-bottom:16px">
+          <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--dp-teal);margin-bottom:4px">🔜 Acción inmediata</div>
+          <p style="color:#134e4a;font-weight:600">${t.next_action}</p></div>`:''}
+        ${t.notes?`<div style="margin-bottom:16px"><label style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;display:block;margin-bottom:6px">Notas</label><p style="color:#475569">${t.notes}</p></div>`:''}
+        <div style="border-top:1px solid #f1f5f9;padding-top:16px;margin-top:8px">
+          <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:10px">⚡ Cambio rápido de estatus</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${DP_STATUS.filter(s=>s!==t.status).map(s=>
+              `<button class="btn btn-secondary btn-sm" onclick="dpQuickStatus('${t.id}','${s}')">${DP_STATUS_EMOJI[s]} ${s}</button>`
+            ).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  } catch(e) { c.innerHTML = `<div class="dp-page"><p style="color:red">Error: ${e.message}</p></div>`; }
+}
+
+// ── Actions ──────────────────────────────────────────────────────
+function dpNewTask() { _dpEditId = null; dpRenderForm(); }
+
+async function dpEditTask(id) {
+  try {
+    const t = await api('/api/tasks/'+id);
+    _dpEditId = id;
+    dpRenderForm(t);
+  } catch(e) { showToast('Error: '+e.message,'error'); }
+}
+
+async function dpQuickStatus(id, status) {
+  let next_action = null;
+  if (status === 'Bloqueado') {
+    next_action = prompt('⚠️ Acción inmediata (obligatoria para Bloqueado):');
+    if (!next_action?.trim()) { showToast('Acción inmediata requerida','warn'); return; }
+  }
+  try {
+    await api('/api/tasks/'+id+'/status', { method:'PATCH', body:JSON.stringify({ status, next_action }) });
+    showToast(`${DP_STATUS_EMOJI[status]} Estatus → ${status}`, 'success');
+    renderGestion(_dpView);
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+async function dpDeleteTask(id, name) {
+  if (!dpIsAdmin()) { showToast('Solo el admin puede eliminar tareas','error'); return; }
+  if (!confirm(`¿Eliminar la tarea "${name}" (${id})?\nEsta acción no se puede deshacer.`)) return;
+  try {
+    await api('/api/tasks/'+id, { method:'DELETE' });
+    showToast(`🗑 Tarea ${id} eliminada`, 'success');
+    renderGestion('table');
+  } catch(e) { showToast(e.message,'error'); }
+}
+// ══════════════════════════════════════════════════════════════════
+//  FIN DELEGAPRO
+// ══════════════════════════════════════════════════════════════════
 
 </script>
 </body>
